@@ -36,8 +36,8 @@ kotlin {
 
 
         androidMain.dependencies {
-            implementation(libs.koin.bom)
             implementation(libs.koin.android)
+            implementation(libs.koin.compose.viewmodel)
         }
 
     }

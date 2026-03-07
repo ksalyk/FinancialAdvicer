@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
 
             implementation(libs.koin.android)
+            implementation(libs.koin.compose.viewmodel)
             implementation(libs.splashscreen)
         }
         commonMain.dependencies {
@@ -53,6 +54,7 @@ kotlin {
 
             // Koin for KMP
             api(libs.koin.core)
+            api(libs.koin.core.viewmodel)
             api(libs.koin.compose)
 
             implementation(libs.ktor.client.core)
