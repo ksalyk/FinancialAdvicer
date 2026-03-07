@@ -74,7 +74,8 @@ actual class SecureStorage {
         if (status != errSecSuccess) return null
 
         val data = CFBridgingRelease(resultRef.value) as? NSData ?: return null
-        return NSString.create(data, NSUTF8StringEncoding) as? String
+        val nsString = NSString.create(data, NSUTF8StringEncoding) ?: return null
+        return nsString.toString()
     }
 
     actual fun clear(key: String) {
