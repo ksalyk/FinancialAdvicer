@@ -36,6 +36,7 @@ kotlin {
 
 
         androidMain.dependencies {
+            implementation(libs.koin.bom)
             implementation(libs.koin.android)
         }
 

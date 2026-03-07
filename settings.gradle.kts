@@ -25,6 +25,8 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        // Ensure Maven Central is also available without restrictions for other dependencies
+        maven("https://repo.maven.apache.org/maven2/")
     }
 }
 
