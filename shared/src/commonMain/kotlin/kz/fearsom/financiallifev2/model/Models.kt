@@ -1,0 +1,225 @@
+package kz.fearsom.financiallifev2.model
+
+import kotlinx.serialization.Serializable
+
+// ════════════════════════════════════════════════════════════════════
+//  LAYER 1 — NARRATIVE GRAPH
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Delta-based effect on [PlayerState].
+ * Every field is a delta: positive = increase, negative = decrease.
+ * Special sentinel: [nextEvent] overrides the option's declared next
+ * (useful for conditional redirects from random events).
+ */
+@Serializable
+data class Effect(
+    val capitalDelta: Long = 0,
+    val incomeDelta: Long = 0,
+    val expensesDelta: Long = 0,
+    val debtDelta: Long = 0,
+    val debtPaymentDelta: Long = 0,    // change in monthly debt repayment
+    val investmentsDelta: Long = 0,
+    val stressDelta: Int = 0,
+    val knowledgeDelta: Int = 0,
+    val riskDelta: Int = 0
+)
+
+/**
+ * Condition that must hold on [PlayerState] for a conditional event to fire.
+ * Example: Condition(DEBT, GT, 1_000_000) → debt > 1 000 000
+ */
+@Serializable
+data class Condition(
+    val field: Field,
+    val op: Op,
+    val value: Long
+) {
+    @Serializable
+    enum class Field { CAPITAL, INCOME, EXPENSES, DEBT, STRESS, KNOWLEDGE, RISK, MONTH }
+
+    @Serializable
+    enum class Op { GT, LT, GTE, LTE, EQ, NEQ }
+
+    fun check(state: PlayerState): Boolean {
+        val actual: Long = when (field) {
+            Field.CAPITAL   -> state.capital
+            Field.INCOME    -> state.income
+            Field.EXPENSES  -> state.expenses
+            Field.DEBT      -> state.debt
+            Field.STRESS    -> state.stress.toLong()
+            Field.KNOWLEDGE -> state.financialKnowledge.toLong()
+            Field.RISK      -> state.riskLevel.toLong()
+            Field.MONTH     -> state.month.toLong()
+        }
+        return when (op) {
+            Op.GT  -> actual > value
+            Op.LT  -> actual < value
+            Op.GTE -> actual >= value
+            Op.LTE -> actual <= value
+            Op.EQ  -> actual == value
+            Op.NEQ -> actual != value
+        }
+    }
+}
+
+/** A player choice within an event. */
+@Serializable
+data class GameOption(
+    val id: String,
+    val text: String,
+    val emoji: String,
+    val effects: Effect = Effect(),
+    /** Where to go after this choice. Use [MONTHLY_TICK] to trigger monthly sim first. */
+    val next: String
+)
+
+/**
+ * One node in the narrative graph.
+ *
+ * [conditions] — ALL must be true for this event to be injected automatically
+ *   (by the monthly conditional-event scanner). Leave empty for story events.
+ *
+ * [priority] — higher = checked first when multiple conditional events match.
+ *
+ * [isEnding] + [endingType] — leaf nodes that terminate the game.
+ */
+@Serializable
+data class GameEvent(
+    val id: String,
+    val message: String,
+    val flavor: String = "💬",
+    val options: List<GameOption>,
+    val conditions: List<Condition> = emptyList(),
+    val priority: Int = 0,
+    val isEnding: Boolean = false,
+    val endingType: EndingType? = null
+)
+
+/** Sentinel next-event ID: causes the engine to run a monthly economic tick first. */
+const val MONTHLY_TICK = "__monthly_tick__"
+
+@Serializable
+enum class EndingType {
+    BANKRUPTCY, PAYCHECK_TO_PAYCHECK, FINANCIAL_STABILITY, FINANCIAL_FREEDOM, WEALTH
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  LAYER 2 — STATE SYSTEM
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Full economic + psychological state of the player.
+ * All monetary values in Tenge (KZT).
+ */
+@Serializable
+data class PlayerState(
+    // ── Money ────────────────────────────────────────────────────────
+    val capital: Long    = 200_000L,    // liquid savings
+    val income: Long     = 450_000L,    // monthly gross income
+    val expenses: Long   = 200_000L,    // fixed monthly expenses (rent, food, transport)
+    val debt: Long       = 120_000L,    // total outstanding debt
+    val debtPaymentMonthly: Long = 18_000L,  // monthly repayment amount
+    val investments: Long = 0L,         // total money in market
+    val investmentReturnRate: Double = 0.08, // annual return (8% default)
+
+    // ── Soft stats ───────────────────────────────────────────────────
+    val stress: Int             = 25,   // 0–100
+    val financialKnowledge: Int = 10,   // 0–100
+    val riskLevel: Int          = 15,   // 0–100
+
+    // ── Time ─────────────────────────────────────────────────────────
+    val month: Int = 1,
+    val year:  Int = 2024
+) {
+    val monthLabel: String get() = "$year / ${"$month".padStart(2, '0')}"
+
+    /** Net cash flow after all obligations. */
+    val netMonthlyFlow: Long get() =
+        income - expenses - debtPaymentMonthly + monthlyInvestmentReturn
+
+    val monthlyInvestmentReturn: Long get() =
+        (investments * investmentReturnRate / 12).toLong()
+
+    val netWorth: Long get() = capital + investments - debt
+}
+
+/** Result of a single monthly economic simulation tick. */
+@Serializable
+data class MonthlyReport(
+    val month: Int,
+    val year: Int,
+    val incomeReceived: Long,
+    val expensesPaid: Long,
+    val debtPayment: Long,
+    val investmentGain: Long,
+    val netFlow: Long,
+    val capitalBefore: Long,
+    val capitalAfter: Long,
+    val debtAfter: Long,
+    val stressDelta: Int
+) {
+    fun toMessage(): String = buildString {
+        appendLine("📊 ${month.monthName()} $year — Итоги месяца")
+        appendLine()
+        appendLine("💰 Доход:           +${incomeReceived.moneyFormat()}")
+        appendLine("🏠 Расходы:          -${expensesPaid.moneyFormat()}")
+        if (debtPayment > 0) appendLine("💳 Выплата долга:    -${debtPayment.moneyFormat()}")
+        if (investmentGain > 0) appendLine("📈 Инвестиции:       +${investmentGain.moneyFormat()}")
+        appendLine()
+        val sign = if (netFlow >= 0) "+" else ""
+        appendLine("${if (netFlow >= 0) "✅" else "⚠️"} Итого: $sign${netFlow.moneyFormat()}")
+        appendLine("💼 Капитал: ${capitalAfter.moneyFormat()}")
+        if (debtAfter > 0) append("💳 Долг: ${debtAfter.moneyFormat()}")
+    }.trimEnd()
+}
+
+private fun Int.monthName() = listOf(
+    "", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+)[this]
+
+// ════════════════════════════════════════════════════════════════════
+//  CHAT / UI LAYER
+// ════════════════════════════════════════════════════════════════════
+
+@Serializable
+enum class MessageSender { CHARACTER, SYSTEM, MONTHLY_REPORT, PLAYER }
+
+@Serializable
+data class ChatMessage(
+    val id: String = "",
+    val sender: MessageSender = MessageSender.SYSTEM,
+    val text: String = "",
+    val emoji: String = "",
+    val timestampMs: Long = 0L
+)
+
+// ════════════════════════════════════════════════════════════════════
+//  COMPOSITE GAME STATE
+// ════════════════════════════════════════════════════════════════════
+
+@Serializable
+data class GameState(
+    val playerState: PlayerState = PlayerState(),
+    val currentEventId: String = "",
+    val messages: List<ChatMessage> = emptyList(),
+    val isWaitingForChoice: Boolean = false,
+    val gameOver: Boolean = false,
+    val endingType: EndingType? = null
+)
+
+// ════════════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════════════
+
+@Serializable
+data class LoginRequest(val username: String, val password: String)
+
+@Serializable
+data class LoginResponse(
+    val success: Boolean = false,
+    val token: String  = "",
+    val userId: String = "",
+    val message: String = ""
+)
