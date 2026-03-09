@@ -77,14 +77,21 @@ class AuthRepository(
     suspend fun restoreSessionFromStorage() {
         val access  = withContext(Dispatchers.Default) { secureStorage.get(KEY_ACCESS_TOKEN) }
         val refresh = withContext(Dispatchers.Default) { secureStorage.get(KEY_REFRESH_TOKEN) }
-        if (access.isNullOrBlank() || refresh.isNullOrBlank()) return
+        Napier.d("Restoring session: access=${access?.take(10)}..., refresh=${refresh?.take(10)}...", tag = TAG)
+        if (access.isNullOrBlank() || refresh.isNullOrBlank()) {
+            Napier.d("No stored tokens found", tag = TAG)
+            return
+        }
         restoreSession(access, refresh)
     }
 
     /** Persist a rotated token pair (called by HttpClientFactory after silent refresh). */
-    fun persistTokens(accessToken: String, refreshToken: String) {
-        secureStorage.save(KEY_ACCESS_TOKEN,  accessToken)
-        secureStorage.save(KEY_REFRESH_TOKEN, refreshToken)
+    suspend fun persistTokens(accessToken: String, refreshToken: String) {
+        withContext(Dispatchers.Default) {
+            secureStorage.save(KEY_ACCESS_TOKEN,  accessToken)
+            secureStorage.save(KEY_REFRESH_TOKEN, refreshToken)
+            Napier.d("Persisted tokens: access=${accessToken.take(10)}..., refresh=${refreshToken.take(10)}...", tag = TAG)
+        }
     }
 
     /**
@@ -132,9 +139,11 @@ class AuthRepository(
             if (!resp.success) throw IllegalArgumentException(resp.message)
 
             tokenStorage.update(resp.accessToken, resp.refreshToken)
-            secureStorage.save(KEY_ACCESS_TOKEN,  resp.accessToken)
-            secureStorage.save(KEY_REFRESH_TOKEN, resp.refreshToken)
-            Napier.i("Login success userId=${resp.userId}", tag = TAG)
+            withContext(Dispatchers.Default) {
+                secureStorage.save(KEY_ACCESS_TOKEN,  resp.accessToken)
+                secureStorage.save(KEY_REFRESH_TOKEN, resp.refreshToken)
+            }
+            Napier.i("Login success userId=${resp.userId}, persisted tokens: access=${resp.accessToken.take(10)}...", tag = TAG)
 
             AuthState(
                 isLoggedIn   = true,
@@ -166,9 +175,11 @@ class AuthRepository(
             if (!resp.success) throw IllegalArgumentException(resp.message)
 
             tokenStorage.update(resp.accessToken, resp.refreshToken)
-            secureStorage.save(KEY_ACCESS_TOKEN,  resp.accessToken)
-            secureStorage.save(KEY_REFRESH_TOKEN, resp.refreshToken)
-            Napier.i("Registration success userId=${resp.userId}", tag = TAG)
+            withContext(Dispatchers.Default) {
+                secureStorage.save(KEY_ACCESS_TOKEN,  resp.accessToken)
+                secureStorage.save(KEY_REFRESH_TOKEN, resp.refreshToken)
+            }
+            Napier.i("Registration success userId=${resp.userId}, persisted tokens: access=${resp.accessToken.take(10)}...", tag = TAG)
 
             AuthState(
                 isLoggedIn   = true,

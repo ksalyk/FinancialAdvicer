@@ -46,7 +46,7 @@ fun buildHttpClient(
     baseUrl: String,
     onTokenRefreshFailed: () -> Unit,
     /** Called after a successful silent token rotation so the new pair can be persisted. */
-    onTokensRefreshed: (accessToken: String, refreshToken: String) -> Unit = { _, _ -> },
+    onTokensRefreshed: suspend (accessToken: String, refreshToken: String) -> Unit = { _, _ -> },
 ): HttpClient = HttpClient(createPlatformEngine()) {
 
     install(ContentNegotiation) {

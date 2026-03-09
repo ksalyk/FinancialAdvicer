@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -45,33 +46,43 @@ actual class SecureStorage(context: Context) {
     // ── SecureStorage API ─────────────────────────────────────────────────────
 
     actual fun save(key: String, value: String) {
+        Log.d(TAG, "Saving key=$key, value length=${value.length}")
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key())
         val iv        = cipher.iv                                // 12 bytes for GCM
         val encrypted = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
         val payload   = Base64.encodeToString(iv + encrypted, Base64.NO_WRAP)
-        prefs.edit().putString(key, payload).apply()
+        val success = prefs.edit().putString(key, payload).commit()  // Use commit() for immediate persistence
+        Log.d(TAG, "Save key=$key, success=$success, payload length=${payload.length}")
     }
 
     actual fun get(key: String): String? {
-        val payload = prefs.getString(key, null) ?: return null
+        val payload = prefs.getString(key, null)
+        Log.d(TAG, "Getting key=$key, found=${payload != null}, payload length=${payload?.length ?: 0}")
+        if (payload == null) return null
         return try {
             val combined  = Base64.decode(payload, Base64.NO_WRAP)
             val iv        = combined.copyOfRange(0, GCM_IV_LENGTH)
             val encrypted = combined.copyOfRange(GCM_IV_LENGTH, combined.size)
             val cipher    = Cipher.getInstance(TRANSFORMATION)
             cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(GCM_TAG_BITS, iv))
-            String(cipher.doFinal(encrypted), Charsets.UTF_8)
-        } catch (_: Exception) {
+            val decrypted = String(cipher.doFinal(encrypted), Charsets.UTF_8)
+            Log.d(TAG, "Decrypted key=$key successfully, value length=${decrypted.length}")
+            decrypted
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to decrypt key=$key", e)
             null   // corrupted or key rotated — treat as missing
         }
     }
 
     actual fun clear(key: String) {
-        prefs.edit().remove(key).apply()
+        Log.d(TAG, "Clearing key=$key")
+        val success = prefs.edit().remove(key).commit()  // Use commit() for immediate persistence
+        Log.d(TAG, "Clear key=$key, success=$success")
     }
 
     companion object {
+        private const val TAG = "SecureStorage"
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
         private const val KEY_ALIAS         = "fl_secure_key"
         private const val PREFS_FILE        = "fl_secure_prefs"

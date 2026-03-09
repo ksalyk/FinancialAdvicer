@@ -33,9 +33,11 @@ kotlin {
             implementation(libs.ktor.client.okhttp)   // OkHttp engine for cert pinning
             implementation(libs.kotlinx.coroutines.android)
 
+            implementation(libs.koin.core)
             implementation(libs.koin.android)
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.splashscreen)
+
         }
         commonMain.dependencies {
             implementation(project(":shared"))
