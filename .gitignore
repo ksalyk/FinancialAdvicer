@@ -26,4 +26,3 @@ node_modules/
 # Server logs
 server.log
 logs/
-.claude
