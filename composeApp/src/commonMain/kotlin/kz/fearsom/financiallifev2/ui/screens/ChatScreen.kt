@@ -31,13 +31,6 @@ import kz.fearsom.financiallifev2.ui.components.StatsPanelOverlay
 import kz.fearsom.financiallifev2.ui.theme.*
 import kotlinx.coroutines.delay
 
-// ─── Character constants ──────────────────────────────────────────────────────
-// Asan's profile is fixed in this game; kept here rather than in PlayerState
-// since it's purely presentational (no effect on economic simulation).
-private const val CHAR_NAME  = "Асан"
-private const val CHAR_EMOJI = "👨‍💻"
-private const val CHAR_TITLE = "Инженер-программист"
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 @Composable
@@ -45,7 +38,8 @@ fun ChatScreen(
     uiState: GameUiState,
     onChoiceSelected: (String) -> Unit,
     onToggleStats: () -> Unit,
-    onRestart: () -> Unit
+    onRestart: () -> Unit,
+    onNavigateToMenu: () -> Unit = {}
 ) {
     val colors      = LocalAppColors.current
     val listState   = rememberLazyListState()
@@ -75,9 +69,13 @@ fun ChatScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
             ChatTopBar(
-                playerState    = playerState,
-                onStatsClick   = onToggleStats,
-                onRestartClick = onRestart
+                playerState      = playerState,
+                characterName    = uiState.characterName,
+                characterEmoji   = uiState.characterEmoji,
+                characterTitle   = uiState.characterTitle,
+                onStatsClick     = onToggleStats,
+                onRestartClick   = onRestart,
+                onMenuClick      = onNavigateToMenu
             )
 
             LazyColumn(
@@ -91,11 +89,13 @@ fun ChatScreen(
                         visible = true,
                         enter   = slideInVertically { it / 2 } + fadeIn(tween(350))
                     ) {
-                        MessageBubble(message)
+                        MessageBubble(message, uiState.characterName)
                     }
                 }
                 if (uiState.isTyping) {
-                    item(key = "typing") { TypingIndicator() }
+                    item(key = "typing") {
+                        TypingIndicator(uiState.characterEmoji, uiState.characterName)
+                    }
                 }
             }
 
@@ -116,8 +116,8 @@ fun ChatScreen(
         if (uiState.showStats && playerState != null) {
             StatsPanelOverlay(
                 playerState    = playerState,
-                characterName  = CHAR_NAME,
-                characterEmoji = CHAR_EMOJI,
+                characterName  = uiState.characterName,
+                characterEmoji = uiState.characterEmoji,
                 onDismiss      = onToggleStats
             )
         }
@@ -129,8 +129,12 @@ fun ChatScreen(
 @Composable
 private fun ChatTopBar(
     playerState: PlayerState?,
+    characterName: String,
+    characterEmoji: String,
+    characterTitle: String,
     onStatsClick: () -> Unit,
-    onRestartClick: () -> Unit
+    onRestartClick: () -> Unit,
+    onMenuClick: () -> Unit
 ) {
     val colors = LocalAppColors.current
     val infiniteTransition = rememberInfiniteTransition(label = "online")
@@ -148,6 +152,11 @@ private fun ChatTopBar(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Home button
+            IconButton(onClick = onMenuClick) {
+                Text("🏠", fontSize = 20.sp)
+            }
+
             Box {
                 Box(
                     modifier = Modifier
@@ -155,7 +164,7 @@ private fun ChatTopBar(
                         .clip(CircleShape)
                         .background(colors.backgroundElevated),
                     contentAlignment = Alignment.Center
-                ) { Text(CHAR_EMOJI, fontSize = 22.sp) }
+                ) { Text(characterEmoji, fontSize = 22.sp) }
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -169,15 +178,15 @@ private fun ChatTopBar(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    CHAR_NAME,
+                    characterName,
                     style      = MaterialTheme.typography.titleMedium,
                     color      = colors.textPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 val subtitle = if (playerState != null) {
-                    "$CHAR_TITLE · ${monthName(playerState.month)} ${playerState.year}"
+                    "$characterTitle · ${monthName(playerState.month)} ${playerState.year}"
                 } else {
-                    CHAR_TITLE
+                    characterTitle
                 }
                 Text(
                     subtitle,
@@ -199,9 +208,9 @@ private fun ChatTopBar(
 // ─── Message Bubble factory ───────────────────────────────────────────────────
 
 @Composable
-private fun MessageBubble(message: ChatMessage) {
+private fun MessageBubble(message: ChatMessage, characterName: String = "Асан") {
     when (message.sender) {
-        MessageSender.CHARACTER      -> CharacterBubble(message)
+        MessageSender.CHARACTER      -> CharacterBubble(message, characterName)
         MessageSender.PLAYER         -> PlayerBubble(message)
         MessageSender.SYSTEM         -> SystemBubble(message)
         MessageSender.MONTHLY_REPORT -> MonthlyReportCard(message)
@@ -210,7 +219,7 @@ private fun MessageBubble(message: ChatMessage) {
 
 // Asan's left-aligned chat bubble
 @Composable
-private fun CharacterBubble(message: ChatMessage) {
+private fun CharacterBubble(message: ChatMessage, characterName: String = "Асан") {
     val colors = LocalAppColors.current
     val shape = RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -223,7 +232,7 @@ private fun CharacterBubble(message: ChatMessage) {
                 Spacer(Modifier.width(4.dp))
             }
             Text(
-                CHAR_NAME,
+                characterName,
                 style      = MaterialTheme.typography.bodySmall,
                 color      = colors.textSecondary,
                 fontWeight = FontWeight.SemiBold
@@ -356,7 +365,7 @@ private fun MonthlyReportCard(message: ChatMessage) {
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
 
 @Composable
-private fun TypingIndicator() {
+private fun TypingIndicator(characterEmoji: String = "👨‍💻", characterName: String = "Асан") {
     val colors = LocalAppColors.current
     val infiniteTransition = rememberInfiniteTransition(label = "typing")
     val bubbleShape = RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
@@ -366,9 +375,9 @@ private fun TypingIndicator() {
             modifier          = Modifier.padding(start = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(CHAR_EMOJI, fontSize = 13.sp)
+            Text(characterEmoji, fontSize = 13.sp)
             Spacer(Modifier.width(4.dp))
-            Text(CHAR_NAME, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
+            Text(characterName, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
         }
         Box(
             modifier = Modifier
