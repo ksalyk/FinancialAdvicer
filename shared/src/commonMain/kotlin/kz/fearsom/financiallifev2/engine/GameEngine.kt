@@ -30,14 +30,22 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    fun startGame(): GameState {
-        val ps    = graph.initialPlayerState
+    /**
+     * Start a new game. If [initialState] is provided (character-selection flow),
+     * it overrides the default [ScenarioGraph.initialPlayerState].
+     * If [characterName] is provided, it is used in the intro system message.
+     */
+    fun startGame(
+        initialState: PlayerState? = null,
+        characterName: String = "Асан"
+    ): GameState {
+        val ps    = initialState ?: graph.initialPlayerState
         val intro = graph.events["intro"] ?: error("No 'intro' event in graph")
         return GameState(
             playerState        = ps,
             currentEventId     = intro.id,
             messages           = listOf(
-                systemMsg("🎮 Финансовое приключение началось! Помогай Асану строить финансовое будущее."),
+                systemMsg("🎮 Финансовое приключение началось! Помогай $characterName строить финансовое будущее."),
                 characterMsg(intro)
             ),
             isWaitingForChoice = true

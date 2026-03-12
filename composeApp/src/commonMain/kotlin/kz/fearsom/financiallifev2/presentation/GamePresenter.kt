@@ -1,9 +1,8 @@
 package kz.fearsom.financiallifev2.presentation
 
+import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
-import kz.fearsom.financiallifev2.model.EndingType
-import kz.fearsom.financiallifev2.model.GameOption
-import kz.fearsom.financiallifev2.model.GameState
+import kz.fearsom.financiallifev2.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,27 +14,32 @@ data class GameUiState(
     val gameState: GameState? = null,
     val currentOptions: List<GameOption> = emptyList(),
     val isTyping: Boolean = false,
-    val showStats: Boolean = false
+    val showStats: Boolean = false,
+    // Dynamic character display info
+    val characterName: String  = "Асан",
+    val characterEmoji: String = "👨‍💻",
+    val characterTitle: String = "Инженер-программист"
 )
 
 /**
  * Pure Kotlin presenter — iOS + Android compatible (no Android ViewModel).
  *
- * Wires [GameEngine.state] StateFlow into [GameUiState], injecting a simulated
- * typing delay so choices feel like a real async conversation.
+ * Session-aware: supports both the legacy default start (Асан) and the
+ * new session-based flow (character-selection → ChatScreen).
  */
 class GamePresenter(
     private val engine: GameEngine,
+    private val sessionRepo: GameSessionRepository,
     private val scope: CoroutineScope
 ) {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
+    // Tracks which session is currently being played (for save-on-back)
+    private var activeSessionId: String? = null
+
     init {
         scope.launch {
-            // Mirror engine's canonical state into our UI state.
-            // currentOptions are gated by isWaitingForChoice so we never show
-            // options mid-typing or on game-over screens.
             engine.state.collect { gameState ->
                 _uiState.value = _uiState.value.copy(
                     gameState      = gameState,
@@ -44,37 +48,103 @@ class GamePresenter(
                     else
                         emptyList()
                 )
+                // Auto-save progress to repository whenever game state changes
+                gameState?.let { state ->
+                    activeSessionId?.let { id ->
+                        sessionRepo.saveGameState(id, state)
+                        // Complete the session if it reached a game-over ending
+                        val endingType = state.endingType
+                        if (state.gameOver && endingType != null) {
+                            sessionRepo.completeSession(id, endingType.toGameEnding())
+                        }
+                    }
+                }
             }
         }
     }
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
-    fun startGame() {
+    /**
+     * Start a brand-new game for [session] created by the new-game flow.
+     * Initialises the engine with the character's stats from the era's start year.
+     */
+    fun startNewGame(sessionId: String) {
+        val session = sessionRepo.getSession(sessionId) ?: run {
+            startDefaultGame(); return
+        }
+        activeSessionId = sessionId
         scope.launch {
-            _uiState.value = _uiState.value.copy(isTyping = true)
-            delay(800)                // brief pause before first message
-            engine.startGame()        // emits initial GameState → collector updates UI
+            _uiState.value = _uiState.value.copy(
+                isTyping       = true,
+                characterName  = session.characterName,
+                characterEmoji = session.characterEmoji,
+                characterTitle = session.characterTitle
+            )
+            delay(800)
+            val initialState = session.initialStats.toPlayerState(
+                year  = session.currentGameYear,
+                month = session.currentGameMonth
+            )
+            engine.startGame(initialState, session.characterName)
             delay(300)
             _uiState.value = _uiState.value.copy(isTyping = false)
         }
     }
 
     /**
-     * Handle a player option tap.
-     *
-     * Flow:
-     *  1. Hide options, show typing indicator
-     *  2. Wait [typingDelay] so the player sees "Асан is typing…"
-     *  3. Call engine.makeChoice — synchronously computes new state (applies
-     *     effects, runs monthly tick if needed, injects conditional events),
-     *     emits it on [engine.state], collector updates gameState + options
-     *  4. Short settling pause, then hide typing indicator
+     * Continue an existing [session] — restores the saved engine state if available,
+     * otherwise restarts from the session's initial stats.
      */
+    fun continueGame(sessionId: String) {
+        val session = sessionRepo.getSession(sessionId) ?: run {
+            startDefaultGame(); return
+        }
+        activeSessionId = sessionId
+        val savedState = sessionRepo.getSavedGameState(sessionId)
+        scope.launch {
+            _uiState.value = _uiState.value.copy(
+                isTyping       = true,
+                characterName  = session.characterName,
+                characterEmoji = session.characterEmoji,
+                characterTitle = session.characterTitle
+            )
+            delay(800)
+            if (savedState != null) {
+                engine.loadState(savedState)
+            } else {
+                val initialState = session.initialStats.toPlayerState(
+                    year  = session.currentGameYear,
+                    month = session.currentGameMonth
+                )
+                engine.startGame(initialState, session.characterName)
+            }
+            delay(300)
+            _uiState.value = _uiState.value.copy(isTyping = false)
+        }
+    }
+
+    /** Legacy default start (Асан the junior dev) — used when no session is selected. */
+    fun startDefaultGame() {
+        activeSessionId = null
+        scope.launch {
+            _uiState.value = _uiState.value.copy(
+                isTyping       = true,
+                characterName  = "Асан",
+                characterEmoji = "👨‍💻",
+                characterTitle = "Инженер-программист"
+            )
+            delay(800)
+            engine.startGame()
+            delay(300)
+            _uiState.value = _uiState.value.copy(isTyping = false)
+        }
+    }
+
     fun onChoiceSelected(optionId: String) {
         scope.launch {
             _uiState.value = _uiState.value.copy(isTyping = true, currentOptions = emptyList())
-            delay(1400)               // simulate response latency
+            delay(1400)
             engine.makeChoice(optionId)
             delay(500)
             _uiState.value = _uiState.value.copy(isTyping = false)
@@ -85,10 +155,27 @@ class GamePresenter(
         _uiState.value = _uiState.value.copy(showStats = !_uiState.value.showStats)
     }
 
+    /** Restart from the beginning of the same session (same character + era). */
     fun restartGame() {
         engine.reset()
-        _uiState.value = GameUiState()
-        startGame()
+        _uiState.value = _uiState.value.copy(
+            gameState      = null,
+            currentOptions = emptyList(),
+            isTyping       = false
+        )
+        val sessionId = activeSessionId
+        if (sessionId != null) {
+            startNewGame(sessionId)
+        } else {
+            startDefaultGame()
+        }
+    }
+
+    /** Save the current engine state before navigating away (back to MainMenu). */
+    fun saveAndPause() {
+        val sessionId = activeSessionId ?: return
+        val state = _uiState.value.gameState ?: return
+        sessionRepo.saveGameState(sessionId, state)
     }
 
     fun getEndingTitle(type: EndingType?): String = when (type) {

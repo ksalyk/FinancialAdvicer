@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.NetworkConfig
@@ -53,6 +54,9 @@ val commonModule = module {
         )
     }
 
-    // ── Game ──────────────────────────────────────────────────────────────────
+    // ── Game engine ───────────────────────────────────────────────────────────
     single { GameEngine() }
+
+    // ── Session repository (in-memory; replace with SQLDelight in Sprint 4) ──
+    single { GameSessionRepository() }
 }
