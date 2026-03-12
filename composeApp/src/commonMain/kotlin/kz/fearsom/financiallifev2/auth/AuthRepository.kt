@@ -3,7 +3,9 @@ package kz.fearsom.financiallifev2.auth
 import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -131,10 +133,16 @@ class AuthRepository(
         }
 
         return runCatching {
-            val resp: AuthApiResponse = httpClient.post("$baseUrl/auth/login") {
+            val response = httpClient.post("$baseUrl/auth/login") {
+                expectSuccess = false
                 contentType(ContentType.Application.Json)
                 setBody(AuthRequest(username.trim(), password))
-            }.body()
+            }
+            if (!response.status.isSuccess()) {
+                val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
+                throw IllegalStateException(msg?.ifBlank { null } ?: "Сервер недоступен (${response.status.value})")
+            }
+            val resp = response.body<AuthApiResponse>()
 
             if (!resp.success) throw IllegalArgumentException(resp.message)
 
@@ -167,10 +175,16 @@ class AuthRepository(
         }
 
         return runCatching {
-            val resp: AuthApiResponse = httpClient.post("$baseUrl/auth/register") {
+            val response = httpClient.post("$baseUrl/auth/register") {
+                expectSuccess = false
                 contentType(ContentType.Application.Json)
                 setBody(AuthRequest(username.trim(), password))
-            }.body()
+            }
+            if (!response.status.isSuccess()) {
+                val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
+                throw IllegalStateException(msg?.ifBlank { null } ?: "Сервер недоступен (${response.status.value})")
+            }
+            val resp = response.body<AuthApiResponse>()
 
             if (!resp.success) throw IllegalArgumentException(resp.message)
 

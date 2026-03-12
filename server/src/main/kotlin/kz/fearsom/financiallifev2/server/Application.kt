@@ -17,7 +17,7 @@ import kz.fearsom.financiallifev2.server.repository.UserRepository
 fun main() {
     embeddedServer(
         Netty,
-        port = System.getenv("PORT")?.toIntOrNull() ?: 8080,
+        port = System.getenv("PORT")?.toIntOrNull() ?: 8081,
         host = "0.0.0.0",
         module = Application::module
     ).start(wait = true)
