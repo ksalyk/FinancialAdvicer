@@ -16,17 +16,19 @@
             height: 100%;
             background: #0A0E1A;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
         }
 
-        canvas#ComposeTarget {
-            width: 100vw;
-            height: 100vh;
-            display: block;
+        #ComposeTarget {
+            width: 100%;
+            height: 100%;
+            display: flex;
         }
     </style>
 </head>
 <body>
-<canvas id="ComposeTarget"></canvas>
+<!-- Compose will render inside this div -->
+<div id="ComposeTarget"></div>
 <script src="landing.js"></script>
 </body>
 </html>
