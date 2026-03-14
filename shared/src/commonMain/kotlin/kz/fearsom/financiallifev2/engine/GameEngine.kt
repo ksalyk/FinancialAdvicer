@@ -120,19 +120,7 @@ class GameEngine(
             ps = updatedPs
             newMessages += monthlyReportMsg(report)
 
-<<<<<<< HEAD
-            // ── Conditional event injection ──────────────────────────────
-            val conditional = findConditionalEvent(ps, current.currentEventId)
-            if (conditional != null) {
-                newMessages += systemMsg("⚡ Внеплановое событие!")
-                newMessages += characterMsg(conditional, ps)
-                nextEventId = conditional.id
-            } else {
-                // Rotate through the after-tick story pool
-                val pool = graph.afterTickEventPool.filter { it != current.currentEventId }
-                nextEventId = pool.randomOrNull() ?: "normal_life"
-                graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it, ps) }
-=======
+
             // ── 4-tier event priority queue ───────────────────────────────
 
             // PRIORITY 1: Era-scheduled global event (world crisis on this date)
@@ -164,7 +152,6 @@ class GameEngine(
             val winner = graph.findEvent(nextEventId)
             if (winner?.unique == true) {
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
->>>>>>> 5b59f4c (scenario: add era definitions, event pool selector, and scam library)
             }
 
             // Apply cooldown
@@ -180,7 +167,7 @@ class GameEngine(
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
             }
 
-            graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it) }
+            graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it, ps) }
 
         } else {
             // ── Direct graph navigation ──────────────────────────────────
@@ -368,20 +355,20 @@ class GameEngine(
             .replace("{income3x}",      (ps.income * 3).moneyFormat())
             .replace("{name}",          currentCharacterName)
 
-    private fun playerMsg(option: GameOption) = ChatMessage(
+    fun playerMsg(option: GameOption) = ChatMessage(
         id     = "player_${option.id}_${ts()}",
         sender = MessageSender.PLAYER,
         text   = "${option.emoji} ${option.text}",
         emoji  = option.emoji
     )
 
-    private fun systemMsg(text: String) = ChatMessage(
+    fun systemMsg(text: String) = ChatMessage(
         id     = "sys_${ts()}",
         sender = MessageSender.SYSTEM,
         text   = text
     )
 
-    private fun monthlyReportMsg(report: MonthlyReport) = ChatMessage(
+    fun monthlyReportMsg(report: MonthlyReport) = ChatMessage(
         id     = "report_${report.year}_${report.month}_${ts()}",
         sender = MessageSender.MONTHLY_REPORT,
         text   = report.toMessage(),
