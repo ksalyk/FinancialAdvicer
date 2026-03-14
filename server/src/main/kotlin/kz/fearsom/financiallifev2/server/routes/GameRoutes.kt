@@ -18,6 +18,8 @@ import kz.fearsom.financiallifev2.scenarios.AsanScenarioGraph
 import kz.fearsom.financiallifev2.server.models.GameStateRequest
 import kz.fearsom.financiallifev2.server.models.GameStateResponse
 import kz.fearsom.financiallifev2.server.repository.GameRepository
+import kz.fearsom.financiallifev2.server.repository.RecordSessionRequest
+import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("GameRoutes")
@@ -60,7 +62,10 @@ data class SnapshotDto(
 // All routes here are assumed to be mounted inside authenticate("auth-jwt") {}
 // in Routing.kt, so call.principal<JWTPrincipal>()!! is always non-null.
 
-fun Route.gameRoutes(gameRepository: GameRepository) {
+fun Route.gameRoutes(
+    gameRepository: GameRepository,
+    statisticsRepository: StatisticsRepository
+) {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     route("/game") {
@@ -213,6 +218,28 @@ fun Route.gameRoutes(gameRepository: GameRepository) {
         // ── GET /game/health ──────────────────────────────────────────────────
         get("/health") {
             call.respond(mapOf("status" to "ok", "storage" to "postgresql"))
+        }
+
+        // ── POST /game/statistics/record ──────────────────────────────────────
+        // Called by the client when a game session ends (any ending).
+        post("/statistics/record") {
+            val userId = call.jwtUserId()
+            val req    = call.receive<RecordSessionRequest>()
+
+            val id = statisticsRepository.recordSession(userId, req)
+
+            log.info("Session recorded userId={} ending={} id={}", userId, req.ending, id)
+
+            call.respond(mapOf("id" to id))
+        }
+
+        // ── GET /game/statistics ──────────────────────────────────────────────
+        // Returns aggregated lifetime statistics for the authenticated user.
+        get("/statistics") {
+            val userId = call.jwtUserId()
+            val stats  = statisticsRepository.getPlayerStatistics(userId)
+
+            call.respond(stats)
         }
     }
 }

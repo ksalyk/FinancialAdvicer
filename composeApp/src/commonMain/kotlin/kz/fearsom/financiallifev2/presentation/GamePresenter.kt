@@ -3,6 +3,7 @@ package kz.fearsom.financiallifev2.presentation
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.*
+import kz.fearsom.financiallifev2.network.GameApiService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,8 @@ data class GameUiState(
 class GamePresenter(
     private val engine: GameEngine,
     private val sessionRepo: GameSessionRepository,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val gameApiService: GameApiService? = null
 ) {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -55,7 +57,15 @@ class GamePresenter(
                         // Complete the session if it reached a game-over ending
                         val endingType = state.endingType
                         if (state.gameOver && endingType != null) {
-                            sessionRepo.completeSession(id, endingType.toGameEnding())
+                            val gameEnding = endingType.toGameEnding()
+                            sessionRepo.completeSession(id, gameEnding)
+                            // Sync completed session to server (fire-and-forget)
+                            val session = sessionRepo.getSession(id)
+                            if (session != null && gameApiService != null) {
+                                launch {
+                                    gameApiService.recordCompletedSession(session, gameEnding)
+                                }
+                            }
                         }
                     }
                 }

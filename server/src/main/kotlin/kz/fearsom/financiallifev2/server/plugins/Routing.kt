@@ -4,14 +4,21 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kz.fearsom.financiallifev2.server.repository.CharactersRepository
+import kz.fearsom.financiallifev2.server.repository.ErasRepository
 import kz.fearsom.financiallifev2.server.repository.GameRepository
+import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
 import kz.fearsom.financiallifev2.server.repository.UserRepository
+import kz.fearsom.financiallifev2.server.routes.adminRoutes
 import kz.fearsom.financiallifev2.server.routes.authRoutes
 import kz.fearsom.financiallifev2.server.routes.gameRoutes
 
 fun Application.configureRouting(
     userRepository: UserRepository,
-    gameRepository: GameRepository
+    gameRepository: GameRepository,
+    statisticsRepository: StatisticsRepository,
+    charactersRepository: CharactersRepository,
+    erasRepository: ErasRepository
 ) {
     routing {
         get("/") {
@@ -28,8 +35,11 @@ fun Application.configureRouting(
 
             // Protected: all game endpoints require a valid access token.
             authenticate("auth-jwt") {
-                gameRoutes(gameRepository)
+                gameRoutes(gameRepository, statisticsRepository)
             }
+
+            // Admin: character + era management (protected by ADMIN_KEY Bearer token)
+            adminRoutes(charactersRepository, erasRepository, statisticsRepository)
         }
     }
 }

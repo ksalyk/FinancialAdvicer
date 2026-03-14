@@ -7,6 +7,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
+import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.presentation.*
 import kz.fearsom.financiallifev2.ui.screens.*
 import org.koin.compose.koinInject
@@ -43,16 +44,17 @@ fun AppNavigation() {
     val authRepository : AuthRepository         = koinInject()
     val gameEngine     : GameEngine             = koinInject()
     val sessionRepo    : GameSessionRepository  = koinInject()
+    val gameApiService : GameApiService         = koinInject()
 
     val scope = rememberCoroutineScope()
 
     // Shared presenters — lifetime bound to this Composable's composition
     val authPresenter     = remember { AuthPresenter(authRepository, scope) }
-    val gamePresenter     = remember { GamePresenter(gameEngine, sessionRepo, scope) }
+    val gamePresenter     = remember { GamePresenter(gameEngine, sessionRepo, scope, gameApiService) }
     val mainMenuPresenter = remember { MainMenuPresenter(sessionRepo, scope) }
     val newGamePresenter  = remember { NewGamePresenter(sessionRepo, scope) }
     val charsPresenter    = remember { CharactersPresenter(sessionRepo, scope) }
-    val statsPresenter    = remember { StatisticsPresenter(sessionRepo, scope) }
+    val statsPresenter    = remember { StatisticsPresenter(sessionRepo, scope, gameApiService) }
 
     val authUiState     by authPresenter.uiState.collectAsStateWithLifecycle()
     val gameUiState     by gamePresenter.uiState.collectAsStateWithLifecycle()

@@ -1,5 +1,8 @@
 package kz.fearsom.financiallifev2.server.database
 
+import kz.fearsom.financiallifev2.server.database.tables.CharactersTable
+import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
+import kz.fearsom.financiallifev2.server.database.tables.ErasTable
 import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
 import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
@@ -39,7 +42,10 @@ object DatabaseFactory {
                 UsersTable,
                 RefreshTokensTable,
                 GameSessionsTable,
-                GameStatesTable
+                GameStatesTable,
+                CompletedSessionsTable,
+                CharactersTable,
+                ErasTable
             )
         }
     }
