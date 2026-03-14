@@ -28,17 +28,21 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
     private val _state = MutableStateFlow<GameState?>(null)
     val state: StateFlow<GameState?> = _state.asStateFlow()
 
+    // Tracks the current character name for template substitution in event messages
+    private var currentCharacterName: String = ""
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
      * Start a new game. If [initialState] is provided (character-selection flow),
      * it overrides the default [ScenarioGraph.initialPlayerState].
-     * If [characterName] is provided, it is used in the intro system message.
+     * If [characterName] is provided, it is used in messages and template substitution.
      */
     fun startGame(
         initialState: PlayerState? = null,
         characterName: String = "Асан"
     ): GameState {
+        currentCharacterName = characterName
         val ps    = initialState ?: graph.initialPlayerState
         val intro = graph.events["intro"] ?: error("No 'intro' event in graph")
         val personalizedIntro = intro.copy(message = buildIntroMessage(characterName, ps))
@@ -47,7 +51,7 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
             currentEventId     = intro.id,
             messages           = listOf(
                 systemMsg("🎮 Финансовое приключение началось! Помогай $characterName строить финансовое будущее."),
-                characterMsg(personalizedIntro)
+                characterMsg(personalizedIntro, ps)
             ),
             isWaitingForChoice = true
         ).also { _state.value = it }
@@ -90,18 +94,18 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
             val conditional = findConditionalEvent(ps, current.currentEventId)
             if (conditional != null) {
                 newMessages += systemMsg("⚡ Внеплановое событие!")
-                newMessages += characterMsg(conditional)
+                newMessages += characterMsg(conditional, ps)
                 nextEventId = conditional.id
             } else {
                 // Rotate through the after-tick story pool
                 val pool = graph.afterTickEventPool.filter { it != current.currentEventId }
                 nextEventId = pool.randomOrNull() ?: "normal_life"
-                graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it) }
+                graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it, ps) }
             }
         } else {
             // ── Direct graph navigation ──────────────────────────────────
             nextEventId = option.next
-            graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it) }
+            graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it, ps) }
         }
 
         val nextEvent = graph.findEvent(nextEventId)
@@ -118,7 +122,8 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
     }
 
     /** Rehydrate engine from a previously serialized [GameState] (e.g., loaded from DB). */
-    fun loadState(state: GameState) {
+    fun loadState(state: GameState, characterName: String = "") {
+        if (characterName.isNotEmpty()) currentCharacterName = characterName
         _state.value = state
     }
 
@@ -205,12 +210,44 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
 
     // ── Message factories ─────────────────────────────────────────────────────
 
-    private fun characterMsg(event: GameEvent) = ChatMessage(
+    /**
+     * Create a chat message for a character event, substituting {token} placeholders
+     * with actual values from the current [PlayerState].
+     */
+    private fun characterMsg(event: GameEvent, ps: PlayerState) = ChatMessage(
         id     = "char_${event.id}_${ts()}",
         sender = MessageSender.CHARACTER,
-        text   = event.message,
+        text   = substituteTemplate(event.message, ps),
         emoji  = event.flavor
     )
+
+    /**
+     * Replaces {token} placeholders in event messages with live PlayerState values.
+     *
+     * Supported tokens:
+     *   {income}       — monthly income
+     *   {expenses}     — monthly fixed expenses
+     *   {capital}      — current savings/capital
+     *   {debt}         — total outstanding debt
+     *   {debtPayment}  — monthly debt repayment
+     *   {investments}  — total portfolio value
+     *   {passiveIncome}— monthly investment return
+     *   {netFlow}      — net monthly cash flow
+     *   {income3x}     — 3× income (emergency fund target)
+     *   {name}         — character name
+     */
+    private fun substituteTemplate(text: String, ps: PlayerState): String =
+        text
+            .replace("{income}",        ps.income.moneyFormat())
+            .replace("{expenses}",      ps.expenses.moneyFormat())
+            .replace("{capital}",       ps.capital.moneyFormat())
+            .replace("{debt}",          ps.debt.moneyFormat())
+            .replace("{debtPayment}",   ps.debtPaymentMonthly.moneyFormat())
+            .replace("{investments}",   ps.investments.moneyFormat())
+            .replace("{passiveIncome}", ps.monthlyInvestmentReturn.moneyFormat())
+            .replace("{netFlow}",       ps.netMonthlyFlow.moneyFormat())
+            .replace("{income3x}",      (ps.income * 3).moneyFormat())
+            .replace("{name}",          currentCharacterName)
 
     private fun playerMsg(option: GameOption) = ChatMessage(
         id     = "player_${option.id}_${ts()}",

@@ -113,7 +113,7 @@ class GamePresenter(
             _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
             if (savedState != null) {
-                engine.loadState(savedState)
+                engine.loadState(savedState, session.characterName)
             } else {
                 val initialState = session.initialStats.toPlayerState(
                     year  = session.currentGameYear,
