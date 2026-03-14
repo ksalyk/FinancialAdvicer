@@ -41,16 +41,30 @@ class GameEngine(private val graph: ScenarioGraph = ScenarioGraph()) {
     ): GameState {
         val ps    = initialState ?: graph.initialPlayerState
         val intro = graph.events["intro"] ?: error("No 'intro' event in graph")
+        val personalizedIntro = intro.copy(message = buildIntroMessage(characterName, ps))
         return GameState(
             playerState        = ps,
             currentEventId     = intro.id,
             messages           = listOf(
                 systemMsg("🎮 Финансовое приключение началось! Помогай $characterName строить финансовое будущее."),
-                characterMsg(intro)
+                characterMsg(personalizedIntro)
             ),
             isWaitingForChoice = true
         ).also { _state.value = it }
     }
+
+    private fun buildIntroMessage(characterName: String, ps: PlayerState): String = buildString {
+        appendLine("Привет! 👋 Я $characterName.")
+        appendLine()
+        appendLine("Зарплата: ${ps.income.moneyFormat()}/мес")
+        appendLine("Расходы: ${ps.expenses.moneyFormat()}/мес")
+        if (ps.debt > 0) {
+            appendLine("Долг: ${ps.debt.moneyFormat()} (−${ps.debtPaymentMonthly.moneyFormat()}/мес)")
+        }
+        appendLine("Накопления: ${ps.capital.moneyFormat()}")
+        appendLine()
+        append("Звонит друг — зовёт вложиться в крипту. Говорит, можно x2 за месяц. Что делаешь?")
+    }.trimEnd()
 
     /**
      * Process a player choice. Called from GamePresenter (which adds typing delays).
