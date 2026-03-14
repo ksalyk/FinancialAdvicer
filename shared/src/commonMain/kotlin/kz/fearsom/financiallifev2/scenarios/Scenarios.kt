@@ -32,15 +32,25 @@ private fun cond(field: Condition.Field, op: Condition.Op, value: Long) =
 // ─── ScenarioGraph ────────────────────────────────────────────────────────────
 
 /**
- * The full narrative graph for "Асан" — 28-year-old Junior Android Dev, Алматы.
+ * The full narrative graph — character-agnostic story events.
+ *
+ * Event messages may contain {token} placeholders that are substituted at
+ * render time by GameEngine.substituteTemplate() with actual PlayerState values:
+ *   {income}        — monthly income
+ *   {expenses}      — monthly fixed expenses
+ *   {capital}       — current savings/capital
+ *   {debt}          — total outstanding debt
+ *   {debtPayment}   — monthly debt repayment amount
+ *   {investments}   — total portfolio value
+ *   {passiveIncome} — monthly investment return
+ *   {netFlow}       — net monthly cash flow
+ *   {income3x}      — 3× income (emergency fund target)
+ *   {name}          — character name
  *
  * Structure:
  *   [events]             — narrative nodes keyed by id
  *   [conditionalEvents]  — injected by engine when PlayerState matches conditions
  *   [afterTickEventPool] — ids drawn from after a monthly tick (convergence hub)
- *
- * Convergence example:
- *   job_offer → [startup | stable_job] → MONTHLY_TICK → financial_month (pool)
  */
 class ScenarioGraph {
 
@@ -65,25 +75,16 @@ class ScenarioGraph {
     val events: Map<String, GameEvent> = buildMap {
 
         // ── INTRO ─────────────────────────────────────────────────────────────
+        // Message overridden at runtime by GameEngine.buildIntroMessage()
         put("intro", event(
             id = "intro",
-            message = """
-                Привет! 👋 Я Асан, джун-разраб из Алматы.
-
-                Только что получил зарплату — 450 000 тг.
-                Долг по кредитке: 120 000 тг (−15 000/мес).
-                Аренда + еда: 180 000 тг/мес.
-
-                Звонит друг Дима — зовёт вложиться в крипту. Говорит, можно x2 за месяц.
-
-                Что делаю?
-            """.trimIndent(),
+            message = "Привет! Загружаем твою историю...",
             flavor = "😰",
             options = listOf(
-                option("crypto_in", "Вложить 100 000 тг в крипту с Димой", "🚀",
+                option("crypto_in", "Вложить 100 000 тг в крипту с другом", "🚀",
                     next = "crypto_result",
                     fx = Effect(capitalDelta = -100_000, riskDelta = 20, stressDelta = 10)),
-                option("pay_debt", "Погасить весь долг по кредитке", "💳",
+                option("pay_debt", "Погасить долг по кредитке", "💳",
                     next = "debt_paid",
                     fx = Effect(capitalDelta = -120_000, debtDelta = -120_000,
                         debtPaymentDelta = -15_000, stressDelta = -8, knowledgeDelta = 5)),
@@ -101,10 +102,10 @@ class ScenarioGraph {
             id = "crypto_result",
             message = """
                 Прошёл месяц. Крипта упала на 40%.
-                Дима не отвечает. Потерял 40 000 тг 😭
+                Друг не отвечает. Потерял 40 000 тг 😭
                 Осталось 60 000 тг на бирже.
 
-                Дима внезапно пишет: «Надо докупить на дне, потом x3».
+                Друг внезапно пишет: «Надо докупить на дне, потом x3».
             """.trimIndent(),
             flavor = "😬",
             options = listOf(
@@ -120,10 +121,12 @@ class ScenarioGraph {
         put("total_loss", event(
             id = "total_loss",
             message = """
-                Биржа оказалась скамом. Дима исчез. Потерял всё — 150 000 тг.
+                Биржа оказалась скамом. Друг исчез. Потерял всё — 150 000 тг.
 
-                Это был урок ценой в треть моих накоплений.
+                Это был урок ценой в часть накоплений.
                 Никаких «быстрых денег» — только системная работа.
+
+                Капитал сейчас: {capital}.
             """.trimIndent(),
             flavor = "💀",
             options = listOf(
@@ -141,6 +144,7 @@ class ScenarioGraph {
                 Прочитал 3 книги по инвестициям. Понял:
                 индексные ETF > хайп проекты.
 
+                Капитал сейчас: {capital}.
                 Готов начать инвестировать правильно?
             """.trimIndent(),
             flavor = "📚",
@@ -156,19 +160,19 @@ class ScenarioGraph {
         put("debt_paid", event(
             id = "debt_paid",
             message = """
-                Долг закрыт! 🎉 Освободилось 15 000 тг/мес.
+                Долг закрыт! 🎉
 
-                Капитал: ${(200_000L - 120_000L).moneyFormat()} тг.
-                Расходы снизились на 15 000/мес.
+                Капитал: {capital}.
+                Ежемесячные расходы: {expenses}/мес.
 
                 Что делать с освободившимися деньгами?
             """.trimIndent(),
             flavor = "🎉",
             options = listOf(
-                option("invest_freed", "Инвестировать 15 000/мес в ETF (автоплатёж)", "📈",
+                option("invest_freed", "Инвестировать освободившиеся деньги в ETF", "📈",
                     next = MONTHLY_TICK,
                     fx = Effect(investmentsDelta = 15_000, knowledgeDelta = 8)),
-                option("raise_cushion", "Нарастить подушку до 3 зарплат (1.35 млн)", "🛡️",
+                option("raise_cushion", "Нарастить подушку до 3 зарплат ({income3x})", "🛡️",
                     next = MONTHLY_TICK,
                     fx = Effect(stressDelta = -5, knowledgeDelta = 5)),
                 option("lifestyle_creep", "Переехать в квартиру подороже (+40к/мес)", "🏠",
@@ -203,11 +207,13 @@ class ScenarioGraph {
                 Именно так и работает подушка безопасности! ✅
 
                 Купил телефон без стресса и без долгов.
-                Теперь восполняю подушку — 15 000/мес пока не будет 90 000.
+                Теперь восполняю подушку — 15 000/мес.
+
+                Капитал: {capital}.
             """.trimIndent(),
             flavor = "💪",
             options = listOf(
-                option("rebuild_cushion", "Восполнять подушку 15 000/мес + начать инвестировать", "📊",
+                option("rebuild_cushion", "Восполнять подушку + начать инвестировать", "📊",
                     next = MONTHLY_TICK,
                     fx = Effect(knowledgeDelta = 5, stressDelta = -3))
             )
@@ -218,6 +224,9 @@ class ScenarioGraph {
             message = """
                 Взял рассрочку 38 000 тг под 20% годовых.
                 Подушка цела, но появился новый долг.
+
+                Итого долг сейчас: {debt}.
+                Ежемесячный платёж: {debtPayment}/мес.
 
                 Стратегически — спорно. Подушка нужна была именно для этого.
             """.trimIndent(),
@@ -237,7 +246,7 @@ class ScenarioGraph {
         put("job_offer", event(
             id = "job_offer",
             message = """
-                Получил оффер от стартапа: 700 000 тг vs текущие 450 000.
+                Получил оффер от стартапа: 700 000 тг vs текущие {income}.
                 Стартапу 1 год, ещё не прибыльный.
 
                 Текущий работодатель — крупный банк, стабильно.
@@ -248,7 +257,7 @@ class ScenarioGraph {
                 option("take_startup", "Принять оффер стартапа (+250к/мес, высокий риск)", "🚀",
                     next = "startup_joined",
                     fx = Effect(incomeDelta = 250_000, riskDelta = 20, stressDelta = 15)),
-                option("negotiate_current", "Показать оффер текущему — попросить 600к", "🤝",
+                option("negotiate_current", "Показать оффер текущему — попросить +150к", "🤝",
                     next = "negotiated_raise",
                     fx = Effect(incomeDelta = 150_000, stressDelta = -5, knowledgeDelta = 8)),
                 option("stay_safe", "Остаться — стабильность важнее на текущем этапе", "🛡️",
@@ -261,10 +270,10 @@ class ScenarioGraph {
             id = "startup_joined",
             message = """
                 Стартап крутой! Работа интересная.
-                +250к/мес очень ощутимо.
+                +250к/мес очень ощутимо — текущий доход: {income}/мес.
 
                 Через 6 месяцев инвесторы не продлили финансирование.
-                Нас сокращают. У меня подушка 2 зарплаты (~900к на счёте).
+                Нас сокращают. На счёте: {capital}.
 
                 Что дальше?
             """.trimIndent(),
@@ -282,12 +291,12 @@ class ScenarioGraph {
         put("negotiated_raise", event(
             id = "negotiated_raise",
             message = """
-                Шеф согласился на 600 000 тг! 🎉
+                Шеф согласился! 🎉
 
-                Показал оффер — и это сработало.
-                Стабильность + рост зарплаты = идеально.
+                Новая зарплата: {income}/мес.
+                Стабильность + рост = идеально.
 
-                +150к/мес. Что с ними делать?
+                Что делать с прибавкой?
             """.trimIndent(),
             flavor = "🎯",
             options = listOf(
@@ -303,10 +312,10 @@ class ScenarioGraph {
         put("promotion_soon", event(
             id = "promotion_soon",
             message = """
-                Остался — через месяц объявили повышение!
-                Теперь мидл с зарплатой 550 000 тг. 🎉
+                Остался — через месяц объявили повышение! 🎉
+                Теперь мидл: +100к/мес к текущей {income}.
 
-                +100к/мес. Это первый шаг к senior.
+                Это первый шаг к senior.
             """.trimIndent(),
             flavor = "📈",
             options = listOf(
@@ -323,11 +332,11 @@ class ScenarioGraph {
         put("back_stable", event(
             id = "back_stable",
             message = """
-                Вышел на новое место — 500к/мес.
-                Немного меньше стартапа, но стабильно.
-
+                Вышел на новое место — {income}/мес.
                 Опыт сокращения научил: подушка безопасности — это не опция.
+
                 Теперь правило 50/30/20.
+                Накопления: {capital}.
             """.trimIndent(),
             flavor = "💼",
             options = listOf(
@@ -348,6 +357,7 @@ class ScenarioGraph {
                 Пришло уведомление через месяц: +3.2% → +1 600 тг.
                 Немного, но сложный процент делает своё дело.
 
+                Портфель: {investments}. Капитал: {capital}.
                 Дальше — набирать позицию регулярно?
             """.trimIndent(),
             flavor = "📈",
@@ -372,13 +382,13 @@ class ScenarioGraph {
                 Ипотека 14 400 000 тг под 7.5% на 20 лет.
                 Платёж: ~115 000 тг/мес.
 
-                Сейчас снимаю за 130 000/мес — разница невелика.
-                Есть 2 800 000 в накоплениях. Не хватает 800 000.
-                Родители готовы одолжить.
+                Текущие расходы: {expenses}/мес.
+                На счёте: {capital}.
+                Родители готовы одолжить недостающее.
             """.trimIndent(),
             flavor = "🏠",
             options = listOf(
-                option("mortgage_yes", "Взять ипотеку сейчас, занять у родителей 800к", "🏠",
+                option("mortgage_yes", "Взять ипотеку сейчас, занять у родителей", "🏠",
                     next = MONTHLY_TICK,
                     fx = Effect(capitalDelta = -3_600_000, debtDelta = 14_400_000,
                         debtPaymentDelta = 115_000, expensesDelta = -130_000,
@@ -398,9 +408,10 @@ class ScenarioGraph {
             id = "senior_offer",
             message = """
                 Получил оффер Senior — 900 000 тг/мес! 🎯
+                Сейчас зарплата: {income}/мес.
 
                 За 2 года прокачал скиллы.
-                Это удвоение зарплаты с джуна.
+                Это значительный рост дохода.
             """.trimIndent(),
             flavor = "🚀",
             options = listOf(
@@ -414,13 +425,13 @@ class ScenarioGraph {
         put("financial_freedom_path", event(
             id = "financial_freedom_path",
             message = """
-                Доход 900к/мес. Расходы 200к. Инвестирую 400к/мес.
+                Доход: {income}/мес. Расходы: {expenses}/мес.
+                Чистый поток: {netFlow}/мес.
 
                 Портфель растёт. Пассивный доход через ETF + дивиденды —
-                уже 45 000 тг/мес.
+                уже {passiveIncome}/мес.
 
-                До пассивного дохода = расходам (~10 лет при текущем темпе).
-                Но путь чёткий. Ты на правильном пути!
+                Финансовая свобода на горизонте. Ты на правильном пути!
             """.trimIndent(),
             flavor = "🎯",
             options = listOf(
@@ -436,6 +447,8 @@ class ScenarioGraph {
             message = """
                 Жизнь идёт своим чередом.
                 Работаешь, откладываешь, иногда балуешь себя.
+
+                Доход: {income}/мес | Расходы: {expenses}/мес | Капитал: {capital}.
 
                 Что в фокусе этого месяца?
             """.trimIndent(),
@@ -460,7 +473,7 @@ class ScenarioGraph {
         put("skill_check", event(
             id = "skill_check",
             message = """
-                Изучил новую технологию. Написал статью на Medium.
+                Изучил новую технологию. Написал статью.
                 150 лайков, 2 рекрутера написали в личку.
 
                 Один предлагает Senior-позицию прямо сейчас.
@@ -482,11 +495,11 @@ class ScenarioGraph {
             message = """
                 🏆 ФИНАНСОВАЯ СВОБОДА ДОСТИГНУТА!
 
-                Асан построил портфель > 15 000 000 тг.
-                Пассивный доход: 125 000 тг/мес.
-                Расходы покрыты на 100%.
+                {name} построил портфель {investments}.
+                Пассивный доход: {passiveIncome}/мес.
+                Расходы: {expenses}/мес — покрыты полностью.
 
-                Путь занял 8 лет. С твоими советами — на 3 года быстрее среднего.
+                С твоими советами — на 3 года быстрее среднего.
                 Спасибо! 🙏
             """.trimIndent(),
             flavor = "🏆",
@@ -541,7 +554,7 @@ class ScenarioGraph {
             message = """
                 ⚠️ ДОЛГОВОЙ КРИЗИС!
 
-                Долг превысил 1 000 000 тг.
+                Долг вырос до {debt}.
                 Банк звонит. Коллекторы шлют письма.
                 Стресс максимальный.
 
@@ -565,7 +578,10 @@ class ScenarioGraph {
         // BANKRUPTCY TRIGGER: capital = 0, stress = 100
         event(
             id = "bankruptcy_trigger",
-            message = "Капитал обнулился. Платить нечем.",
+            message = """
+                Капитал обнулился. Платить нечем.
+                Долг: {debt}. Расходы: {expenses}/мес.
+            """.trimIndent(),
             flavor = "💀",
             priority = 90,
             conditions = listOf(
@@ -586,9 +602,8 @@ class ScenarioGraph {
                 😰 Ловушка «от зарплаты до зарплаты»
 
                 Уже 6 месяцев нет никаких накоплений.
-                Каждый месяц — ноль.
-
-                Нужно что-то менять.
+                Доход: {income}/мес. Расходы: {expenses}/мес.
+                Капитал: {capital}. Нужно что-то менять.
             """.trimIndent(),
             flavor = "⚠️",
             priority = 50,
@@ -616,6 +631,7 @@ class ScenarioGraph {
 
                 Компания показала рекордную прибыль.
                 Тебе выплатили 200 000 тг сверху.
+                Капитал теперь: {capital}.
 
                 Куда направить?
             """.trimIndent(),
@@ -645,7 +661,7 @@ class ScenarioGraph {
             message = """
                 🏠 Накопил на первый взнос!
 
-                На счёте уже 2 800 000 тг.
+                На счёте уже {capital}.
                 Банк предварительно одобрил ипотеку по 7-20-25.
 
                 Стоит рассмотреть?
@@ -715,4 +731,3 @@ class ScenarioGraph {
     fun findEvent(id: String): GameEvent? =
         events[id] ?: conditionalEvents.find { it.id == id }
 }
-
