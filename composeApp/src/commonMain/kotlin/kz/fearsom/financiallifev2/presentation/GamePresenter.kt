@@ -74,13 +74,14 @@ class GamePresenter(
             startDefaultGame(); return
         }
         activeSessionId = sessionId
+        // Set character info synchronously so the first render already shows the correct character
+        _uiState.value = _uiState.value.copy(
+            characterName  = session.characterName,
+            characterEmoji = session.characterEmoji,
+            characterTitle = session.characterTitle
+        )
         scope.launch {
-            _uiState.value = _uiState.value.copy(
-                isTyping       = true,
-                characterName  = session.characterName,
-                characterEmoji = session.characterEmoji,
-                characterTitle = session.characterTitle
-            )
+            _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
             val initialState = session.initialStats.toPlayerState(
                 year  = session.currentGameYear,
@@ -102,13 +103,14 @@ class GamePresenter(
         }
         activeSessionId = sessionId
         val savedState = sessionRepo.getSavedGameState(sessionId)
+        // Set character info synchronously so the first render already shows the correct character
+        _uiState.value = _uiState.value.copy(
+            characterName  = session.characterName,
+            characterEmoji = session.characterEmoji,
+            characterTitle = session.characterTitle
+        )
         scope.launch {
-            _uiState.value = _uiState.value.copy(
-                isTyping       = true,
-                characterName  = session.characterName,
-                characterEmoji = session.characterEmoji,
-                characterTitle = session.characterTitle
-            )
+            _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
             if (savedState != null) {
                 engine.loadState(savedState)
