@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.PlayerState
-import kz.fearsom.financiallifev2.scenarios.ScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.AsanScenarioGraph
 import kz.fearsom.financiallifev2.server.models.GameStateRequest
 import kz.fearsom.financiallifev2.server.models.GameStateResponse
 import kz.fearsom.financiallifev2.server.repository.GameRepository
@@ -70,7 +70,7 @@ fun Route.gameRoutes(gameRepository: GameRepository) {
             call.respond(CharacterDto(
                 name         = "Асан",
                 description  = "28-летний джун-разработчик из Алматы",
-                initialState = ScenarioGraph().initialPlayerState
+                initialState = AsanScenarioGraph().initialPlayerState
             ))
         }
 
@@ -102,7 +102,7 @@ fun Route.gameRoutes(gameRepository: GameRepository) {
                     mapOf("error" to "No active session — call /game/start first")
                 )
 
-            val event = ScenarioGraph().findEvent(session.currentEventId)
+            val event = AsanScenarioGraph().findEvent(session.currentEventId)
                 ?: return@get call.respond(
                     HttpStatusCode.NotFound,
                     mapOf("error" to "Event '${session.currentEventId}' not in graph")

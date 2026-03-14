@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 
 /**
  * Delta-based effect on [PlayerState].
- * Every field is a delta: positive = increase, negative = decrease.
- * Special sentinel: [nextEvent] overrides the option's declared next
- * (useful for conditional redirects from random events).
+ * Every numeric field is a delta: positive = increase, negative = decrease.
+ * [setFlags] / [clearFlags] mutate the player's boolean flag set.
+ * [scheduleEvent] queues a named event to fire N months from now.
  */
 @Serializable
 data class Effect(
@@ -22,44 +22,92 @@ data class Effect(
     val investmentsDelta: Long = 0,
     val stressDelta: Int = 0,
     val knowledgeDelta: Int = 0,
-    val riskDelta: Int = 0
+    val riskDelta: Int = 0,
+    /** Flags added to [PlayerState.flags] when this choice is made. */
+    val setFlags: Set<String> = emptySet(),
+    /** Flags removed from [PlayerState.flags] when this choice is made. */
+    val clearFlags: Set<String> = emptySet(),
+    /** Deferred event that fires [ScheduledEvent.afterMonths] months from now. */
+    val scheduleEvent: ScheduledEvent? = null
+)
+
+/** Describes a future event to be queued inside an [Effect]. */
+@Serializable
+data class ScheduledEvent(
+    val eventId: String,
+    val afterMonths: Int
+)
+
+/** A pending scheduled event stored inside [PlayerState] until it fires. */
+@Serializable
+data class PendingEvent(
+    val eventId: String,
+    val fireAtYear: Int,
+    val fireAtMonth: Int
 )
 
 /**
- * Condition that must hold on [PlayerState] for a conditional event to fire.
- * Example: Condition(DEBT, GT, 1_000_000) → debt > 1 000 000
+ * Condition that must hold for a conditional or pool event to be eligible.
+ * Sealed hierarchy supports numeric stats, boolean flags, era, and character targeting.
+ * All conditions in an event's list must pass simultaneously (AND logic).
  */
 @Serializable
-data class Condition(
-    val field: Field,
-    val op: Op,
-    val value: Long
-) {
-    @Serializable
-    enum class Field { CAPITAL, INCOME, EXPENSES, DEBT, STRESS, KNOWLEDGE, RISK, MONTH }
+sealed class Condition {
+    abstract fun check(state: PlayerState): Boolean
 
+    /** Numeric stat comparison. Example: CAPITAL > 500_000 */
     @Serializable
-    enum class Op { GT, LT, GTE, LTE, EQ, NEQ }
+    data class Stat(val field: Field, val op: Op, val value: Long) : Condition() {
+        override fun check(state: PlayerState): Boolean {
+            val actual: Long = when (field) {
+                Field.CAPITAL   -> state.capital
+                Field.INCOME    -> state.income
+                Field.EXPENSES  -> state.expenses
+                Field.DEBT      -> state.debt
+                Field.STRESS    -> state.stress.toLong()
+                Field.KNOWLEDGE -> state.financialKnowledge.toLong()
+                Field.RISK      -> state.riskLevel.toLong()
+                Field.MONTH     -> state.month.toLong()
+            }
+            return when (op) {
+                Op.GT  -> actual > value
+                Op.LT  -> actual < value
+                Op.GTE -> actual >= value
+                Op.LTE -> actual <= value
+                Op.EQ  -> actual == value
+                Op.NEQ -> actual != value
+            }
+        }
 
-    fun check(state: PlayerState): Boolean {
-        val actual: Long = when (field) {
-            Field.CAPITAL   -> state.capital
-            Field.INCOME    -> state.income
-            Field.EXPENSES  -> state.expenses
-            Field.DEBT      -> state.debt
-            Field.STRESS    -> state.stress.toLong()
-            Field.KNOWLEDGE -> state.financialKnowledge.toLong()
-            Field.RISK      -> state.riskLevel.toLong()
-            Field.MONTH     -> state.month.toLong()
-        }
-        return when (op) {
-            Op.GT  -> actual > value
-            Op.LT  -> actual < value
-            Op.GTE -> actual >= value
-            Op.LTE -> actual <= value
-            Op.EQ  -> actual == value
-            Op.NEQ -> actual != value
-        }
+        @Serializable
+        enum class Field { CAPITAL, INCOME, EXPENSES, DEBT, STRESS, KNOWLEDGE, RISK, MONTH }
+
+        @Serializable
+        enum class Op { GT, LT, GTE, LTE, EQ, NEQ }
+    }
+
+    /** True when [flag] is present in [PlayerState.flags]. */
+    @Serializable
+    data class HasFlag(val flag: String) : Condition() {
+        override fun check(state: PlayerState) = flag in state.flags
+    }
+
+    /** True when [flag] is NOT present in [PlayerState.flags]. */
+    @Serializable
+    data class NotFlag(val flag: String) : Condition() {
+        override fun check(state: PlayerState) = flag !in state.flags
+    }
+
+    /** True when the player is in the given era. */
+    @Serializable
+    data class InEra(val eraId: String) : Condition() {
+        override fun check(state: PlayerState) = state.eraId == eraId
+    }
+
+    /** True when playing as the given character archetype. */
+    @Serializable
+    data class ForCharacter(val characterId: String) : Condition() {
+        override fun check(state: PlayerState) = state.characterId == characterId
     }
 }
 
@@ -77,12 +125,14 @@ data class GameOption(
 /**
  * One node in the narrative graph.
  *
- * [conditions] — ALL must be true for this event to be injected automatically
- *   (by the monthly conditional-event scanner). Leave empty for story events.
- *
- * [priority] — higher = checked first when multiple conditional events match.
- *
- * [isEnding] + [endingType] — leaf nodes that terminate the game.
+ * [conditions]     — ALL must be true for this event to be injected (leave empty for story events).
+ * [priority]       — higher = checked first when multiple conditional events match.
+ * [tags]           — categories for pool filtering and era weight modifiers.
+ *                    Convention: "scam", "scam.pyramid", "career", "crisis", "family", etc.
+ * [poolWeight]     — relative weight in random pool selection (higher = more likely).
+ * [unique]         — if true, can only fire once per game session.
+ * [cooldownMonths] — minimum months before this event can fire again (0 = no cooldown).
+ * [isEnding]       — leaf node that terminates the game.
  */
 @Serializable
 data class GameEvent(
@@ -93,8 +143,16 @@ data class GameEvent(
     val conditions: List<Condition> = emptyList(),
     val priority: Int = 0,
     val isEnding: Boolean = false,
-    val endingType: EndingType? = null
+    val endingType: EndingType? = null,
+    val tags: Set<String> = emptySet(),
+    val poolWeight: Int = 10,
+    val unique: Boolean = false,
+    val cooldownMonths: Int = 0
 )
+
+/** Entry in a weighted event pool. */
+@Serializable
+data class PoolEntry(val eventId: String, val baseWeight: Int)
 
 /** Sentinel next-event ID: causes the engine to run a monthly economic tick first. */
 const val MONTHLY_TICK = "__monthly_tick__"
@@ -117,7 +175,7 @@ data class PlayerState(
     // ── Money ────────────────────────────────────────────────────────
     val capital: Long    = 200_000L,    // liquid savings
     val income: Long     = 450_000L,    // monthly gross income
-    val expenses: Long   = 200_000L,    // fixed monthly expenses (rent, food, transport)
+    val expenses: Long   = 200_000L,    // fixed monthly expenses
     val debt: Long       = 120_000L,    // total outstanding debt
     val debtPaymentMonthly: Long = 18_000L,  // monthly repayment amount
     val investments: Long = 0L,         // total money in market
@@ -130,7 +188,23 @@ data class PlayerState(
 
     // ── Time ─────────────────────────────────────────────────────────
     val month: Int = 1,
-    val year:  Int = 2024
+    val year:  Int = 2024,
+
+    // ── Identity ─────────────────────────────────────────────────────
+    /** Character archetype ID — used for event targeting. */
+    val characterId: String = "asan",
+    /** Era ID — used for era-specific event filtering and weight modifiers. */
+    val eraId: String = "modern_kz_2024",
+
+    // ── Event tracking ────────────────────────────────────────────────
+    /** Boolean game-state flags, e.g. "learned.scam.pyramid", "has_emergency_fund". */
+    val flags: Set<String> = emptySet(),
+    /** IDs of unique events already triggered — prevents re-triggering. */
+    val triggeredUniqueEvents: Set<String> = emptySet(),
+    /** Deferred events queued by previous choices. */
+    val pendingScheduled: List<PendingEvent> = emptyList(),
+    /** eventId → absoluteMonth when cooldown expires. */
+    val eventCooldowns: Map<String, Int> = emptyMap()
 ) {
     val monthLabel: String get() = "$year / ${"$month".padStart(2, '0')}"
 
@@ -142,6 +216,9 @@ data class PlayerState(
         (investments * investmentReturnRate / 12).toLong()
 
     val netWorth: Long get() = capital + investments - debt
+
+    /** Absolute month counter used for cooldown calculations. */
+    val absoluteMonth: Int get() = year * 12 + month
 }
 
 /** Result of a single monthly economic simulation tick. */
