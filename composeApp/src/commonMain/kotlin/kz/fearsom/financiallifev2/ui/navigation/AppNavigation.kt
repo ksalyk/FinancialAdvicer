@@ -15,6 +15,7 @@ import org.koin.compose.koinInject
 // ── Screen definitions ────────────────────────────────────────────────────────
 
 sealed interface AppScreen {
+    object Splash                                        : AppScreen
     object Login                                         : AppScreen
     object MainMenu                                      : AppScreen
     object EraSelection                                  : AppScreen
@@ -27,6 +28,7 @@ sealed interface AppScreen {
 
 // Navigation depth — drives slide direction.
 private fun AppScreen.depth(): Int = when (this) {
+    AppScreen.Splash                 -> -1
     AppScreen.Login                  -> 0
     AppScreen.MainMenu               -> 1
     AppScreen.EraSelection           -> 2
@@ -64,7 +66,7 @@ fun AppNavigation() {
     val statsUiState    by statsPresenter.uiState.collectAsStateWithLifecycle()
 
     // ── Back stack ────────────────────────────────────────────────────────────
-    var backStack  by remember { mutableStateOf(listOf<AppScreen>(AppScreen.Login)) }
+    var backStack  by remember { mutableStateOf(listOf<AppScreen>(AppScreen.Splash)) }
     var navForward by remember { mutableStateOf(true) }
 
     fun navigate(screen: AppScreen) {
@@ -82,17 +84,31 @@ fun AppNavigation() {
     // ── Cold start ────────────────────────────────────────────────────────────
     LaunchedEffect(Unit) { authPresenter.restoreSession() }
 
-    // ── Auth state ────────────────────────────────────────────────────────────
+    // ── Splash exit — fires once session restore completes ────────────────────
+    LaunchedEffect(authUiState.isRestoringSession) {
+        if (!authUiState.isRestoringSession && backStack.lastOrNull() == AppScreen.Splash) {
+            navForward = true
+            backStack  = if (authUiState.authState.isLoggedIn) {
+                listOf(AppScreen.MainMenu)
+            } else {
+                listOf(AppScreen.Login)
+            }
+        }
+    }
+
+    // ── Auth state — handles login / logout after splash ──────────────────────
     LaunchedEffect(authUiState.authState.isLoggedIn) {
         if (authUiState.authState.isLoggedIn) {
-            if (backStack.lastOrNull() == AppScreen.Login ||
-                backStack.lastOrNull() is AppScreen.Login) {
+            if (backStack.lastOrNull() == AppScreen.Login) {
                 navForward = true
                 backStack  = listOf(AppScreen.MainMenu)
             }
         } else {
-            navForward = false
-            backStack  = listOf(AppScreen.Login)
+            // Don't touch the stack while splash is still showing
+            if (backStack.lastOrNull() != AppScreen.Splash) {
+                navForward = false
+                backStack  = listOf(AppScreen.Login)
+            }
         }
     }
 
@@ -110,6 +126,9 @@ fun AppNavigation() {
         label = "appNav"
     ) { screen ->
         when (screen) {
+
+            // ── Splash ────────────────────────────────────────────────────────
+            AppScreen.Splash -> SplashScreen()
 
             // ── Login ─────────────────────────────────────────────────────────
             AppScreen.Login -> LoginScreen(

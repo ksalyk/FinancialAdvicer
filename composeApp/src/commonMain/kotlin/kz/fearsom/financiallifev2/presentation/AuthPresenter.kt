@@ -3,6 +3,7 @@ package kz.fearsom.financiallifev2.presentation
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.auth.AuthState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +13,8 @@ data class AuthUiState(
     val authState: AuthState = AuthState(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isRegisterMode: Boolean = false
+    val isRegisterMode: Boolean = false,
+    val isRestoringSession: Boolean = true
 )
 
 /**
@@ -54,9 +56,15 @@ class AuthPresenter(
         }
     }
 
-    /** Called once on startup — reads tokens from secure storage and validates with /auth/me. */
+    /** Called once on startup — reads tokens from secure storage and validates with /auth/me.
+     *  Keeps [isRestoringSession] true for at least 1 500 ms so the splash animation is visible. */
     fun restoreSession() {
-        scope.launch { authRepository.restoreSessionFromStorage() }
+        scope.launch {
+            val minDelay = scope.launch { delay(1500L) }
+            authRepository.restoreSessionFromStorage()
+            minDelay.join()
+            _uiState.value = _uiState.value.copy(isRestoringSession = false)
+        }
     }
 
     fun logout() = authRepository.logout()
