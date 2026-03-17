@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.scenarios.characters
 
+import kz.fearsom.financiallifev2.model.Condition
 import kz.fearsom.financiallifev2.model.Condition.Stat.Field.CAPITAL
 import kz.fearsom.financiallifev2.model.Condition.Stat.Field.DEBT
 import kz.fearsom.financiallifev2.model.Condition.Stat.Field.KNOWLEDGE
@@ -13,583 +14,567 @@ import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.MONTHLY_TICK
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
-import kz.fearsom.financiallifev2.model.ScheduledEvent
 import kz.fearsom.financiallifev2.scenarios.ScamEventLibrary
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.cond
 import kz.fearsom.financiallifev2.scenarios.event
 import kz.fearsom.financiallifev2.scenarios.option
-
-// ─── ErbolatScenarioGraph ─────────────────────────────────────────────────────
-//
-// Character: Ерболат — 38 лет, владелец 2 магазинов одежды, Астана.
-// Жена ведёт бухгалтерию. Двое детей в частной школе.
-// Бизнес на грани: аренда растёт, маржа падает из-за конкуренции.
-// Совместим с эрами: kz_2015, kz_2024.
-//
-// Нарратив: Удержать бизнес или pivot в e-commerce?
-// Высокий доход, но огромный долг — один плохой месяц грозит банкротством.
+import kz.fearsom.financiallifev2.scenarios.story
 
 class ErbolatScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph() {
 
-    override val initialPlayerState = PlayerState(
-        capital            = 3_500_000L,
-        income             = 900_000L,
-        expenses           = 750_000L,
-        debt               = 4_000_000L,
-        debtPaymentMonthly = 111_111L,  // 4M / 36 мес
-        investments        = 0L,
-        investmentReturnRate = 0.12,
-        stress             = 65,
-        financialKnowledge = 35,
-        riskLevel          = 50,
-        month              = 1,
-        year               = when (eraId) { "kz_2015" -> 2015; else -> 2024 },
-        characterId        = "erbolat",
-        eraId              = eraId
-    )
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // STORY EVENTS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    override val events: Map<String, GameEvent> = buildMap {
-
-        // ── INTRO ─────────────────────────────────────────────────────────────
-        put("intro", event(
-            id = "intro",
-            message = """
-                Ерболат. 38 лет. Предприниматель. 💼
-
-                Два магазина одежды в Астане — «BestStyle» на Хан Шатыре
-                и «BestStyle 2» в ТРЦ Мега. Открывал 5 лет назад на кредит.
-
-                Капитал: {capital} тг
-                Выручка: ~{income} тг/мес
-                Расходы (аренда, зарплаты, товар): {expenses} тг/мес
-                Долг банку: {debt} тг (платёж ~111к/мес)
-
-                Жена Гульнара говорит: «Конкуренты из AliExpress убивают розницу.
-                Надо что-то менять. Может, закроем второй магазин?»
-
-                Что делаешь?
-            """.trimIndent(),
-            flavor = "💼",
-            options = listOf(
-                option(
-                    id    = "close_second_store",
-                    text  = "Закрыть второй магазин — снизить риски",
-                    emoji = "🔒",
-                    next  = "ecommerce_pivot",
-                    fx    = Effect(incomeDelta = -300_000L, expensesDelta = -250_000L, stressDelta = -10, knowledgeDelta = 3)
-                ),
-                option(
-                    id    = "fight_competition",
-                    text  = "Бороться — снизить цены, усилить маркетинг",
-                    emoji = "⚡",
-                    next  = "franchise_offer",
-                    fx    = Effect(capitalDelta = -200_000L, incomeDelta = 50_000L, stressDelta = 15, knowledgeDelta = 5)
-                ),
-                option(
-                    id    = "wait_and_see",
-                    text  = "Подождать — рынок сам разберётся",
-                    emoji = "⏳",
-                    next  = "supplier_scam",
-                    fx    = Effect(stressDelta = 10)
-                )
-            )
-        ))
-
-        // ── ФРАНШИЗНЫЙ ОФФЕР ──────────────────────────────────────────────────
-        put("franchise_offer", event(
-            id = "franchise_offer",
-            message = """
-                🤝 Представитель российской сети «FashionMart» предлагает франшизу.
-
-                Условия:
-                — Паушальный взнос: 2 000 000 тг
-                — Роялти: 5% от выручки ежемесячно
-                — Бренд, логистика, маркетинг — всё готово
-                — Прогнозируемый рост: +40% к обороту за год
-
-                Но придётся взять ещё один кредит на 2М.
-                Долг вырастет до 6М тг.
-
-                Капитал: {capital} тг. Текущий долг: {debt} тг.
-            """.trimIndent(),
-            flavor = "🤝",
-            options = listOf(
-                option(
-                    id    = "take_franchise",
-                    text  = "Взять франшизу — масштабирование",
-                    emoji = "🚀",
-                    next  = "franchise_result",
-                    fx    = Effect(capitalDelta = -2_000_000L, debtDelta = 2_000_000L, incomeDelta = 200_000L, expensesDelta = 50_000L, stressDelta = 20, knowledgeDelta = 10)
-                ),
-                option(
-                    id    = "skip_franchise",
-                    text  = "Отказаться — слишком много долгов",
-                    emoji = "🛡️",
-                    next  = "ecommerce_pivot",
-                    fx    = Effect(knowledgeDelta = 5)
-                ),
-                option(
-                    id    = "negotiate_franchise",
-                    text  = "Торговаться — снизить паушальный взнос",
-                    emoji = "🗣️",
-                    next  = "ecommerce_pivot",
-                    fx    = Effect(capitalDelta = -1_200_000L, debtDelta = 1_200_000L, incomeDelta = 150_000L, stressDelta = 10, knowledgeDelta = 8)
-                )
-            )
-        ))
-
-        // ── РЕЗУЛЬТАТ ФРАНШИЗЫ ────────────────────────────────────────────────
-        put("franchise_result", event(
-            id = "franchise_result",
-            message = """
-                📊 6 месяцев с франшизой.
-
-                Оборот вырос, но и расходы тоже.
-                Роялти 5% «съедает» маржу.
-
-                Представитель сети предлагает открыть третий магазин.
-                Или выкупить мастер-франшизу по Казахстану за 10М тг.
-
-                Долг сейчас: {debt} тг. Капитал: {capital} тг.
-            """.trimIndent(),
-            flavor = "📊",
-            options = listOf(
-                option(
-                    id    = "third_store",
-                    text  = "Открыть третий магазин (кредит 3М)",
-                    emoji = "🏬",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(debtDelta = 3_000_000L, incomeDelta = 250_000L, expensesDelta = 200_000L, stressDelta = 25)
-                ),
-                option(
-                    id    = "master_franchise",
-                    text  = "Выкупить мастер-франшизу (кредит 10М)",
-                    emoji = "🌐",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(debtDelta = 10_000_000L, incomeDelta = 500_000L, stressDelta = 30, knowledgeDelta = 15)
-                ),
-                option(
-                    id    = "hold_position",
-                    text  = "Держать текущее — гасить долг",
-                    emoji = "🎯",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(stressDelta = -5, knowledgeDelta = 3)
-                )
-            )
-        ))
-
-        // ── ПИВОТ В E-COMMERCE ────────────────────────────────────────────────
-        put("ecommerce_pivot", event(
-            id = "ecommerce_pivot",
-            message = """
-                💻 Гульнара нашла решение.
-
-                «Ерболат, смотри — на Kaspi.kz тысячи продавцов одежды.
-                Мы можем стать одним из топ-продавцов за полгода.
-                Нужно: фотосессия товара (150к), подключение к платформе.»
-
-                Альтернатива: создать свой интернет-магазин (500к + 3 месяца).
-
-                Выручка от офлайна: {income} тг/мес.
-            """.trimIndent(),
-            flavor = "💻",
-            options = listOf(
-                option(
-                    id    = "kaspi_marketplace",
-                    text  = "Выйти на Kaspi.kz — быстрый старт",
-                    emoji = "🛍️",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -150_000L, incomeDelta = 150_000L, stressDelta = 5, knowledgeDelta = 10)
-                ),
-                option(
-                    id    = "own_website",
-                    text  = "Создать свой сайт — независимость",
-                    emoji = "🌐",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -500_000L, incomeDelta = 80_000L, stressDelta = 20, knowledgeDelta = 15)
-                ),
-                option(
-                    id    = "both_channels",
-                    text  = "Оба канала сразу — максимальный охват",
-                    emoji = "⚡",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -650_000L, incomeDelta = 220_000L, stressDelta = 30, knowledgeDelta = 18)
-                )
-            )
-        ))
-
-        // ── МОШЕННИК-ПОСТАВЩИК ────────────────────────────────────────────────
-        put("supplier_scam", event(
-            id = "supplier_scam",
-            message = """
-                ⚠️ Новый поставщик из Китая.
-
-                Предлагает коллекцию сезона на 40% дешевле обычных поставщиков.
-                Предоплата 100%: 800 000 тг. Доставка через 4 недели.
-
-                Другой бизнесмен говорит, что работал с ними — «нормальные».
-                Но контракт на русском, а юридический адрес в Гонконге.
-
-                Капитал: {capital} тг.
-            """.trimIndent(),
-            flavor = "⚠️",
-            options = listOf(
-                option(
-                    id    = "pay_supplier",
-                    text  = "Оплатить — выгода очевидна",
-                    emoji = "💸",
-                    next  = "supplier_result",
-                    fx    = Effect(capitalDelta = -800_000L, stressDelta = 10)
-                ),
-                option(
-                    id    = "check_supplier",
-                    text  = "Проверить через юриста (30к, 2 недели)",
-                    emoji = "🔍",
-                    next  = "supplier_safe",
-                    fx    = Effect(capitalDelta = -30_000L, knowledgeDelta = 8)
-                ),
-                option(
-                    id    = "skip_supplier",
-                    text  = "Отказаться — слишком рискованно",
-                    emoji = "🛡️",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(knowledgeDelta = 5)
-                )
-            )
-        ))
-
-        // ── МОШЕННИК РАСКРЫТ ──────────────────────────────────────────────────
-        put("supplier_result", event(
-            id = "supplier_result",
-            message = """
-                💀 Товар не пришёл. Телефон отключён.
-
-                800 000 тг потеряны. Поставщик-мошенник.
-                Полиция принимает заявление, но шансы вернуть деньги минимальны.
-
-                Сезонная коллекция сорвана. Конкуренты получили преимущество.
-
-                Капитал: {capital} тг. Долг: {debt} тг.
-            """.trimIndent(),
-            flavor = "💀",
-            options = listOf(
-                option(
-                    id    = "cut_losses",
-                    text  = "Принять потерю — работать дальше",
-                    emoji = "💪",
-                    next  = "ecommerce_pivot",
-                    fx    = Effect(stressDelta = 25, knowledgeDelta = 10)
-                ),
-                option(
-                    id    = "sue_supplier",
-                    text  = "Подать в суд (50к на юриста)",
-                    emoji = "⚖️",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -50_000L, stressDelta = 15, knowledgeDelta = 5)
-                )
-            )
-        ))
-
-        put("supplier_safe", event(
-            id = "supplier_safe",
-            message = """
-                ✅ Юрист проверил поставщика.
-
-                «Ерболат, это мошенники. Такая же схема была в Бишкеке год назад.
-                Они исчезают после предоплаты.»
-
-                Ты сэкономил 800 000 тг.
-                Стоит найти надёжного поставщика — юрист знает проверенных.
-            """.trimIndent(),
-            flavor = "✅",
-            options = listOf(
-                option(
-                    id    = "find_reliable",
-                    text  = "Попросить юриста познакомить с поставщиком",
-                    emoji = "🤝",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(incomeDelta = 50_000L, stressDelta = -10, knowledgeDelta = 5)
-                ),
-                option(
-                    id    = "search_yourself",
-                    text  = "Найти самому через проверенные платформы",
-                    emoji = "🔍",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(knowledgeDelta = 8)
-                )
-            )
-        ))
-
-        // ── КОНЦОВКИ ──────────────────────────────────────────────────────────
-        put("ending_empire", event(
-            id = "ending_empire",
-            message = """
-                🏆 БИЗНЕС-ИМПЕРИЯ
-
-                5 магазинов + онлайн. Долг погашен.
-                Ерболат открыл обучение для начинающих предпринимателей.
-
-                Дети учатся за рубежом.
-                Гульнара — операционный директор группы компаний.
-
-                Капитал: {capital} тг
-            """.trimIndent(),
-            flavor = "🏆",
-            isEnding = true,
-            endingType = EndingType.WEALTH,
-            options = emptyList()
-        ))
-
-        put("ending_pivot_success", event(
-            id = "ending_pivot_success",
-            message = """
-                🌐 DIGITAL FIRST
-
-                Офлайн-магазины закрыты. Онлайн-продажи х5.
-                Меньше стресса, больше маржа.
-
-                Долг погашен досрочно.
-                Ерболат консультирует других предпринимателей.
-
-                Капитал: {capital} тг
-            """.trimIndent(),
-            flavor = "💻",
-            isEnding = true,
-            endingType = EndingType.FINANCIAL_FREEDOM,
-            options = emptyList()
-        ))
-
-        put("ending_stable_business", event(
-            id = "ending_stable_business",
-            message = """
-                😊 СТАБИЛЬНЫЙ БИЗНЕС
-
-                Один магазин. Онлайн-канал. Долг под контролем.
-                Не миллиардер, но спокойно.
-
-                Дети в хорошей школе.
-                Гульнара занялась своим проектом.
-
-                Капитал: {capital} тг
-            """.trimIndent(),
-            flavor = "🏪",
-            isEnding = true,
-            endingType = EndingType.FINANCIAL_STABILITY,
-            options = emptyList()
-        ))
-
-        put("ending_bankruptcy", event(
-            id = "ending_bankruptcy",
-            message = """
-                💔 БАНКРОТСТВО
-
-                Долг вырос до критического уровня.
-                Банк забрал имущество. Бизнес закрыт.
-
-                Гульнара нашла работу бухгалтером.
-                Ерболат начинает консультантом в чужой компании.
-
-                Это не конец — это урок.
-            """.trimIndent(),
-            flavor = "💀",
-            isEnding = true,
-            endingType = EndingType.BANKRUPTCY,
-            options = emptyList()
-        ))
-
-        put("ending_paycheck", event(
-            id = "ending_paycheck",
-            message = """
-                😰 ВЫЖИВАНИЕ
-
-                Бизнес еле держится. Каждый месяц — борьба.
-                Долг выплачивается, но накоплений нет.
-
-                Дети переведены в государственную школу.
-                Отпуск — воспоминание из прошлого.
-
-                Долг: {debt} тг. Капитал: {capital} тг.
-            """.trimIndent(),
-            flavor = "😰",
-            isEnding = true,
-            endingType = EndingType.PAYCHECK_TO_PAYCHECK,
-            options = emptyList()
-        ))
-
-        // ── HUB ──────────────────────────────────────────────────────────────
-        put("normal_life", event(
-            id = "normal_life",
-            message = """
-                Операционный месяц. Зарплаты выплачены, аренда оплачена.
-
-                Выручка: {income} тг
-                Расходы бизнеса: {expenses} тг
-                Долг: {debt} тг
-
-                Гульнара спрашивает: на что направить свободные деньги?
-            """.trimIndent(),
-            flavor = "📋",
-            poolWeight = 20,
-            options = listOf(
-                option(
-                    id    = "pay_debt",
-                    text  = "Досрочно погасить часть долга",
-                    emoji = "💳",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -200_000L, debtDelta = -200_000L, stressDelta = -5, knowledgeDelta = 2)
-                ),
-                option(
-                    id    = "marketing",
-                    text  = "Вложить в маркетинг (+трафик)",
-                    emoji = "📣",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -100_000L, incomeDelta = 80_000L, knowledgeDelta = 5)
-                ),
-                option(
-                    id    = "inventory",
-                    text  = "Закупить больший ассортимент",
-                    emoji = "📦",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -300_000L, incomeDelta = 120_000L, stressDelta = 5)
-                ),
-                option(
-                    id    = "finance_course",
-                    text  = "Пройти курс по управлению бизнесом",
-                    emoji = "🎓",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -50_000L, knowledgeDelta = 12, stressDelta = -5)
-                )
-            )
-        ))
+    override val initialPlayerState = when (eraId) {
+        "kz_2015" -> PlayerState(
+            capital = 2_800_000L,
+            income = 780_000L,
+            expenses = 650_000L,
+            debt = 3_600_000L,
+            debtPaymentMonthly = 100_000L,
+            investments = 0L,
+            investmentReturnRate = 0.08,
+            stress = 64,
+            financialKnowledge = 34,
+            riskLevel = 48,
+            month = 1,
+            year = 2015,
+            characterId = "erbolat",
+            eraId = eraId
+        )
+        else -> PlayerState(
+            capital = 4_200_000L,
+            income = 1_050_000L,
+            expenses = 860_000L,
+            debt = 4_000_000L,
+            debtPaymentMonthly = 111_111L,
+            investments = 0L,
+            investmentReturnRate = 0.10,
+            stress = 66,
+            financialKnowledge = 38,
+            riskLevel = 52,
+            month = 1,
+            year = 2024,
+            characterId = "erbolat",
+            eraId = eraId
+        )
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CONDITIONAL EVENTS
-    // ─────────────────────────────────────────────────────────────────────────
+    override val events: Map<String, GameEvent> = when (eraId) {
+        "kz_2015" -> erbolat2015Events()
+        else -> erbolat2024Events()
+    }
 
-    override val conditionalEvents: List<GameEvent> = listOf(
+    override val conditionalEvents: List<GameEvent> = when (eraId) {
+        "kz_2015" -> commonErbolatConditionals(
+            burnoutIntro = "Ерболат перестал отличать деловую злость от усталости. Домой он приходит как на вторую смену, а не как к семье.",
+            financeIntro = "В 2015-м он впервые слышит про инструменты, которые работают не через «чутьё», а через дисциплину и структуру."
+        )
+        else -> commonErbolatConditionals(
+            burnoutIntro = "Телефон Ерболата не замолкает ни в магазине, ни в машине, ни ночью. Даже успех теперь приходит в виде уведомлений и претензий.",
+            financeIntro = "Цифровая торговля учит его болезненному, но важному: интуиции уже мало, нужен язык цифр и процессов."
+        )
+    }
 
-        // Долговой кризис — бизнес-банкротство
-        event(
-            id = "debt_crisis",
-            message = """
-                🚨 БИЗНЕС НА ГРАНИ БАНКРОТСТВА
+    override val eventPool: List<PoolEntry> = listOf(
+        PoolEntry("normal_life", 16),
+        PoolEntry("supplier_scam", 10),
+        PoolEntry("franchise_offer", 6)
+    ) + ScamEventLibrary.poolEntries
 
-                Долг: {debt} тг. Капитал: {capital} тг.
-                Банк требует досрочного погашения части долга или дополнительного залога.
-
-                Налоговая прислала проверку.
-                У тебя 2 недели на решение.
-            """.trimIndent(),
-            flavor = "🚨",
-            priority = 10,
-            conditions = listOf(cond(DEBT, GT, 3_000_000L), cond(CAPITAL, LTE, 500_000L)),
+    private fun erbolat2015Events(): Map<String, GameEvent> = buildMap {
+        put("intro", event(
+            id = "intro",
+            flavor = "💼",
+            message = story(
+                """
+                2015 год. Ерболат стоит в пустеющем зале второго магазина и впервые замечает, что музыка в торговом центре звучит слишком бодро для его реальности. Выручка ещё держится, но маржа уже стала тонкой, как чужое терпение.
+                """,
+                """
+                Он привык считать себя человеком действия. Такие люди не жалуются, не показывают страх и всегда находят следующий ход. Но у любого предпринимателя есть момент, когда за словом «двигаемся» начинает прятаться простая усталость от постоянной ответственности.
+                """,
+                """
+                На нём долг {debt}, капитал {capital}, семья и бизнес, который всё ещё может вытащить их вверх, а может утянуть целиком. Гульнара осторожно говорит о сокращении рисков. Сам Ерболат пока ещё тянется к идее большого хода.
+                """
+            ),
             options = listOf(
-                option(
-                    id    = "sell_store",
-                    text  = "Продать один магазин — погасить долг",
-                    emoji = "🔒",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = 1_500_000L, debtDelta = -1_500_000L, incomeDelta = -300_000L, expensesDelta = -200_000L, stressDelta = 10)
-                ),
-                option(
-                    id    = "bank_restructure",
-                    text  = "Реструктурировать долг в банке",
-                    emoji = "🏦",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(expensesDelta = -50_000L, stressDelta = 20, knowledgeDelta = 8)
-                ),
-                option(
-                    id    = "find_investor",
-                    text  = "Найти инвестора — продать 30% доли",
-                    emoji = "🤝",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = 2_000_000L, stressDelta = 15, knowledgeDelta = 10)
-                )
+                option("close_second_store", "Сократить масштаб раньше, чем рынок заставит это сделать", "🔒", "ecommerce_pivot",
+                    Effect(incomeDelta = -220_000L, expensesDelta = -180_000L, stressDelta = -8, knowledgeDelta = 4)),
+                option("fight_competition", "Пойти в атаку и выжать рост из старой модели", "⚡", "franchise_offer",
+                    Effect(capitalDelta = -180_000L, incomeDelta = 50_000L, stressDelta = 12, knowledgeDelta = 5)),
+                option("wait_and_see", "Ещё немного понаблюдать и не рубить с плеча", "⏳", "supplier_scam",
+                    Effect(stressDelta = 8))
             )
+        ))
+        put("franchise_offer", event(
+            id = "franchise_offer",
+            flavor = "🤝",
+            message = story(
+                """
+                Представитель крупной сети говорит очень уверенно. Франшиза звучит как чужой порядок, который можно просто купить: бренд, стандарты, реклама, логистика, будто бы вместе с деньгами приходит и меньшая тревога.
+                """,
+                """
+                Для Ерболата это искушение особого рода. Он устал быть человеком, который всё придумывает сам. Возможность опереться на готовую систему кажется почти роскошью. Но роскошь эта продаётся в кредит и с очень длинным хвостом обязательств.
+                """,
+                """
+                Если он зайдёт, долг вырастет. Если откажется, придётся самому признать: спасение бизнеса всё ещё лежит на его собственных решениях.
+                """
+            ),
+            options = listOf(
+                option("take_franchise", "Купить систему и надеяться, что масштаб спасёт", "🚀", "franchise_result",
+                    Effect(capitalDelta = -1_500_000L, debtDelta = 2_000_000L, incomeDelta = 180_000L, expensesDelta = 50_000L, stressDelta = 18, knowledgeDelta = 8)),
+                option("skip_franchise", "Отказаться и удержать долг в пределах реальности", "🛡️", "ecommerce_pivot",
+                    Effect(knowledgeDelta = 5, stressDelta = -3)),
+                option("negotiate_franchise", "Торговаться и не брать на себя весь предложенный масштаб", "🗣️", "ecommerce_pivot",
+                    Effect(capitalDelta = -900_000L, debtDelta = 1_000_000L, incomeDelta = 90_000L, stressDelta = 8, knowledgeDelta = 8))
+            )
+        ))
+        put("franchise_result", event(
+            id = "franchise_result",
+            flavor = "📊",
+            message = story(
+                """
+                Полгода спустя Ерболат смотрит на цифры и понимает: рост оборота сам по себе ещё не победа. Выручка стала красивее, но вместе с ней выросли и расходы, а свободы почему-то не прибавилось.
+                """,
+                """
+                Это болезненное открытие для человека, который привык верить, что масштаб почти автоматически оправдывает риск. Теперь ясно: можно стать больше и при этом стать уязвимее.
+                """,
+                """
+                Перед ним снова развилка. Жать дальше и строить почти империю или признать, что главная задача сейчас не экспансия, а спасение качества жизни и манёвренности.
+                """
+            ),
+            options = listOf(
+                option("third_store", "Идти дальше и покупать рост в долг", "🏬", MONTHLY_TICK,
+                    Effect(debtDelta = 3_000_000L, incomeDelta = 220_000L, expensesDelta = 180_000L, stressDelta = 22)),
+                option("master_franchise", "Сделать ставку на очень большую игру", "🌐", MONTHLY_TICK,
+                    Effect(debtDelta = 8_000_000L, incomeDelta = 420_000L, stressDelta = 30, knowledgeDelta = 14)),
+                option("hold_position", "Остановиться и сначала научиться удерживать", "🎯", MONTHLY_TICK,
+                    Effect(stressDelta = -6, knowledgeDelta = 4))
+            )
+        ))
+        put("ecommerce_pivot", event(
+            id = "ecommerce_pivot",
+            flavor = "🛍️",
+            message = story(
+                """
+                Гульнара показывает экран телефона как медицинский снимок будущего: продажи уходят в онлайн. Пока Ерболат спорил с арендой и поставщиками, рынок уже научился покупать иначе.
+                """,
+                """
+                Для него это почти удар по самолюбию. Он строил себя как офлайн-предпринимателя, человека точки, витрины, разговора с клиентом лицом к лицу. Переход в цифру ощущается не просто как новый канал, а как признание, что старый способ перестал быть центром.
+                """,
+                """
+                Но именно здесь и может лежать спасение: быстрый маркетплейс, собственный сайт или попытка сделать всё разом и снова работать на износ.
+                """
+            ),
+            options = listOf(
+                option("kaspi_marketplace", "Пойти туда, где уже есть трафик и деньги", "🛒", MONTHLY_TICK,
+                    Effect(capitalDelta = -150_000L, incomeDelta = 150_000L, stressDelta = 4, knowledgeDelta = 10,
+                        setFlags = setOf("erbolat.digital"))),
+                option("own_website", "Строить независимость, даже если она медленнее", "🌐", MONTHLY_TICK,
+                    Effect(capitalDelta = -350_000L, incomeDelta = 90_000L, stressDelta = 12, knowledgeDelta = 14,
+                        setFlags = setOf("erbolat.digital"))),
+                option("both_channels", "Захватить всё сразу и жить в режиме перегруза", "⚡", MONTHLY_TICK,
+                    Effect(capitalDelta = -650_000L, incomeDelta = 220_000L, stressDelta = 24, knowledgeDelta = 18,
+                        setFlags = setOf("erbolat.digital")))
+            )
+        ))
+        put("supplier_scam", commonSupplierScamEvent())
+        commonErbolatHubAndEndings("2015")
+    }
+
+    private fun erbolat2024Events(): Map<String, GameEvent> = buildMap {
+        put("intro", event(
+            id = "intro",
+            flavor = "📦",
+            message = story(
+                """
+                2024 год. У Ерболата уже есть не просто магазины, а усталость человека, который слишком долго удерживал бизнес личной волей. Теперь проблемы приходят не только из офлайна: маркетплейсы давят маржу, поставщики требуют предоплату, налоговая хочет прозрачности, а семья хочет видеть дома живого человека, а не постоянно включённого директора.
+                """,
+                """
+                Он всё ещё умеет собирать деньги из хаоса, но всё хуже умеет собирать себя. В его мире успех давно перестал быть красивым словом и стал синонимом круглосуточной доступности.
+                """,
+                """
+                Капитал {capital}, доход {income}, долг {debt}. Бизнес можно ещё масштабировать, можно оздоровить, можно заново собрать в более спокойную и технологичную систему. Но нельзя делать вид, что ничего не меняется.
+                """
+            ),
+            options = listOf(
+                option("close_second_store", "Сократить офлайн и вернуть бизнесу кислород", "🔒", "ecommerce_pivot",
+                    Effect(incomeDelta = -260_000L, expensesDelta = -220_000L, stressDelta = -10, knowledgeDelta = 5)),
+                option("fight_competition", "Биться за долю рынка и не отдавать сцену маркетплейсам", "⚔️", "franchise_offer",
+                    Effect(capitalDelta = -250_000L, incomeDelta = 60_000L, stressDelta = 14, knowledgeDelta = 5)),
+                option("wait_and_see", "Оставить всё как есть ещё на квартал", "🕰️", "supplier_scam",
+                    Effect(stressDelta = 10))
+            )
+        ))
+        put("franchise_offer", event(
+            id = "franchise_offer",
+            flavor = "🌐",
+            message = story(
+                """
+                На этот раз предложение звучит современнее: не просто франшиза, а подключение к федеральной digital-системе с CRM, рекламой, аналитикой и узнаваемым брендом. Всё то, на что самому Ерболату всегда не хватало либо времени, либо дисциплины.
+                """,
+                """
+                Его тянет к этой сделке не только жадность. Его тянет надежда, что кто-то наконец-то привнесёт порядок в его постоянно гудящую машину. Но цена порядка всё так же выписывается долгом и уступками в контроле.
+                """,
+                """
+                Нужно решить, покупать ли чужую систему, если она одновременно может спасти бизнес и сделать его менее своим.
+                """
+            ),
+            options = listOf(
+                option("take_franchise", "Зайти глубоко и купить масштаб вместе с контролем", "🚀", "franchise_result",
+                    Effect(capitalDelta = -2_000_000L, debtDelta = 2_500_000L, incomeDelta = 220_000L, expensesDelta = 80_000L, stressDelta = 18, knowledgeDelta = 10)),
+                option("skip_franchise", "Не продавать спокойствие ради красивой оболочки", "🛡️", "ecommerce_pivot",
+                    Effect(knowledgeDelta = 6, stressDelta = -3)),
+                option("negotiate_franchise", "Зайти частично и выторговать меньше зависимости", "🤝", "ecommerce_pivot",
+                    Effect(capitalDelta = -1_100_000L, debtDelta = 1_200_000L, incomeDelta = 110_000L, stressDelta = 8, knowledgeDelta = 8))
+            )
+        ))
+        put("franchise_result", event(
+            id = "franchise_result",
+            flavor = "📈",
+            message = story(
+                """
+                Бизнес становится технологичнее, но и холоднее. Цифры выглядят лучше, процессы прозрачнее, однако Ерболат неожиданно ощущает, что каждое следующее решение теперь требует согласования не только с рынком, но и с чужой моделью.
+                """,
+                """
+                Это полезный, но неприятный урок. Можно перестать тонуть в хаосе и всё равно потерять чувство, что компания принадлежит тебе не только юридически, но и внутренне.
+                """,
+                """
+                Дальше надо выбрать: снова давить в масштаб или сделать бизнес устойчивым, не превращая себя в оператора чужого шаблона.
+                """
+            ),
+            options = listOf(
+                option("third_store", "Открыть ещё точку и взять рост числом", "🏬", MONTHLY_TICK,
+                    Effect(debtDelta = 3_500_000L, incomeDelta = 280_000L, expensesDelta = 230_000L, stressDelta = 24)),
+                option("master_franchise", "Идти в по-настоящему большую игру", "🌍", MONTHLY_TICK,
+                    Effect(debtDelta = 10_000_000L, incomeDelta = 520_000L, stressDelta = 32, knowledgeDelta = 14)),
+                option("hold_position", "Зафиксировать масштаб и чинить качество жизни", "🧭", MONTHLY_TICK,
+                    Effect(stressDelta = -8, knowledgeDelta = 5))
+            )
+        ))
+        put("ecommerce_pivot", event(
+            id = "ecommerce_pivot",
+            flavor = "💻",
+            message = story(
+                """
+                В 2024-м цифровой поворот уже не выглядит экспериментом. Он выглядит санитарной мерой. Если Ерболат не перестроит бизнес, рынок сам перестроит его без спроса.
+                """,
+                """
+                Гульнара говорит жёстко: нужны маркетплейсы, аналитика, прозрачный учёт, быстрая логистика и нормальная налоговая дисциплина. Для Ерболата это звучит как признание, что харизма предпринимателя больше не заменяет систему.
+                """,
+                """
+                Он может сделать быстрый рывок через готовые платформы, строить собственный канал или снова выбрать перегруз как универсальный язык спасения.
+                """
+            ),
+            options = listOf(
+                option("kaspi_marketplace", "Подружиться с маркетплейсом и перестать воевать с настоящим", "🛍️", MONTHLY_TICK,
+                    Effect(capitalDelta = -180_000L, incomeDelta = 170_000L, stressDelta = 2, knowledgeDelta = 12,
+                        setFlags = setOf("erbolat.digital"))),
+                option("own_website", "Сделать собственный канал и сохранить больше контроля", "🌐", MONTHLY_TICK,
+                    Effect(capitalDelta = -550_000L, incomeDelta = 120_000L, stressDelta = 12, knowledgeDelta = 16,
+                        setFlags = setOf("erbolat.digital"))),
+                option("both_channels", "Снова взяться за всё сразу", "⚡", MONTHLY_TICK,
+                    Effect(capitalDelta = -800_000L, incomeDelta = 260_000L, stressDelta = 26, knowledgeDelta = 18,
+                        setFlags = setOf("erbolat.digital")))
+            )
+        ))
+        put("supplier_scam", commonSupplierScamEvent())
+        commonErbolatHubAndEndings("2024")
+    }
+
+    private fun commonSupplierScamEvent() = event(
+        id = "supplier_scam",
+        flavor = "⚠️",
+        message = story(
+            """
+            Новый поставщик предлагает слишком хорошие условия. Именно это и настораживает. У Ерболата за годы бизнеса выработалась интуиция, но он знает и её слабость: когда денег не хватает, подозрения начинают казаться роскошью.
+            """,
+            """
+            Контракт выглядит прилично, менеджер отвечает быстро, цена почти неприлично выгодная. Всё в этой сделке будто бы специально настроено так, чтобы предприниматель устал сомневаться.
+            """,
+            """
+            Можно рискнуть оборотными средствами, потратить деньги на проверку или отказаться и дальше жить с мыслью, что, возможно, упустил шанс.
+            """
         ),
-
-        // Предпринимательское выгорание
-        event(
-            id = "burnout_warning",
-            message = """
-                😮‍💨 ПРЕДПРИНИМАТЕЛЬСКОЕ ВЫГОРАНИЕ
-
-                Стресс: {stress}/100.
-                5 лет без нормального отпуска.
-                Гульнара говорит: «Ерболат, ты стал раздражительным. Дети тебя боятся.»
-
-                Врач рекомендует 2 недели отдыха.
-                Но сейчас — сезон перед Наурызом.
-            """.trimIndent(),
-            flavor = "😮‍💨",
-            priority = 8,
-            conditions = listOf(cond(STRESS, GTE, 80L)),
-            options = listOf(
-                option(
-                    id    = "family_vacation",
-                    text  = "Семейный отпуск в Дубай (300к)",
-                    emoji = "✈️",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = -300_000L, stressDelta = -40)
-                ),
-                option(
-                    id    = "delegate",
-                    text  = "Нанять управляющего — делегировать",
-                    emoji = "👤",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(expensesDelta = 150_000L, stressDelta = -25, knowledgeDelta = 8)
-                )
-            )
-        ),
-
-        // Финансовая грамотность открывает инструменты
-        event(
-            id = "investment_unlock",
-            message = """
-                💡 ФИНАНСОВЫЕ ИНСТРУМЕНТЫ ДЛЯ БИЗНЕСА
-
-                Знания: {knowledge}/100.
-                Консультант рассказал о факторинге и хеджировании валютных рисков.
-
-                Банк предлагает факторинг — получить деньги от дебиторов сразу
-                за комиссию 2%. Это освободит 500к оборотных средств.
-            """.trimIndent(),
-            flavor = "💡",
-            priority = 5,
-            conditions = listOf(cond(KNOWLEDGE, GTE, 50L)),
-            unique = true,
-            options = listOf(
-                option(
-                    id    = "use_factoring",
-                    text  = "Подключить факторинг",
-                    emoji = "⚡",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect(capitalDelta = 500_000L, expensesDelta = 10_000L, knowledgeDelta = 5)
-                ),
-                option(
-                    id    = "skip_factoring",
-                    text  = "Не нужно — справляемся сами",
-                    emoji = "🛡️",
-                    next  = MONTHLY_TICK,
-                    fx    = Effect()
-                )
-            )
+        options = listOf(
+            option("pay_supplier", "Перевести деньги и надеяться, что удача всё ещё любит смелых", "💸", "supplier_result",
+                Effect(capitalDelta = -800_000L, stressDelta = 10)),
+            option("check_supplier", "Заплатить за проверку и купить себе ясность", "🔍", "supplier_safe",
+                Effect(capitalDelta = -40_000L, knowledgeDelta = 8)),
+            option("skip_supplier", "Не заходить в слишком сладкую историю", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 5))
         )
     )
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EVENT POOL
-    // ─────────────────────────────────────────────────────────────────────────
+    private fun MutableMap<String, GameEvent>.commonErbolatHubAndEndings(eraLabel: String) {
+        put("supplier_result", event(
+            id = "supplier_result",
+            flavor = "💀",
+            message = story(
+                """
+                Груз не приходит. Телефон выключен. Деньги ушли туда, где у них больше нет имени. Для предпринимателя это не просто потеря суммы, а унижение: тебя поймали на твоей же усталости и жадности до облегчения.
+                """,
+                """
+                Ерболат злится прежде всего на себя. Не за то, что рискнул, а за то, что рискнул без структуры. В этом эпизоде рушатся не только деньги, но и привычное чувство контроля над ситуацией.
+                """,
+                """
+                Теперь ему нужно либо жёстко принять урок и перестраиваться, либо тратить ещё силы на попытку вернуть то, что уже, возможно, исчезло.
+                """
+            ),
+            options = listOf(
+                option("cut_losses", "Переварить потерю и идти чинить бизнес дальше", "💪", "ecommerce_pivot",
+                    Effect(stressDelta = 24, knowledgeDelta = 10)),
+                option("sue_supplier", "Судиться, даже если шансы малы", "⚖️", MONTHLY_TICK,
+                    Effect(capitalDelta = -60_000L, stressDelta = 15, knowledgeDelta = 5))
+            )
+        ))
+        put("supplier_safe", event(
+            id = "supplier_safe",
+            flavor = "✅",
+            message = story(
+                """
+                Юрист смотрит бумаги всего несколько минут и сразу говорит то, что Ерболат уже, кажется, знал внутри: это пустышка. На этот раз его спасли не нюх и не удача, а дисциплина.
+                """,
+                """
+                Для него это почти новый опыт. Проверка кажется дорогой только до тех пор, пока не посчитаешь цену ошибки. После этого она выглядит самой дешёвой инвестицией месяца.
+                """,
+                """
+                Теперь можно идти через проверенных людей или снова пытаться выторговать рынок в одиночку.
+                """
+            ),
+            options = listOf(
+                option("find_reliable", "Оплатить надёжность и укрепить операционку", "🤝", MONTHLY_TICK,
+                    Effect(incomeDelta = 60_000L, stressDelta = -10, knowledgeDelta = 5)),
+                option("search_yourself", "Искать самому, но уже не вслепую", "🔍", MONTHLY_TICK,
+                    Effect(knowledgeDelta = 8))
+            )
+        ))
+        put("normal_life", event(
+            id = "normal_life",
+            flavor = "📋",
+            poolWeight = 20,
+            message = story(
+                """
+                Очередной операционный месяц. Зарплаты, аренда, поставщики, возвраты, налоговые вопросы, семейные разговоры, усталость, которая уже почти стала фоном. Бизнес живёт не только большими решениями, а и бесконечной чередой мелких управленческих поступков.
+                """,
+                """
+                Ерболат давно понял: если он не задаёт деньгам направление, они сами находят для себя самый шумный и неэффективный выход.
+                """,
+                """
+                Свободный ресурс можно пустить в снижение долга, рост трафика, товар или собственную управленческую голову.
+                """
+            ),
+            options = listOf(
+                option("pay_debt", "Погасить часть долга и купить себе чуть больше сна", "💳", MONTHLY_TICK,
+                    Effect(capitalDelta = -250_000L, debtDelta = -250_000L, stressDelta = -6, knowledgeDelta = 2)),
+                option("marketing", "Купить внимание рынка, а не ждать его милости", "📣", MONTHLY_TICK,
+                    Effect(capitalDelta = -120_000L, incomeDelta = 90_000L, knowledgeDelta = 5)),
+                option("inventory", "Вложиться в ассортимент и надеяться на сезон", "📦", MONTHLY_TICK,
+                    Effect(capitalDelta = -320_000L, incomeDelta = 130_000L, stressDelta = 5)),
+                option("finance_course", "Научиться управлять взрослее, чем раньше", "🎓", MONTHLY_TICK,
+                    Effect(capitalDelta = -60_000L, knowledgeDelta = 12, stressDelta = -4))
+            )
+        ))
+        put("ending_empire", event(
+            id = "ending_empire",
+            flavor = "🏆",
+            isEnding = true,
+            endingType = EndingType.WEALTH,
+            message = story(
+                """
+                Ерболат сумел пройти путь от человека, который тушил операционные пожары своей нервной системой, до владельца настоящей системы. Бизнес перестал держаться на его личной панике и начал работать как структура.
+                """,
+                """
+                Он по-прежнему предприниматель, но уже не человек, который обязан лично быть во всех местах сразу. Это главное богатство, пришедшее вместе с цифрами: вернуть себе собственную жизнь, а не только умножить активы.
+                """,
+                """
+                Эпоха $eraLabel осталась позади. Капитал {capital}. Теперь масштаб не пожирает его, а подчиняется ему.
+                """
+            ),
+            options = emptyList()
+        ))
+        put("ending_pivot_success", event(
+            id = "ending_pivot_success",
+            flavor = "💻",
+            isEnding = true,
+            endingType = EndingType.FINANCIAL_FREEDOM,
+            message = story(
+                """
+                Самая взрослая победа Ерболата оказалась не в том, чтобы открыть как можно больше точек, а в том, чтобы вовремя отпустить старую идентичность. Он перевёл бизнес в цифровую модель и перестал путать объём с качеством жизни.
+                """,
+                """
+                Доход стал устойчивее, долговая удавка ослабла, семья снова видит дома человека, а не только перевозбуждённый центр управления.
+                """,
+                """
+                Капитал {capital}. Свобода пришла к нему в форме ясности и управляемости.
+                """
+            ),
+            options = emptyList()
+        ))
+        put("ending_stable_business", event(
+            id = "ending_stable_business",
+            flavor = "🏪",
+            isEnding = true,
+            endingType = EndingType.FINANCIAL_STABILITY,
+            message = story(
+                """
+                Ерболат не взял рынок штурмом, но собрал для семьи куда более редкую вещь: бизнес, который не разваливается от каждого плохого месяца. Иногда именно это и есть зрелое предпринимательство.
+                """,
+                """
+                Он больше не живёт в режиме перманентной тревоги. Компания работает, долг под контролем, дом перестал быть филиалом офиса.
+                """,
+                """
+                Капитал {capital}. Это не легенда о стремительном взлёте, а история о честно отвоёванной устойчивости.
+                """
+            ),
+            options = emptyList()
+        ))
+        put("ending_bankruptcy", event(
+            id = "ending_bankruptcy",
+            flavor = "💀",
+            isEnding = true,
+            endingType = EndingType.BANKRUPTCY,
+            message = story(
+                """
+                Самое страшное в банкротстве для Ерболата не потеря магазинов. Самое страшное — признать, что всё это время он мерил себя только способностью удерживать и тащить. Когда бизнес падает, вместе с ним падает и эта старая, жёсткая версия мужественности.
+                """,
+                """
+                Но именно на руинах у него появляется шанс понять себя не как совокупность активов, а как человека, который всё ещё может построить новую жизнь уже без прежних иллюзий.
+                """,
+                """
+                Капитал истощён, долг задавил конструкцию. История закончилась больно, но окончательно ли — зависит уже не от рынка.
+                """
+            ),
+            options = emptyList()
+        ))
+        put("ending_paycheck", event(
+            id = "ending_paycheck",
+            flavor = "😰",
+            isEnding = true,
+            endingType = EndingType.PAYCHECK_TO_PAYCHECK,
+            message = story(
+                """
+                Бизнес ещё жив, но живёт как человек после тяжёлой болезни: двигается, дышит, но сил на новый рывок нет. Каждый месяц уходит на то, чтобы просто не упасть.
+                """,
+                """
+                Ерболат всё ещё предприниматель на бумаге, но внутренне давно работает скорее на обязательства, чем на мечту. У такого состояния нет драмы большого краха, зато есть вязкая усталость ежедневного выживания.
+                """,
+                """
+                Долг {debt}, капитал {capital}. Не катастрофа, но и не та жизнь, ради которой всё начиналось.
+                """
+            ),
+            options = emptyList()
+        ))
+    }
 
-    override val eventPool: List<PoolEntry> = listOf(
-        PoolEntry("normal_life",    baseWeight = 20),
-        PoolEntry("supplier_scam",  baseWeight = 12),
-        PoolEntry("franchise_offer", baseWeight = 6),
-    ) + ScamEventLibrary.poolEntries
+    private fun commonErbolatConditionals(
+        burnoutIntro: String,
+        financeIntro: String
+    ): List<GameEvent> = listOf(
+        event(
+            id = "debt_crisis",
+            priority = 10,
+            flavor = "🚨",
+            conditions = listOf(cond(DEBT, GT, 3_000_000L), cond(CAPITAL, LTE, 700_000L)),
+            message = story(
+                """
+                Банк перестаёт разговаривать уважительно. Когда денег становится мало, любой партнёр очень быстро вспоминает, кто на самом деле слабее в переговорах.
+                """,
+                """
+                Ерболат ненавидит этот момент, потому что здесь уже не работают уверенный голос и предпринимательский темперамент. Работают только цифры, а цифры упрямее любого характера.
+                """,
+                """
+                Долг {debt}, капитал {capital}. Надо выбирать, что именно резать: масштаб, долю, самолюбие или будущий доход.
+                """
+            ),
+            options = listOf(
+                option("sell_store", "Продать часть бизнеса, чтобы спасти остальное", "🔒", MONTHLY_TICK,
+                    Effect(capitalDelta = 1_500_000L, debtDelta = -1_500_000L, incomeDelta = -280_000L, expensesDelta = -180_000L, stressDelta = 10)),
+                option("bank_restructure", "Идти в реструктуризацию и покупать себе время", "🏦", MONTHLY_TICK,
+                    Effect(expensesDelta = -50_000L, stressDelta = 20, knowledgeDelta = 8)),
+                option("find_investor", "Впустить инвестора и поделиться контролем", "🤝", MONTHLY_TICK,
+                    Effect(capitalDelta = 2_000_000L, stressDelta = 14, knowledgeDelta = 10))
+            )
+        ),
+        event(
+            id = "burnout_warning",
+            priority = 8,
+            flavor = "😮‍💨",
+            conditions = listOf(cond(STRESS, GTE, 82L)),
+            message = story(
+                burnoutIntro,
+                """
+                Для Ерболата отдых долгое время казался слабостью. Теперь врач, жена и собственное тело говорят одно и то же: если не остановиться, бизнес получит владельца, который всё ещё на месте, но уже не принимает внятных решений.
+                """,
+                """
+                Пришло время признать, что делегирование и пауза тоже бывают формами силы.
+                """
+            ),
+            options = listOf(
+                option("family_vacation", "Вырвать себя из режима тревоги хотя бы на две недели", "✈️", MONTHLY_TICK,
+                    Effect(capitalDelta = -300_000L, stressDelta = -38)),
+                option("delegate", "Нанять управляющего и купить себе воздух", "👤", MONTHLY_TICK,
+                    Effect(expensesDelta = 150_000L, stressDelta = -24, knowledgeDelta = 8))
+            )
+        ),
+        event(
+            id = "investment_unlock",
+            priority = 5,
+            flavor = "💡",
+            unique = true,
+            conditions = listOf(cond(KNOWLEDGE, GTE, 52L)),
+            message = story(
+                financeIntro,
+                """
+                Это неприятный, но важный момент взросления бизнеса: признать, что предпринимательская интуиция не обязана решать всё в одиночку. Инструменты, процессы и финансовая дисциплина не убивают хватку, а защищают её от хаоса.
+                """,
+                """
+                Ерболат может использовать новый инструмент сейчас или продолжить управлять так, как привык раньше.
+                """
+            ),
+            options = listOf(
+                option("use_factoring", "Подключить инструмент и вернуть бизнесу манёвренность", "⚡", MONTHLY_TICK,
+                    Effect(capitalDelta = 500_000L, expensesDelta = 10_000L, knowledgeDelta = 5)),
+                option("skip_factoring", "Остаться в старой манере управления", "🛡️", MONTHLY_TICK,
+                    Effect())
+            )
+        ),
+        event(
+            id = "ending_bankruptcy_trigger",
+            priority = 100,
+            conditions = listOf(cond(CAPITAL, LTE, 0L), cond(STRESS, GTE, 90L)),
+            message = "Все способы оттянуть удар закончились.",
+            options = listOf(option("claim_bankruptcy", "Признать банкротство", "💀", "ending_bankruptcy"))
+        ),
+        event(
+            id = "ending_wealth_trigger",
+            priority = 2,
+            unique = true,
+            conditions = listOf(cond(CAPITAL, GTE, 18_000_000L)),
+            message = "Бизнес вырос настолько, что перестал питаться исключительно нервной системой владельца.",
+            options = listOf(option("claim_empire", "Забрать большую концовку", "🏆", "ending_empire"))
+        ),
+        event(
+            id = "ending_freedom_trigger",
+            priority = 3,
+            unique = true,
+            conditions = listOf(cond(CAPITAL, GTE, 9_000_000L), Condition.HasFlag("erbolat.digital")),
+            message = "Перестройка бизнеса наконец начала работать на Ерболата, а не только требовать от него всё новые силы.",
+            options = listOf(option("claim_pivot", "Войти в цифровую свободу", "💻", "ending_pivot_success"))
+        ),
+        event(
+            id = "ending_stability_trigger",
+            priority = 4,
+            unique = true,
+            conditions = listOf(cond(CAPITAL, GTE, 3_500_000L), cond(STRESS, LTE, 55L)),
+            message = "Штормы не исчезли, но бизнес перестал тонуть от каждого из них.",
+            options = listOf(option("claim_stability", "Зафиксировать стабильный бизнес", "🏪", "ending_stable_business"))
+        ),
+        event(
+            id = "ending_paycheck_trigger",
+            priority = 1,
+            unique = true,
+            conditions = listOf(cond(DEBT, GT, 2_000_000L), cond(CAPITAL, LTE, 300_000L)),
+            message = "Компания всё ещё работает, но почти весь её смысл ушёл в обслуживание обязательств.",
+            options = listOf(option("claim_paycheck", "Признать режим выживания", "😰", "ending_paycheck"))
+        )
+    )
 }

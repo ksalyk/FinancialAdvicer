@@ -18,6 +18,7 @@ import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
 import kz.fearsom.financiallifev2.model.moneyFormat
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.ErbolatScenarioGraph
 
@@ -108,6 +109,7 @@ object ScenarioGraphFactory {
     fun forCharacter(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
         "aidar_90s" -> Aidar90sScenarioGraph()
         "aidar"     -> AidarScenarioGraph(eraId)
+        "asan"      -> AsanScenarioGraph()
         "dana"      -> DanaScenarioGraph(eraId)
         "erbolat"   -> ErbolatScenarioGraph(eraId)
         else        -> forEra(eraId)  // bundles: fall back to era-specific graph
@@ -122,5 +124,4 @@ object ScenarioGraphFactory {
         else      -> error("No scenario graph for eraId=$eraId")
     }
 }
-
 

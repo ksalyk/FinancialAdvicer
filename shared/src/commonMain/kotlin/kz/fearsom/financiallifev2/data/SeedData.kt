@@ -67,7 +67,7 @@ object SeedData {
             baseInflationRate = 9.8,
             baseSalaryMin = 300_000L,
             baseSalaryMax = 1_500_000L,
-            availableCharacterIds = listOf("aidar", "dana", "erbolat"),
+            availableCharacterIds = listOf("aidar", "asan", "dana", "erbolat"),
             keyEconomicEvents = listOf("Технологический бум", "Финансовые реформы"),
             emoji = "🚀",
             isLocked = true
@@ -97,6 +97,27 @@ object SeedData {
             ),
             uniqueEventIds = listOf("startup_pitch", "senior_promotion"),
             difficulty = Difficulty.EASY,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "asan",
+            name = "Асан",
+            age = 28,
+            profession = "Android разработчик",
+            emoji = "📱",
+            backstory = "Живёт в Алматы, работает Android-разработчиком и пытается наконец перестать путать хороший доход с финансовой устойчивостью. После нескольких импульсивных ошибок хочет собрать систему: закрыть долги, построить подушку и вырасти в сильного senior-инженера без саморазрушения.",
+            personality = "Умный, ироничный, склонный к импульсивным решениям, но способный быстро учиться на боли",
+            compatibleEraIds = listOf("kz_2024"),
+            initialStats = CharacterStats(
+                capital = 200_000L,
+                income = 450_000L,
+                debt = 120_000L,
+                monthlyExpenses = 180_000L,
+                stress = 25,
+                financialKnowledge = 10,
+                riskLevel = 15
+            ),
+            uniqueEventIds = listOf("job_offer", "mortgage_offer", "senior_offer"),
+            difficulty = Difficulty.MEDIUM,
             isUnlocked = true
         ), PredefinedCharacter(
             id = "dana",
