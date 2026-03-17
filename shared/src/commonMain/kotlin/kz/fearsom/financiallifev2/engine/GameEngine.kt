@@ -1,7 +1,7 @@
 package kz.fearsom.financiallifev2.engine
 
 import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.scenarios.AsanScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.EraDefinition
 import kz.fearsom.financiallifev2.scenarios.EraRegistry
 import kz.fearsom.financiallifev2.scenarios.EventPoolSelector
@@ -33,8 +33,8 @@ import kotlin.random.Random
  *     → emit new GameState via StateFlow
  */
 class GameEngine(
-    private val graph: ScenarioGraph = AsanScenarioGraph(),
-    private val eraDefinition: EraDefinition? = null
+    private var graph: ScenarioGraph = AidarScenarioGraph(),
+    private var eraDefinition: EraDefinition? = null
 ) {
 
     private val _state = MutableStateFlow<GameState?>(null)
@@ -52,18 +52,21 @@ class GameEngine(
      */
     fun startGame(
         initialState: PlayerState? = null,
-        characterName: String = "Асан"
+        characterName: String,
     ): GameState {
         currentCharacterName = characterName
+        if (initialState != null) {
+            graph         = ScenarioGraphFactory.forCharacter(initialState.characterId, initialState.eraId)
+            eraDefinition = EraRegistry.findById(initialState.eraId)
+        }
         val ps    = initialState ?: graph.initialPlayerState
         val intro = graph.findEvent("intro") ?: error("No 'intro' event in graph")
-        val personalizedIntro = intro.copy(message = buildIntroMessage(characterName, ps))
         return GameState(
             playerState        = ps,
             currentEventId     = intro.id,
             messages           = listOf(
                 systemMsg("🎮 Финансовое приключение началось! Помогай $characterName строить финансовое будущее."),
-                characterMsg(personalizedIntro, ps)
+                characterMsg(intro, ps)
             ),
             isWaitingForChoice = true
         ).also { _state.value = it }
@@ -81,25 +84,12 @@ class GameEngine(
         }
     }
 
-    private fun buildIntroMessage(characterName: String, ps: PlayerState): String = buildString {
-        appendLine("Привет! 👋 Я $characterName.")
-        appendLine()
-        appendLine("Зарплата: ${ps.income.moneyFormat()}/мес")
-        appendLine("Расходы: ${ps.expenses.moneyFormat()}/мес")
-        if (ps.debt > 0) {
-            appendLine("Долг: ${ps.debt.moneyFormat()} (−${ps.debtPaymentMonthly.moneyFormat()}/мес)")
-        }
-        appendLine("Накопления: ${ps.capital.moneyFormat()}")
-        appendLine()
-        append("Звонит друг — зовёт вложиться в крипту. Говорит, можно x2 за месяц. Что делаешь?")
-    }.trimEnd()
-
     /**
      * Process a player choice.
      * Handles MONTHLY_TICK sentinel, the full 4-tier event priority queue, and endings.
      */
     fun makeChoice(optionId: String): GameState {
-        val current = _state.value ?: return startGame()
+        val current = _state.value ?: return startGame(characterName = "Асан")
         val event   = graph.findEvent(current.currentEventId) ?: return current
         val option  = event.options.find { it.id == optionId } ?: return current
 
@@ -191,6 +181,8 @@ class GameEngine(
     /** Rehydrate engine from a previously serialized [GameState] (e.g., loaded from DB). */
     fun loadState(state: GameState, characterName: String = "") {
         if (characterName.isNotEmpty()) currentCharacterName = characterName
+        graph         = ScenarioGraphFactory.forCharacter(state.playerState.characterId, state.playerState.eraId)
+        eraDefinition = EraRegistry.findById(state.playerState.eraId)
         _state.value = state
     }
 

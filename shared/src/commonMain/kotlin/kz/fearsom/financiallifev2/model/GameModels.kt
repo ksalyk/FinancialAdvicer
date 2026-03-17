@@ -39,7 +39,12 @@ data class CharacterStats(
 )
 
 /** Convert CharacterStats into a PlayerState for the game engine. */
-fun CharacterStats.toPlayerState(year: Int = 2024, month: Int = 1): PlayerState {
+fun CharacterStats.toPlayerState(
+    year: Int = 2024,
+    month: Int = 1,
+    characterId: String = "",
+    eraId: String = ""
+): PlayerState {
     val debtPayment = if (debt > 0) (debt / 36).coerceAtLeast(5_000L) else 0L
     return PlayerState(
         capital            = capital,
@@ -52,7 +57,9 @@ fun CharacterStats.toPlayerState(year: Int = 2024, month: Int = 1): PlayerState 
         financialKnowledge = financialKnowledge,
         riskLevel          = riskLevel,
         month              = month,
-        year               = year
+        year               = year,
+        characterId        = characterId,
+        eraId              = eraId
     )
 }
 

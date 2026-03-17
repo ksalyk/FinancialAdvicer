@@ -192,9 +192,9 @@ data class PlayerState(
 
     // ── Identity ─────────────────────────────────────────────────────
     /** Character archetype ID — used for event targeting. */
-    val characterId: String = "asan",
+    val characterId: String = "",
     /** Era ID — used for era-specific event filtering and weight modifiers. */
-    val eraId: String = "modern_kz_2024",
+    val eraId: String = "",
 
     // ── Event tracking ────────────────────────────────────────────────
     /** Boolean game-state flags, e.g. "learned.scam.pyramid", "has_emergency_fund". */

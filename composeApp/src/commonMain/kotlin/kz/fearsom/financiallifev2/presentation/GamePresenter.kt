@@ -94,8 +94,10 @@ class GamePresenter(
             _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
             val initialState = session.initialStats.toPlayerState(
-                year  = session.currentGameYear,
-                month = session.currentGameMonth
+                year        = session.currentGameYear,
+                month       = session.currentGameMonth,
+                characterId = session.characterId,
+                eraId       = session.eraId
             )
             engine.startGame(initialState, session.characterName)
             delay(300)
@@ -126,8 +128,10 @@ class GamePresenter(
                 engine.loadState(savedState, session.characterName)
             } else {
                 val initialState = session.initialStats.toPlayerState(
-                    year  = session.currentGameYear,
-                    month = session.currentGameMonth
+                    year        = session.currentGameYear,
+                    month       = session.currentGameMonth,
+                    characterId = session.characterId,
+                    eraId       = session.eraId
                 )
                 engine.startGame(initialState, session.characterName)
             }
@@ -136,18 +140,18 @@ class GamePresenter(
         }
     }
 
-    /** Legacy default start (Асан the junior dev) — used when no session is selected. */
+    /** Legacy default start — used when no session is selected. Loads Айдар (kz_2024). */
     fun startDefaultGame() {
         activeSessionId = null
         scope.launch {
             _uiState.value = _uiState.value.copy(
                 isTyping       = true,
-                characterName  = "Асан",
-                characterEmoji = "👨‍💻",
-                characterTitle = "Инженер-программист"
+                characterName  = "Айдар",
+                characterEmoji = "🧑‍💻",
+                characterTitle = "Junior разработчик"
             )
             delay(800)
-            engine.startGame()
+            engine.startGame(characterName = "Айдар")
             delay(300)
             _uiState.value = _uiState.value.copy(isTyping = false)
         }

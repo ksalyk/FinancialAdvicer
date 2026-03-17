@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.PlayerState
-import kz.fearsom.financiallifev2.scenarios.AsanScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.server.models.GameStateRequest
 import kz.fearsom.financiallifev2.server.models.GameStateResponse
 import kz.fearsom.financiallifev2.server.repository.GameRepository
@@ -84,7 +84,7 @@ fun Route.gameRoutes(
             val userId = call.jwtUserId()
 
             val engine = GameEngine()
-            val state  = engine.startGame()
+            val state  = engine.startGame(characterName = "Асан")
 
             gameRepository.upsertSession(
                 userId         = userId,
