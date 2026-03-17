@@ -137,14 +137,16 @@ class GameEngine(
 
             val nextEvent = eraEvent ?: scheduled ?: conditional
             nextEventId   = nextEvent?.id ?: poolPick ?: "normal_life"
+            val selectedFromPool = nextEvent == null && poolPick != null
 
-            // Mark unique events triggered
             val winner = graph.findEvent(nextEventId)
-            if (winner?.unique == true) {
+            val singleUsePoolEvent = selectedFromPool && winner != null && winner.cooldownMonths <= 0
+
+            // Pool events are one-shot by default unless they declare a cooldown.
+            if (winner?.unique == true || singleUsePoolEvent) {
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
             }
 
-            // Apply cooldown
             if (winner != null && winner.cooldownMonths > 0) {
                 ps = ps.copy(
                     eventCooldowns = ps.eventCooldowns +
@@ -219,6 +221,7 @@ class GameEngine(
         val report = MonthlyReport(
             month          = ps.month,
             year           = ps.year,
+            currency       = ps.currency,
             incomeReceived = ps.income,
             expensesPaid   = ps.expenses,
             debtPayment    = ps.debtPaymentMonthly,
@@ -292,7 +295,7 @@ class GameEngine(
 
     private fun applyEffects(ps: PlayerState, e: Effect): PlayerState {
         val newFlags = (ps.flags + e.setFlags) - e.clearFlags
-        return ps.copy(
+        val updated = ps.copy(
             capital            = (ps.capital            + e.capitalDelta).coerceAtLeast(0L),
             income             = (ps.income             + e.incomeDelta).coerceAtLeast(0L),
             expenses           = (ps.expenses           + e.expensesDelta).coerceAtLeast(0L),
@@ -303,6 +306,24 @@ class GameEngine(
             financialKnowledge = (ps.financialKnowledge + e.knowledgeDelta).coerceIn(0, 100),
             riskLevel          = (ps.riskLevel          + e.riskDelta).coerceIn(0, 100),
             flags              = newFlags
+        )
+        return e.monetaryReform?.let { applyMonetaryReform(updated, it) } ?: updated
+    }
+
+    private fun applyMonetaryReform(ps: PlayerState, reform: MonetaryReform): PlayerState {
+        if (ps.currency != reform.from || reform.numerator <= 0L || reform.denominator <= 0L) return ps
+
+        fun reprice(amount: Long): Long =
+            ((amount * reform.numerator) / reform.denominator).coerceAtLeast(0L)
+
+        return ps.copy(
+            capital = reprice(ps.capital),
+            income = reprice(ps.income),
+            expenses = reprice(ps.expenses),
+            debt = reprice(ps.debt),
+            debtPaymentMonthly = reprice(ps.debtPaymentMonthly),
+            investments = reprice(ps.investments),
+            currency = reform.to
         )
     }
 
@@ -336,15 +357,15 @@ class GameEngine(
      */
     private fun substituteTemplate(text: String, ps: PlayerState): String =
         text
-            .replace("{income}",        ps.income.moneyFormat())
-            .replace("{expenses}",      ps.expenses.moneyFormat())
-            .replace("{capital}",       ps.capital.moneyFormat())
-            .replace("{debt}",          ps.debt.moneyFormat())
-            .replace("{debtPayment}",   ps.debtPaymentMonthly.moneyFormat())
-            .replace("{investments}",   ps.investments.moneyFormat())
-            .replace("{passiveIncome}", ps.monthlyInvestmentReturn.moneyFormat())
-            .replace("{netFlow}",       ps.netMonthlyFlow.moneyFormat())
-            .replace("{income3x}",      (ps.income * 3).moneyFormat())
+            .replace("{income}",        ps.income.moneyFormat(ps.currency))
+            .replace("{expenses}",      ps.expenses.moneyFormat(ps.currency))
+            .replace("{capital}",       ps.capital.moneyFormat(ps.currency))
+            .replace("{debt}",          ps.debt.moneyFormat(ps.currency))
+            .replace("{debtPayment}",   ps.debtPaymentMonthly.moneyFormat(ps.currency))
+            .replace("{investments}",   ps.investments.moneyFormat(ps.currency))
+            .replace("{passiveIncome}", ps.monthlyInvestmentReturn.moneyFormat(ps.currency))
+            .replace("{netFlow}",       ps.netMonthlyFlow.moneyFormat(ps.currency))
+            .replace("{income3x}",      (ps.income * 3).moneyFormat(ps.currency))
             .replace("{name}",          currentCharacterName)
 
     fun playerMsg(option: GameOption) = ChatMessage(

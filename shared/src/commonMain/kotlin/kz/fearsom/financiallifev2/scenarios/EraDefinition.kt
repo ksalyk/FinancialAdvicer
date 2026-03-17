@@ -77,8 +77,8 @@ object EraEventLibrary {
             message = """
                 Ноябрь 1993. Казахстан ввёл собственную валюту — тенге.
 
-                Советские рубли обменивают по фиксированному курсу,
-                но только ограниченную сумму. Очереди у обменников.
+                Советские рубли обменивают по курсу 500:1.
+                Очереди у обменников, у людей паника и усталость.
 
                 У тебя есть наличные рубли — что делаешь?
             """.trimIndent(),
@@ -86,10 +86,28 @@ object EraEventLibrary {
             tags = setOf("crisis", "era.kz_90s"),
             options = listOf(
                 GameOption("exchange_all", "Обменять всё немедленно — пока есть лимит", "🏃",
-                    effects = Effect(stressDelta = -5, knowledgeDelta = 8),
+                    effects = Effect(
+                        stressDelta = -5,
+                        knowledgeDelta = 8,
+                        monetaryReform = MonetaryReform(
+                            from = CurrencyCode.RUB,
+                            to = CurrencyCode.KZT,
+                            numerator = 1,
+                            denominator = 500
+                        )
+                    ),
                     next = MONTHLY_TICK),
                 GameOption("wait_see", "Подождать — может курс улучшится", "⏳",
-                    effects = Effect(capitalDelta = -30_000, stressDelta = 15),
+                    effects = Effect(
+                        capitalDelta = -30_000,
+                        stressDelta = 15,
+                        monetaryReform = MonetaryReform(
+                            from = CurrencyCode.RUB,
+                            to = CurrencyCode.KZT,
+                            numerator = 1,
+                            denominator = 500
+                        )
+                    ),
                     next = MONTHLY_TICK)
             )
         ),
@@ -316,7 +334,10 @@ object EraRegistry {
         globalEvents = listOf(
             EraGlobalEvent("era_ussr_collapse",  year = 1991, month = 12),
             EraGlobalEvent("era_tenge_introduced", year = 1993, month = 11),
-            EraGlobalEvent("era_mmm_wave_90s",   year = 1994, month = 6, probability = 0.9f)
+            EraGlobalEvent("era_mmm_wave_90s",   year = 1994, month = 6, probability = 0.9f),
+            EraGlobalEvent("chechen_war_broadcast", year = 1994, month = 12),
+            EraGlobalEvent("nuclear_disarmament_reaction", year = 1995, month = 4),
+            EraGlobalEvent("capital_move_debate", year = 1997, month = 12)
         ),
         poolWeightModifiers = mapOf(
             "scam.pyramid" to 4.0f,    // MMM era — rampant

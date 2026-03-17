@@ -296,9 +296,9 @@ private fun StatBar(label: String, value: Int, color: Color) {
 
 private fun formatMoney(amount: Long): String {
     return when {
-        amount >= 1_000_000L -> "${amount / 1_000_000L} М тг"
-        amount >= 1_000L     -> "${amount / 1_000}к тг"
-        else                 -> "$amount тг"
+        amount >= 1_000_000L -> "${amount / 1_000_000L} М ₸"
+        amount >= 1_000L     -> "${amount / 1_000}к ₸"
+        else                 -> "$amount ₸"
     }
 }
 

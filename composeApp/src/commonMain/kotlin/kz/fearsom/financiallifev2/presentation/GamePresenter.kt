@@ -4,6 +4,7 @@ import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.network.GameApiService
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,11 +94,13 @@ class GamePresenter(
         scope.launch {
             _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
+            val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
             val initialState = session.initialStats.toPlayerState(
                 year        = session.currentGameYear,
                 month       = session.currentGameMonth,
                 characterId = session.characterId,
-                eraId       = session.eraId
+                eraId       = session.eraId,
+                currency    = scenarioStart.currency
             )
             engine.startGame(initialState, session.characterName)
             delay(300)
@@ -127,11 +130,13 @@ class GamePresenter(
             if (savedState != null) {
                 engine.loadState(savedState, session.characterName)
             } else {
+                val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
                 val initialState = session.initialStats.toPlayerState(
                     year        = session.currentGameYear,
                     month       = session.currentGameMonth,
                     characterId = session.characterId,
-                    eraId       = session.eraId
+                    eraId       = session.eraId,
+                    currency    = scenarioStart.currency
                 )
                 engine.startGame(initialState, session.characterName)
             }

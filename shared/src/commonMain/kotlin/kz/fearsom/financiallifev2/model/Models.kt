@@ -28,7 +28,26 @@ data class Effect(
     /** Flags removed from [PlayerState.flags] when this choice is made. */
     val clearFlags: Set<String> = emptySet(),
     /** Deferred event that fires [ScheduledEvent.afterMonths] months from now. */
-    val scheduleEvent: ScheduledEvent? = null
+    val scheduleEvent: ScheduledEvent? = null,
+    /** Reprices local-currency amounts and optionally switches active currency. */
+    val monetaryReform: MonetaryReform? = null
+)
+
+@Serializable
+enum class CurrencyCode {
+    RUB, KZT, USD
+}
+
+/**
+ * Applies a single ratio to all local-currency money fields in [PlayerState].
+ * Used for redenominations and currency reforms such as RUB → KZT 500:1.
+ */
+@Serializable
+data class MonetaryReform(
+    val from: CurrencyCode,
+    val to: CurrencyCode,
+    val numerator: Long,
+    val denominator: Long
 )
 
 /** Describes a future event to be queued inside an [Effect]. */
@@ -173,7 +192,7 @@ enum class EndingType {
 
 /**
  * Full economic + psychological state of the player.
- * All monetary values in Tenge (KZT).
+ * Monetary fields are denominated in [currency].
  */
 @Serializable
 data class PlayerState(
@@ -200,6 +219,8 @@ data class PlayerState(
     val characterId: String = "",
     /** Era ID — used for era-specific event filtering and weight modifiers. */
     val eraId: String = "",
+    /** Active local currency for all monetary fields above. */
+    val currency: CurrencyCode = CurrencyCode.KZT,
 
     // ── Event tracking ────────────────────────────────────────────────
     /** Boolean game-state flags, e.g. "learned.scam.pyramid", "has_emergency_fund". */
@@ -231,6 +252,7 @@ data class PlayerState(
 data class MonthlyReport(
     val month: Int,
     val year: Int,
+    val currency: CurrencyCode,
     val incomeReceived: Long,
     val expensesPaid: Long,
     val debtPayment: Long,
@@ -244,15 +266,15 @@ data class MonthlyReport(
     fun toMessage(): String = buildString {
         appendLine("📊 ${month.monthName()} $year — Итоги месяца")
         appendLine()
-        appendLine("💰 Доход:           +${incomeReceived.moneyFormat()}")
-        appendLine("🏠 Расходы:          -${expensesPaid.moneyFormat()}")
-        if (debtPayment > 0) appendLine("💳 Выплата долга:    -${debtPayment.moneyFormat()}")
-        if (investmentGain > 0) appendLine("📈 Инвестиции:       +${investmentGain.moneyFormat()}")
+        appendLine("💰 Доход:           +${incomeReceived.moneyFormat(currency)}")
+        appendLine("🏠 Расходы:          -${expensesPaid.moneyFormat(currency)}")
+        if (debtPayment > 0) appendLine("💳 Выплата долга:    -${debtPayment.moneyFormat(currency)}")
+        if (investmentGain > 0) appendLine("📈 Инвестиции:       +${investmentGain.moneyFormat(currency)}")
         appendLine()
         val sign = if (netFlow >= 0) "+" else ""
-        appendLine("${if (netFlow >= 0) "✅" else "⚠️"} Итого: $sign${netFlow.moneyFormat()}")
-        appendLine("💼 Капитал: ${capitalAfter.moneyFormat()}")
-        if (debtAfter > 0) append("💳 Долг: ${debtAfter.moneyFormat()}")
+        appendLine("${if (netFlow >= 0) "✅" else "⚠️"} Итого: $sign${netFlow.moneyFormat(currency)}")
+        appendLine("💼 Капитал: ${capitalAfter.moneyFormat(currency)}")
+        if (debtAfter > 0) append("💳 Долг: ${debtAfter.moneyFormat(currency)}")
     }.trimEnd()
 }
 

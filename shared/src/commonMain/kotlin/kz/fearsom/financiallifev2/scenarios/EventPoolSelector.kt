@@ -9,7 +9,7 @@ import kotlin.random.Random
  * Selects the next event from a weighted pool after a monthly tick.
  *
  * Selection pipeline:
- *   1. Filter: conditions pass, not in cooldown, not already triggered (if unique)
+ *   1. Filter: conditions pass, not in cooldown, not already triggered
  *   2. Apply weight modifiers: era multipliers + flag-based knowledge modifiers
  *   3. Weighted random sample
  *
@@ -30,8 +30,9 @@ object EventPoolSelector {
             .mapNotNull { entry ->
                 val event = allEvents(entry.eventId) ?: return@mapNotNull null
 
-                // Skip unique events already triggered
-                if (event.unique && entry.eventId in state.triggeredUniqueEvents) return@mapNotNull null
+                // Pool events are single-use by default. Explicit cooldownMonths makes them repeatable.
+                val singleUsePoolEvent = event.unique || event.cooldownMonths <= 0
+                if (singleUsePoolEvent && entry.eventId in state.triggeredUniqueEvents) return@mapNotNull null
 
                 // Skip events in cooldown
                 val coolsOffAt = state.eventCooldowns[entry.eventId] ?: 0

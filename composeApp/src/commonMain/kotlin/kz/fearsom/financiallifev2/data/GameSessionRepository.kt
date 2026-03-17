@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.data
 
 import kz.fearsom.financiallifev2.model.*
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,10 @@ class GameSessionRepository {
         characterTitle: String,
         initialStats: CharacterStats
     ): GameSession {
+        val scenarioStart = ScenarioGraphFactory
+            .forCharacter(characterId, era.id)
+            .initialPlayerState
+
         // Abandon any currently active sessions before starting a new one
         _sessions.update { list ->
             list.map { s ->
@@ -60,8 +65,8 @@ class GameSessionRepository {
             characterTitle  = characterTitle,
             initialStats    = initialStats,
             currentStats    = initialStats,
-            currentGameYear = era.startYear,
-            currentGameMonth = 1
+            currentGameYear = scenarioStart.year,
+            currentGameMonth = scenarioStart.month
         )
         _sessions.update { it + session }
         return session

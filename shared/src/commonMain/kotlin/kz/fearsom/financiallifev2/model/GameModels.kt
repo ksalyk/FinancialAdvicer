@@ -43,7 +43,8 @@ fun CharacterStats.toPlayerState(
     year: Int = 2024,
     month: Int = 1,
     characterId: String = "",
-    eraId: String = ""
+    eraId: String = "",
+    currency: CurrencyCode = CurrencyCode.KZT
 ): PlayerState {
     val debtPayment = if (debt > 0) (debt / 36).coerceAtLeast(5_000L) else 0L
     return PlayerState(
@@ -59,7 +60,8 @@ fun CharacterStats.toPlayerState(
         month              = month,
         year               = year,
         characterId        = characterId,
-        eraId              = eraId
+        eraId              = eraId,
+        currency           = currency
     )
 }
 
