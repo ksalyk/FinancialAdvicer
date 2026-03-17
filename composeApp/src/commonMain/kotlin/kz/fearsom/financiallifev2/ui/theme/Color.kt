@@ -62,3 +62,16 @@ val StatDebt      = Color(0xFFFF5252)
 val StatStress    = Color(0xFFFF6E40)
 val StatKnowledge = Color(0xFF40C4FF)
 val StatRisk      = Color(0xFFB388FF)
+
+// ─── Diary / Notebook ─────────────────────────────────────────────────────────
+val DiaryPage         = Color(0xFFFFF8EC)   // warm cream paper (light mode card bg)
+val DiaryPageDark     = Color(0xFF1E1A10)   // aged dark paper (dark mode card bg)
+val DiaryLine         = Color(0xFFE2D5B8)   // faint ruled line (light)
+val DiaryLineDark     = Color(0xFF3A3020)   // faint ruled line (dark)
+val DiaryInk          = Color(0xFF1C1007)   // dark ink text (light)
+val DiaryInkDark      = Color(0xFFEEDDC0)   // aged ink text (dark)
+val DiaryInkSecondary = Color(0xFF5C4A30)   // secondary ink (light)
+val DiaryInkSecondaryDark = Color(0xFFAA9070) // secondary ink (dark)
+val DiaryChoice       = Color(0xFFFFF0D0)   // sticky-note yellow (light)
+val DiaryChoiceDark   = Color(0xFF2A2010)   // sticky-note dark (dark)
+val DiaryChoiceBorder = Color(0xFFD4A017)   // gold pen border

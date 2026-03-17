@@ -527,7 +527,7 @@ class DanaScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph()
     // ─────────────────────────────────────────────────────────────────────────
 
     override val eventPool: List<PoolEntry> = listOf(
-        PoolEntry("normal_life",     weight = 25),
-        PoolEntry("husband_layoff",  weight = 8),
+        PoolEntry("normal_life",     baseWeight = 25),
+        PoolEntry("husband_layoff",  baseWeight = 8),
     ) + ScamEventLibrary.poolEntries
 }

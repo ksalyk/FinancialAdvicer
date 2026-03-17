@@ -22,6 +22,12 @@ data class AppColors(
     val bubblePlayer: Color,
     val bubbleReport: Color,
     val bubbleSystem: Color,
+    // Diary / Notebook palette
+    val diaryPage: Color,
+    val diaryLine: Color,
+    val diaryInk: Color,
+    val diaryInkSecondary: Color,
+    val diaryChoice: Color,
 )
 
 internal val DarkAppColors = AppColors(
@@ -38,6 +44,11 @@ internal val DarkAppColors = AppColors(
     bubblePlayer       = BubblePlayer,
     bubbleReport       = BubbleReport,
     bubbleSystem       = BubbleSystem,
+    diaryPage          = DiaryPageDark,
+    diaryLine          = DiaryLineDark,
+    diaryInk           = DiaryInkDark,
+    diaryInkSecondary  = DiaryInkSecondaryDark,
+    diaryChoice        = DiaryChoiceDark,
 )
 
 internal val LightAppColors = AppColors(
@@ -54,6 +65,11 @@ internal val LightAppColors = AppColors(
     bubblePlayer       = BubblePlayerLight,
     bubbleReport       = BubbleReportLight,
     bubbleSystem       = BubbleSystemLight,
+    diaryPage          = DiaryPage,
+    diaryLine          = DiaryLine,
+    diaryInk           = DiaryInk,
+    diaryInkSecondary  = DiaryInkSecondary,
+    diaryChoice        = DiaryChoice,
 )
 
 /** Provides the current [AppColors] set. Default to dark so previews don't crash. */

@@ -7,16 +7,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,7 +48,6 @@ fun ChatScreen(
     val messages    = uiState.gameState?.messages ?: emptyList()
     val playerState = uiState.gameState?.playerState
 
-    // Auto-scroll to bottom on every new message
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             delay(80)
@@ -63,12 +64,12 @@ fun ChatScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
-                .background(Brush.verticalGradient(listOf(colors.backgroundDeep, colors.backgroundChat)))
+                .height(120.dp)
+                .background(Brush.verticalGradient(listOf(colors.backgroundDeep, Color.Transparent)))
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            ChatTopBar(
+            DiaryTopBar(
                 playerState      = playerState,
                 characterName    = uiState.characterName,
                 characterEmoji   = uiState.characterEmoji,
@@ -81,20 +82,20 @@ fun ChatScreen(
             LazyColumn(
                 state               = listState,
                 modifier            = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(messages, key = { it.id }) { message ->
                     AnimatedVisibility(
                         visible = true,
-                        enter   = slideInVertically { it / 2 } + fadeIn(tween(350))
+                        enter   = fadeIn(tween(400)) + slideInVertically(tween(350)) { it / 3 }
                     ) {
-                        MessageBubble(message, uiState.characterName)
+                        DiaryMessageItem(message, playerState)
                     }
                 }
                 if (uiState.isTyping) {
                     item(key = "typing") {
-                        TypingIndicator(uiState.characterEmoji, uiState.characterName)
+                        DiaryWritingIndicator()
                     }
                 }
             }
@@ -104,15 +105,14 @@ fun ChatScreen(
                 enter   = slideInVertically { it } + fadeIn(),
                 exit    = slideOutVertically { it } + fadeOut()
             ) {
-                OptionsPanel(uiState.currentOptions, onChoiceSelected)
+                DiaryActionsPanel(uiState.currentOptions, onChoiceSelected)
             }
 
             if (uiState.gameState?.gameOver == true) {
-                GameOverBar(uiState.gameState.endingType, onRestart)
+                DiaryGameOverBar(uiState.gameState.endingType, onRestart)
             }
         }
 
-        // Stats overlay — shown when playerState is available
         if (uiState.showStats && playerState != null) {
             StatsPanelOverlay(
                 playerState    = playerState,
@@ -124,10 +124,10 @@ fun ChatScreen(
     }
 }
 
-// ─── Top Bar ─────────────────────────────────────────────────────────────────
+// ─── Top Bar ──────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ChatTopBar(
+private fun DiaryTopBar(
     playerState: PlayerState?,
     characterName: String,
     characterEmoji: String,
@@ -137,48 +137,24 @@ private fun ChatTopBar(
     onMenuClick: () -> Unit
 ) {
     val colors = LocalAppColors.current
-    val infiniteTransition = rememberInfiniteTransition(label = "online")
-    val onlinePulse by infiniteTransition.animateFloat(
-        initialValue = 0.4f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "onlineDot"
-    )
 
-    Surface(color = colors.backgroundDeep, shadowElevation = 8.dp) {
+    Surface(color = colors.backgroundDeep, shadowElevation = 6.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Home button
             IconButton(onClick = onMenuClick) {
                 Text("🏠", fontSize = 20.sp)
             }
 
-            Box {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(colors.backgroundElevated),
-                    contentAlignment = Alignment.Center
-                ) { Text(characterEmoji, fontSize = 22.sp) }
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(GreenSuccess.copy(alpha = onlinePulse))
-                )
-            }
-
-            Spacer(Modifier.width(10.dp))
+            Text("📓", fontSize = 26.sp, modifier = Modifier.padding(end = 8.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    characterName,
+                    "Дневник · $characterName",
                     style      = MaterialTheme.typography.titleMedium,
                     color      = colors.textPrimary,
                     fontWeight = FontWeight.Bold
@@ -196,157 +172,210 @@ private fun ChatTopBar(
             }
 
             IconButton(onClick = onStatsClick) {
-                Text("📊", fontSize = 24.sp)
+                Text("📊", fontSize = 22.sp)
             }
             IconButton(onClick = onRestartClick) {
-                Text("🔄", fontSize = 24.sp)
+                Text("🔄", fontSize = 22.sp)
             }
         }
     }
 }
 
-// ─── Message Bubble factory ───────────────────────────────────────────────────
+// ─── Message router ───────────────────────────────────────────────────────────
 
 @Composable
-private fun MessageBubble(message: ChatMessage, characterName: String = "Асан") {
+private fun DiaryMessageItem(message: ChatMessage, playerState: PlayerState?) {
     when (message.sender) {
-        MessageSender.CHARACTER      -> CharacterBubble(message, characterName)
-        MessageSender.PLAYER         -> PlayerBubble(message)
-        MessageSender.SYSTEM         -> SystemBubble(message)
-        MessageSender.MONTHLY_REPORT -> MonthlyReportCard(message)
+        MessageSender.CHARACTER      -> DiaryEntryCard(message, playerState)
+        MessageSender.PLAYER         -> DiaryChoiceNote(message)
+        MessageSender.SYSTEM         -> DiarySectionLabel(message)
+        MessageSender.MONTHLY_REPORT -> DiaryFinancialEntry(message)
     }
 }
 
-// Asan's left-aligned chat bubble
+// ─── Diary Entry Card (CHARACTER messages) ────────────────────────────────────
+
 @Composable
-private fun CharacterBubble(message: ChatMessage, characterName: String = "Асан") {
+private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
     val colors = LocalAppColors.current
-    val shape = RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
+    val shape  = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
+
+    // Ruled lines drawn behind the text
+    val lineColor = colors.diaryLine
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier          = Modifier.padding(start = 4.dp, bottom = 4.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(colors.diaryPage)
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(
+                        listOf(DiaryChoiceBorder.copy(alpha = 0.30f), colors.diaryLine)
+                    ),
+                    shape = shape
+                )
+                // Draw horizontal ruled lines
+                .drawBehind {
+                    val lineSpacing = 28.dp.toPx()
+                    val startY = 72.dp.toPx() // below the header area
+                    var y = startY
+                    while (y < size.height - 12.dp.toPx()) {
+                        drawLine(
+                            color       = lineColor,
+                            start       = Offset(16.dp.toPx(), y),
+                            end         = Offset(size.width - 16.dp.toPx(), y),
+                            strokeWidth = 1f
+                        )
+                        y += lineSpacing
+                    }
+                }
         ) {
-            if (message.emoji.isNotEmpty()) {
-                Text(message.emoji, fontSize = 13.sp)
-                Spacer(Modifier.width(4.dp))
+            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
+                // Date header row
+                Row(
+                    modifier          = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val dateText = if (playerState != null) {
+                        "${playerState.month} ${monthNameFull(playerState.month)} ${playerState.year}"
+                    } else {
+                        message.emoji.ifEmpty { "📅" }
+                    }
+                    Text(
+                        dateText,
+                        style      = MaterialTheme.typography.labelSmall,
+                        color      = colors.diaryInkSecondary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize   = 11.sp
+                    )
+                    if (message.emoji.isNotEmpty() && playerState != null) {
+                        Text(message.emoji, fontSize = 16.sp)
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier  = Modifier.padding(top = 8.dp, bottom = 12.dp),
+                    thickness = 1.dp,
+                    color     = colors.diaryLine
+                )
+
+                // Main diary text
+                Text(
+                    text       = message.text,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = colors.diaryInk,
+                    lineHeight = 26.sp,
+                    fontStyle  = FontStyle.Normal
+                )
             }
-            Text(
-                characterName,
-                style      = MaterialTheme.typography.bodySmall,
-                color      = colors.textSecondary,
-                fontWeight = FontWeight.SemiBold
-            )
         }
+    }
+}
+
+// ─── Choice Note (PLAYER messages) ────────────────────────────────────────────
+
+@Composable
+private fun DiaryChoiceNote(message: ChatMessage) {
+    val colors = LocalAppColors.current
+    val shape  = RoundedCornerShape(2.dp, 10.dp, 10.dp, 10.dp)
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.CenterEnd
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.82f)
                 .clip(shape)
-                .background(colors.bubbleCharacter)
-                .border(1.dp, GoldPrimary.copy(alpha = 0.28f), shape)
+                .background(colors.diaryChoice)
+                .border(1.dp, DiaryChoiceBorder.copy(alpha = 0.55f), shape)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Text(
-                text       = message.text,
-                style      = MaterialTheme.typography.bodyMedium,
-                color      = colors.textPrimary,
-                lineHeight = 22.sp
-            )
+            Column {
+                Text(
+                    "✍️  Я решил:",
+                    style      = MaterialTheme.typography.labelSmall,
+                    color      = colors.diaryInkSecondary,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize   = 11.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text       = message.text,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = colors.diaryInk,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
 
-// Player's right-aligned choice bubble
+// ─── Section Label (SYSTEM messages) ──────────────────────────────────────────
+
 @Composable
-private fun PlayerBubble(message: ChatMessage) {
+private fun DiarySectionLabel(message: ChatMessage) {
     val colors = LocalAppColors.current
-    val shape = RoundedCornerShape(topStart = 16.dp, topEnd = 4.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-    Column(
-        modifier            = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.End
+    Row(
+        modifier          = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            "Вы",
-            style      = MaterialTheme.typography.bodySmall,
-            color      = BlueAccent.copy(alpha = 0.7f),
-            fontWeight = FontWeight.SemiBold,
-            modifier   = Modifier.padding(end = 4.dp, bottom = 4.dp)
+        HorizontalDivider(
+            modifier  = Modifier.weight(1f),
+            thickness = 1.dp,
+            color     = colors.diaryLine
         )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.78f)
-                .clip(shape)
-                .background(colors.bubblePlayer)
-                .border(1.dp, BlueAccent.copy(alpha = 0.30f), shape)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Text(
-                text       = message.text,
-                style      = MaterialTheme.typography.bodyMedium,
-                color      = colors.textPrimary,
-                lineHeight = 22.sp,
-                textAlign  = TextAlign.End,
-                modifier   = Modifier.fillMaxWidth()
-            )
-        }
+        Text(
+            text     = "  ${message.text}  ",
+            style    = MaterialTheme.typography.labelSmall,
+            color    = colors.diaryInkSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        HorizontalDivider(
+            modifier  = Modifier.weight(1f),
+            thickness = 1.dp,
+            color     = colors.diaryLine
+        )
     }
 }
 
-// Centered system announcement
-@Composable
-private fun SystemBubble(message: ChatMessage) {
-    val colors = LocalAppColors.current
-    val shape = RoundedCornerShape(16.dp)
-    Box(
-        modifier         = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(shape)
-                .background(colors.bubbleSystem)
-                .border(1.dp, PurpleAccent.copy(alpha = 0.28f), shape)
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-        ) {
-            Text(
-                text       = message.text,
-                style      = MaterialTheme.typography.bodySmall,
-                color      = PurpleAccent.copy(alpha = 0.85f),
-                textAlign  = TextAlign.Center,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-}
+// ─── Financial Entry (MONTHLY_REPORT messages) ────────────────────────────────
 
-// Full-width monthly financial report card with monospace layout
 @Composable
-private fun MonthlyReportCard(message: ChatMessage) {
+private fun DiaryFinancialEntry(message: ChatMessage) {
     val colors = LocalAppColors.current
-    val shape = RoundedCornerShape(16.dp)
+    val shape  = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier          = Modifier.padding(start = 4.dp, bottom = 6.dp)
+            modifier          = Modifier.padding(start = 4.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("📊", fontSize = 14.sp)
+            Text("📒", fontSize = 14.sp)
             Spacer(Modifier.width(6.dp))
             Text(
-                "Финансовый отчёт",
-                style      = MaterialTheme.typography.bodySmall,
-                color      = GreenSuccess.copy(alpha = 0.8f),
-                fontWeight = FontWeight.Bold
+                "Итоги месяца",
+                style      = MaterialTheme.typography.labelSmall,
+                color      = GreenSuccess.copy(alpha = 0.85f),
+                fontWeight = FontWeight.Bold,
+                fontSize   = 12.sp
             )
         }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(shape)
-                .background(colors.bubbleReport)
+                .background(colors.diaryPage)
                 .border(
                     width = 1.dp,
                     brush = Brush.horizontalGradient(
-                        listOf(GreenSuccess.copy(alpha = 0.45f), GoldPrimary.copy(alpha = 0.25f))
+                        listOf(GreenSuccess.copy(alpha = 0.4f), DiaryChoiceBorder.copy(alpha = 0.2f))
                     ),
                     shape = shape
                 )
@@ -355,93 +384,73 @@ private fun MonthlyReportCard(message: ChatMessage) {
             Text(
                 text       = message.text,
                 style      = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                color      = colors.textPrimary,
+                color      = colors.diaryInk,
                 lineHeight = 20.sp
             )
         }
     }
 }
 
-// ─── Typing Indicator ─────────────────────────────────────────────────────────
+// ─── Writing Indicator ────────────────────────────────────────────────────────
 
 @Composable
-private fun TypingIndicator(characterEmoji: String = "👨‍💻", characterName: String = "Асан") {
+private fun DiaryWritingIndicator() {
     val colors = LocalAppColors.current
-    val infiniteTransition = rememberInfiniteTransition(label = "typing")
-    val bubbleShape = RoundedCornerShape(topStart = 4.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
+    val infiniteTransition = rememberInfiniteTransition(label = "writing")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue  = 1f,
+        animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse),
+        label = "writingAlpha"
+    )
 
-    Column {
-        Row(
-            modifier          = Modifier.padding(start = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(characterEmoji, fontSize = 13.sp)
-            Spacer(Modifier.width(4.dp))
-            Text(characterName, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
-        }
-        Box(
-            modifier = Modifier
-                .clip(bubbleShape)
-                .background(colors.bubbleCharacter)
-                .border(1.dp, GoldPrimary.copy(alpha = 0.20f), bubbleShape)
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                repeat(3) { index ->
-                    val dotAlpha by infiniteTransition.animateFloat(
-                        initialValue = 0.3f, targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation          = tween(550, easing = FastOutSlowInEasing),
-                            repeatMode         = RepeatMode.Reverse,
-                            initialStartOffset = StartOffset(index * 180)
-                        ),
-                        label = "dot$index"
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(GoldPrimary.copy(alpha = dotAlpha))
-                    )
-                }
-            }
-        }
+    Row(
+        modifier          = Modifier.padding(start = 4.dp, top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("✍️", fontSize = 16.sp, modifier = Modifier.padding(end = 8.dp))
+        Text(
+            "пишет в дневник...",
+            style    = MaterialTheme.typography.bodySmall,
+            color    = colors.diaryInkSecondary.copy(alpha = alpha),
+            fontStyle = FontStyle.Italic
+        )
     }
 }
 
-// ─── Options Panel ────────────────────────────────────────────────────────────
+// ─── Actions Panel ────────────────────────────────────────────────────────────
 
 @Composable
-private fun OptionsPanel(options: List<GameOption>, onSelected: (String) -> Unit) {
+private fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) -> Unit) {
     val colors = LocalAppColors.current
     Surface(color = colors.backgroundDeep, shadowElevation = 16.dp) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                "Выберите решение:",
-                style    = MaterialTheme.typography.bodySmall,
-                color    = colors.textSecondary,
-                modifier = Modifier.padding(bottom = 2.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("✍️", fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
+                Text(
+                    "Что я сделаю:",
+                    style    = MaterialTheme.typography.bodySmall,
+                    color    = colors.textSecondary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
             options.forEachIndexed { index, option ->
                 var visible by remember { mutableStateOf(false) }
                 LaunchedEffect(option.id) {
-                    delay(index * 90L)
+                    delay(index * 80L)
                     visible = true
                 }
                 AnimatedVisibility(
                     visible = visible,
-                    enter   = slideInHorizontally { it } + fadeIn(tween(250))
+                    enter   = slideInHorizontally { it / 2 } + fadeIn(tween(250))
                 ) {
-                    OptionButton(option, onClick = { onSelected(option.id) })
+                    DiaryActionItem(option, onClick = { onSelected(option.id) })
                 }
             }
         }
@@ -449,26 +458,36 @@ private fun OptionsPanel(options: List<GameOption>, onSelected: (String) -> Unit
 }
 
 @Composable
-private fun OptionButton(option: GameOption, onClick: () -> Unit) {
+private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
     val colors = LocalAppColors.current
+    val shape  = RoundedCornerShape(8.dp)
     Surface(
         onClick  = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape    = RoundedCornerShape(14.dp),
+        shape    = shape,
         color    = colors.backgroundElevated,
-        border   = BorderStroke(1.dp, GoldPrimary.copy(alpha = 0.22f))
+        border   = BorderStroke(1.dp, DiaryChoiceBorder.copy(alpha = 0.20f))
     ) {
         Row(
-            modifier          = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier          = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(option.emoji, fontSize = 20.sp, modifier = Modifier.padding(end = 12.dp))
+            Text(
+                "☐",
+                fontSize  = 16.sp,
+                color     = DiaryChoiceBorder.copy(alpha = 0.70f),
+                modifier  = Modifier.padding(end = 10.dp)
+            )
+            if (option.emoji.isNotEmpty()) {
+                Text(option.emoji, fontSize = 18.sp, modifier = Modifier.padding(end = 8.dp))
+            }
             Text(
                 option.text,
                 style      = MaterialTheme.typography.bodyMedium,
                 color      = colors.textPrimary,
                 modifier   = Modifier.weight(1f),
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                lineHeight = 20.sp
             )
         }
     }
@@ -477,7 +496,7 @@ private fun OptionButton(option: GameOption, onClick: () -> Unit) {
 // ─── Game Over ────────────────────────────────────────────────────────────────
 
 @Composable
-private fun GameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
+private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
     val colors = LocalAppColors.current
     val endingColor = Color(
         when (endingType) {
@@ -520,7 +539,7 @@ private fun GameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
                     contentColor   = colors.backgroundDeep
                 )
             ) {
-                Text("🔄 Играть снова", fontWeight = FontWeight.Bold)
+                Text("🔄 Начать заново", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -533,4 +552,11 @@ private fun monthName(month: Int): String = when (month) {
     5  -> "Май"; 6  -> "Июн"; 7  -> "Июл"; 8  -> "Авг"
     9  -> "Сен"; 10 -> "Окт"; 11 -> "Ноя"; 12 -> "Дек"
     else -> "?"
+}
+
+private fun monthNameFull(month: Int): String = when (month) {
+    1  -> "января"; 2  -> "февраля"; 3  -> "марта";   4  -> "апреля"
+    5  -> "мая";    6  -> "июня";    7  -> "июля";     8  -> "августа"
+    9  -> "сентября"; 10 -> "октября"; 11 -> "ноября"; 12 -> "декабря"
+    else -> ""
 }

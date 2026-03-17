@@ -588,8 +588,8 @@ class ErbolatScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGrap
     // ─────────────────────────────────────────────────────────────────────────
 
     override val eventPool: List<PoolEntry> = listOf(
-        PoolEntry("normal_life",    weight = 20),
-        PoolEntry("supplier_scam",  weight = 12),
-        PoolEntry("franchise_offer", weight = 6),
+        PoolEntry("normal_life",    baseWeight = 20),
+        PoolEntry("supplier_scam",  baseWeight = 12),
+        PoolEntry("franchise_offer", baseWeight = 6),
     ) + ScamEventLibrary.poolEntries
 }
