@@ -101,7 +101,12 @@ sealed class Condition {
     /** True when the player is in the given era. */
     @Serializable
     data class InEra(val eraId: String) : Condition() {
-        override fun check(state: PlayerState) = state.eraId == eraId
+        override fun check(state: PlayerState) = normalizeEraId(state.eraId) == normalizeEraId(eraId)
+
+        private fun normalizeEraId(value: String) = when (value) {
+            "modern_kz_2024" -> "kz_2024"
+            else -> value
+        }
     }
 
     /** True when playing as the given character archetype. */
