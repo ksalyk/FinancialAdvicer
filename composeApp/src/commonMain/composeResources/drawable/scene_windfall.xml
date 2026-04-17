@@ -1,0 +1,110 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Deep dark background -->
+    <path android:fillColor="#0A0F05" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+
+    <!-- Central glow burst -->
+    <path android:fillColor="#FFD70012"
+        android:pathData="M180,90 m-100,0 a100,100 0 1,0 200,0 a100,100 0 1,0 -200,0 Z"/>
+    <path android:fillColor="#FFD70020"
+        android:pathData="M180,90 m-60,0 a60,60 0 1,0 120,0 a60,60 0 1,0 -120,0 Z"/>
+    <path android:fillColor="#FFD70035"
+        android:pathData="M180,90 m-30,0 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0 Z"/>
+
+    <!-- Falling coins (scattered pattern) -->
+    <!-- Coin 1 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M60,20 m-10,0 a10,6 0 1,0 20,0 a10,6 0 1,0 -20,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M60,17 m-10,0 a10,6 0 1,0 20,0 a10,6 0 1,0 -20,0 Z"/>
+    <path android:strokeColor="#B8860B" android:strokeWidth="1"
+        android:pathData="M60,17 m-10,0 a10,6 0 1,0 20,0 a10,6 0 1,0 -20,0 Z"/>
+    <!-- Coin 2 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M140,10 m-9,0 a9,5 -15 1,0 18,0 a9,5 -15 1,0 -18,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M140,7 m-9,0 a9,5 -15 1,0 18,0 a9,5 -15 1,0 -18,0 Z"/>
+    <!-- Coin 3 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M230,15 m-11,0 a11,7 10 1,0 22,0 a11,7 10 1,0 -22,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M230,12 m-11,0 a11,7 10 1,0 22,0 a11,7 10 1,0 -22,0 Z"/>
+    <!-- Coin 4 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M300,30 m-10,0 a10,6 -20 1,0 20,0 a10,6 -20 1,0 -20,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M300,27 m-10,0 a10,6 -20 1,0 20,0 a10,6 -20 1,0 -20,0 Z"/>
+    <!-- Coin 5 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M80,55 m-8,0 a8,5 5 1,0 16,0 a8,5 5 1,0 -16,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M80,52 m-8,0 a8,5 5 1,0 16,0 a8,5 5 1,0 -16,0 Z"/>
+    <!-- Coin 6 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M280,50 m-9,0 a9,5 -10 1,0 18,0 a9,5 -10 1,0 -18,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M280,47 m-9,0 a9,5 -10 1,0 18,0 a9,5 -10 1,0 -18,0 Z"/>
+    <!-- Coin 7 (mid) -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M110,80 m-8,0 a8,5 0 1,0 16,0 a8,5 0 1,0 -16,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M110,77 m-8,0 a8,5 0 1,0 16,0 a8,5 0 1,0 -16,0 Z"/>
+    <!-- Coin 8 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M250,70 m-10,0 a10,6 15 1,0 20,0 a10,6 15 1,0 -20,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M250,67 m-10,0 a10,6 15 1,0 20,0 a10,6 15 1,0 -20,0 Z"/>
+    <!-- Coin 9 (near bottom) -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M40,140 m-9,0 a9,5 -5 1,0 18,0 a9,5 -5 1,0 -18,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M40,137 m-9,0 a9,5 -5 1,0 18,0 a9,5 -5 1,0 -18,0 Z"/>
+    <!-- Coin 10 -->
+    <path android:fillColor="#DAA520"
+        android:pathData="M320,130 m-10,0 a10,6 10 1,0 20,0 a10,6 10 1,0 -20,0 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M320,127 m-10,0 a10,6 10 1,0 20,0 a10,6 10 1,0 -20,0 Z"/>
+
+    <!-- Central trophy / star burst -->
+    <!-- Trophy cup -->
+    <path android:fillColor="#B8860B"
+        android:pathData="M162,100 Q155,75 155,65 Q155,52 180,52 Q205,52 205,65 Q205,75 198,100 Z"/>
+    <path android:fillColor="#DAA520"
+        android:pathData="M165,97 Q158,74 158,65 Q158,54 180,54 Q202,54 202,65 Q202,74 195,97 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M168,94 Q162,73 162,65 Q162,57 180,57 Q198,57 198,65 Q198,73 192,94 Z"/>
+    <!-- Trophy base -->
+    <path android:fillColor="#B8860B" android:pathData="M162,100 L198,100 L200,108 L160,108 Z"/>
+    <path android:fillColor="#DAA520" android:pathData="M165,100 L195,100 L197,107 L163,107 Z"/>
+    <!-- Trophy stand -->
+    <path android:fillColor="#B8860B" android:pathData="M170,108 L190,108 L190,118 L170,118 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M157,118 L203,118 L203,124 L157,124 Z"/>
+    <!-- Trophy handles -->
+    <path android:strokeColor="#B8860B" android:strokeWidth="4"
+        android:pathData="M158,62 Q142,62 142,75 Q142,88 158,88"/>
+    <path android:strokeColor="#B8860B" android:strokeWidth="4"
+        android:pathData="M202,62 Q218,62 218,75 Q218,88 202,88"/>
+    <!-- Star on trophy -->
+    <path android:fillColor="#FFD700"
+        android:pathData="M180,62 L182,68 L188,68 L183,72 L185,78 L180,74 L175,78 L177,72 L172,68 L178,68 Z"/>
+
+    <!-- Sparkle dots -->
+    <path android:fillColor="#FFD700" android:pathData="M35,70 L38,70 L38,73 L35,73 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M325,80 L328,80 L328,83 L325,83 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M165,145 L168,145 L168,148 L165,148 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M200,150 L203,150 L203,153 L200,153 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M50,100 L53,100 L53,103 L50,103 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M305,100 L308,100 L308,103 L305,103 Z"/>
+
+    <!-- Confetti bits -->
+    <path android:fillColor="#FF6B35" android:pathData="M45,40 L50,38 L52,42 L47,44 Z"/>
+    <path android:fillColor="#4FC3F7" android:pathData="M310,45 L315,43 L317,48 L312,50 Z"/>
+    <path android:fillColor="#E91E63" android:pathData="M90,30 L93,28 L95,32 L92,34 Z"/>
+    <path android:fillColor="#4CAF50" android:pathData="M270,35 L273,33 L275,37 L272,39 Z"/>
+    <path android:fillColor="#FF6B35" android:pathData="M330,70 L335,68 L337,72 L332,74 Z"/>
+    <path android:fillColor="#4FC3F7" android:pathData="M25,120 L30,118 L32,122 L27,124 Z"/>
+</vector>

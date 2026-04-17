@@ -1,0 +1,91 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Deep night sky -->
+    <path android:fillColor="#05080F" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+    <path android:fillColor="#080D1A" android:pathData="M0,0 L360,0 L360,120 L0,120 Z"/>
+
+    <!-- Milky way hint -->
+    <path android:fillColor="#FFFFFF06"
+        android:pathData="M0,0 Q90,40 180,20 Q270,0 360,30 L360,0 L0,0 Z"/>
+
+    <!-- Stars (scattered) -->
+    <path android:fillColor="#FFFFFF" android:pathData="M20,10 L21,9 L22,10 L21,11 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M55,25 L56,24 L57,25 L56,26 Z"/>
+    <path android:fillColor="#FFFDE7" android:pathData="M90,8 L91.5,7 L93,8 L91.5,9 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M130,18 L131,17 L132,18 L131,19 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M170,5 L171,4 L172,5 L171,6 Z"/>
+    <path android:fillColor="#FFFDE7" android:pathData="M210,12 L211.5,11 L213,12 L211.5,13 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M250,20 L251,19 L252,20 L251,21 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M290,8 L291,7 L292,8 L291,9 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M330,15 L331,14 L332,15 L331,16 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M355,5 L356,4 L357,5 L356,6 Z"/>
+    <path android:fillColor="#FFFDE7" android:pathData="M40,40 L41.5,39 L43,40 L41.5,41 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M75,50 L76,49 L77,50 L76,51 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M310,35 L311,34 L312,35 L311,36 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M345,50 L346,49 L347,50 L346,51 Z"/>
+    <path android:fillColor="#FFFDE7" android:pathData="M15,55 L16.5,54 L18,55 L16.5,56 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M100,45 L101,44 L102,45 L101,46 Z"/>
+
+    <!-- Moon (large, detailed) -->
+    <path android:fillColor="#C8D8E8"
+        android:pathData="M290,25 m-35,0 a35,35 0 1,0 70,0 a35,35 0 1,0 -70,0 Z"/>
+    <!-- Moon shadow crescent -->
+    <path android:fillColor="#080D1A"
+        android:pathData="M278,10 Q268,25 278,40 Q300,48 312,35 Q295,50 278,42 Q262,28 278,10 Z"/>
+    <!-- Moon craters -->
+    <path android:strokeColor="#B0C4D8" android:strokeWidth="1"
+        android:pathData="M295,20 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z"/>
+    <path android:strokeColor="#B0C4D8" android:strokeWidth="0.8"
+        android:pathData="M308,30 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z"/>
+    <path android:strokeColor="#B0C4D8" android:strokeWidth="0.8"
+        android:pathData="M288,38 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z"/>
+
+    <!-- Steppe/hill silhouette -->
+    <path android:fillColor="#080D12"
+        android:pathData="M0,120 Q60,95 120,105 Q180,115 240,95 Q300,75 360,90 L360,180 L0,180 Z"/>
+    <path android:fillColor="#0A0F16"
+        android:pathData="M0,130 Q80,115 160,120 Q240,125 360,110 L360,180 L0,180 Z"/>
+    <!-- Ground -->
+    <path android:fillColor="#050A08" android:pathData="M0,145 L360,145 L360,180 L0,180 Z"/>
+
+    <!-- Sitting figure silhouette -->
+    <!-- Body -->
+    <path android:fillColor="#03050A"
+        android:pathData="M155,148 Q158,138 165,135 Q170,133 175,135 Q182,138 184,148 Z"/>
+    <!-- Head -->
+    <path android:fillColor="#03050A"
+        android:pathData="M165,135 Q165,125 170,123 Q175,121 178,125 Q181,129 178,135 Z"/>
+    <!-- Legs (sitting) -->
+    <path android:fillColor="#03050A"
+        android:pathData="M155,148 Q150,155 145,158 L158,158 Q160,152 164,148 Z"/>
+    <path android:fillColor="#03050A"
+        android:pathData="M184,148 Q189,155 194,158 L181,158 Q179,152 175,148 Z"/>
+
+    <!-- Thought/meditation dots -->
+    <path android:fillColor="#FFFFFF30"
+        android:pathData="M183,122 Q185,120 187,122 Q185,124 183,122 Z"/>
+    <path android:fillColor="#FFFFFF50"
+        android:pathData="M190,115 Q193,112 196,115 Q193,118 190,115 Z"/>
+    <path android:fillColor="#FFFFFF70"
+        android:pathData="M198,106 Q202,102 206,106 Q202,110 198,106 Z"/>
+
+    <!-- Simple quotes symbol -->
+    <path android:fillColor="#FFFFFF20"
+        android:pathData="M30,90 Q28,82 32,80 L36,82 Q32,84 33,90 Z"/>
+    <path android:fillColor="#FFFFFF20"
+        android:pathData="M40,90 Q38,82 42,80 L46,82 Q42,84 43,90 Z"/>
+
+    <!-- Horizon glow (moonlight on steppe) -->
+    <path android:fillColor="#C8D8E810"
+        android:pathData="M220,80 L360,80 L360,120 L220,120 Z"/>
+
+    <!-- Shooting star -->
+    <path android:strokeColor="#FFFFFF60" android:strokeWidth="1.5"
+        android:pathData="M50,30 L80,45"/>
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M48,29 L52,31 L51,33 L47,31 Z"/>
+</vector>

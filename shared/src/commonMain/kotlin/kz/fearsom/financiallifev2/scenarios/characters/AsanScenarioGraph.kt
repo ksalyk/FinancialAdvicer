@@ -830,6 +830,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     next = MONTHLY_TICK,
                     fx = Effect(
                         investmentsDelta = 200_000,
+                        capitalDelta = -200_000,
                         knowledgeDelta = 5
                     )
                 ),

@@ -1,0 +1,98 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Sky (dawn / hopeful blue) -->
+    <path android:fillColor="#0A1520" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+    <path android:fillColor="#0F2535" android:pathData="M0,0 L360,0 L360,100 L0,100 Z"/>
+    <!-- Horizon glow -->
+    <path android:fillColor="#152840" android:pathData="M0,70 L360,70 L360,100 L0,100 Z"/>
+
+    <!-- Ground -->
+    <path android:fillColor="#0A1208" android:pathData="M0,130 L360,130 L360,180 L0,180 Z"/>
+
+    <!-- House (nice, aspirational) -->
+    <!-- House body -->
+    <path android:fillColor="#152030" android:pathData="M100,130 L100,85 L260,85 L260,130 Z"/>
+    <!-- Roof -->
+    <path android:fillColor="#1E3045"
+        android:pathData="M85,85 L180,40 L275,85 Z"/>
+    <path android:fillColor="#253D55"
+        android:pathData="M90,85 L180,43 L270,85 Z"/>
+    <!-- Chimney -->
+    <path android:fillColor="#1A2D40" android:pathData="M210,55 L225,55 L225,40 L210,40 Z"/>
+
+    <!-- Windows (warm glow) -->
+    <path android:fillColor="#FFB30050" android:pathData="M115,95 L148,95 L148,120 L115,120 Z"/>
+    <path android:fillColor="#FFB30050" android:pathData="M212,95 L245,95 L245,120 L212,120 Z"/>
+    <!-- Window frames -->
+    <path android:fillColor="#1E3045" android:pathData="M130,95 L132,95 L132,120 L130,120 Z"/>
+    <path android:fillColor="#1E3045" android:pathData="M115,107 L148,107 L148,109 L115,109 Z"/>
+    <path android:fillColor="#1E3045" android:pathData="M227,95 L229,95 L229,120 L227,120 Z"/>
+    <path android:fillColor="#1E3045" android:pathData="M212,107 L245,107 L245,109 L212,109 Z"/>
+
+    <!-- Door -->
+    <path android:fillColor="#0F1820"
+        android:pathData="M163,130 L163,108 Q180,104 197,108 L197,130 Z"/>
+    <!-- Door knob -->
+    <path android:fillColor="#FFD700"
+        android:pathData="M189,119 Q191,117 193,119 Q191,121 189,119 Z"/>
+
+    <!-- Fence -->
+    <path android:fillColor="#0F1E2E" android:pathData="M30,125 L330,125 L330,130 L30,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M30,120 L33,120 L33,130 L30,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M42,120 L45,120 L45,130 L42,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M54,120 L57,120 L57,130 L54,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M66,120 L69,120 L69,130 L66,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M78,120 L81,120 L81,130 L78,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M90,120 L93,120 L93,130 L90,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M267,120 L270,120 L270,130 L267,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M279,120 L282,120 L282,130 L279,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M291,120 L294,120 L294,130 L291,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M303,120 L306,120 L306,130 L303,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M315,120 L318,120 L318,130 L315,130 Z"/>
+    <path android:fillColor="#0F1E2E" android:pathData="M327,120 L330,120 L330,130 L327,130 Z"/>
+    <!-- Fence picket tops -->
+    <path android:fillColor="#0F1E2E"
+        android:pathData="M30,120 L31.5,116 L33,120 Z"/>
+    <path android:fillColor="#0F1E2E"
+        android:pathData="M42,120 L43.5,116 L45,120 Z"/>
+    <path android:fillColor="#0F1E2E"
+        android:pathData="M54,120 L55.5,116 L57,120 Z"/>
+    <path android:fillColor="#0F1E2E"
+        android:pathData="M66,120 L67.5,116 L69,120 Z"/>
+    <path android:fillColor="#0F1E2E"
+        android:pathData="M78,120 L79.5,116 L81,120 Z"/>
+
+    <!-- Giant key (right side) -->
+    <!-- Key ring -->
+    <path android:strokeColor="#FFD700" android:strokeWidth="4"
+        android:pathData="M290,50 m-22,0 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0 Z"/>
+    <path android:strokeColor="#B8860B" android:strokeWidth="2"
+        android:pathData="M290,50 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z"/>
+    <!-- Key shaft -->
+    <path android:fillColor="#FFD700" android:pathData="M290,69 L290,130 L296,130 L296,69 Z"/>
+    <!-- Key teeth -->
+    <path android:fillColor="#FFD700" android:pathData="M296,90 L308,90 L308,96 L296,96 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M296,105 L308,105 L308,111 L296,111 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M296,118 L304,118 L304,124 L296,124 Z"/>
+
+    <!-- Stars -->
+    <path android:fillColor="#FFE082" android:pathData="M30,20 L31,18 L32,20 L30,19 L32,19 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M55,10 L56,8 L57,10 L55,9 L57,9 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M20,40 L21,38 L22,40 L20,39 L22,39 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M330,15 L331,13 L332,15 L330,14 L332,14 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M340,35 L341,33 L342,35 L340,34 L342,34 Z"/>
+
+    <!-- Moon -->
+    <path android:fillColor="#C8D8E8"
+        android:pathData="M48,30 Q56,20 64,28 Q54,32 48,30 Z"/>
+
+    <!-- Warm glow from windows -->
+    <path android:fillColor="#FFB30010"
+        android:pathData="M100,130 L140,130 L120,180 L80,180 Z"/>
+    <path android:fillColor="#FFB30010"
+        android:pathData="M220,130 L260,130 L240,180 L200,180 Z"/>
+</vector>

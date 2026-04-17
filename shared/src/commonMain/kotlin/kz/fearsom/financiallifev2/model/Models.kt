@@ -296,7 +296,14 @@ data class ChatMessage(
     val sender: MessageSender = MessageSender.SYSTEM,
     val text: String = "",
     val emoji: String = "",
-    val timestampMs: Long = 0L
+    val timestampMs: Long = 0L,
+    /**
+     * Semantic scene category resolved from [GameEvent.tags].
+     * Values: "scam" | "crisis" | "career" | "family" | "investment" |
+     *         "mortgage" | "windfall" | "world" | null (no image)
+     * The UI layer maps this string to the actual drawable resource.
+     */
+    val sceneTag: String? = null
 )
 
 // ════════════════════════════════════════════════════════════════════

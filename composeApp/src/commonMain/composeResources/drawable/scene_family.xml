@@ -1,0 +1,86 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Warm evening sky -->
+    <path android:fillColor="#1A0F0A" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+    <path android:fillColor="#2D1810" android:pathData="M0,0 L360,0 L360,90 L0,90 Z"/>
+    <!-- Warm sunset gradient -->
+    <path android:fillColor="#3D2010" android:pathData="M0,60 L360,60 L360,90 L0,90 Z"/>
+
+    <!-- Stars -->
+    <path android:fillColor="#FFE082" android:pathData="M30,15 L31,13 L32,15 L30,14 L32,14 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M80,8 L81,6 L82,8 L80,7 L82,7 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M150,20 L151,18 L152,20 L150,19 L152,19 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M280,12 L281,10 L282,12 L280,11 L282,11 Z"/>
+    <path android:fillColor="#FFE082" android:pathData="M330,25 L331,23 L332,25 L330,24 L332,24 Z"/>
+
+    <!-- Ground -->
+    <path android:fillColor="#0D0805" android:pathData="M0,130 L360,130 L360,180 L0,180 Z"/>
+    <!-- Grass hint -->
+    <path android:fillColor="#0F1A05" android:pathData="M0,128 L360,128 L360,135 L0,135 Z"/>
+
+    <!-- House -->
+    <!-- Roof -->
+    <path android:fillColor="#5C2A1A"
+        android:pathData="M100,90 L180,45 L260,90 Z"/>
+    <path android:fillColor="#7A3520"
+        android:pathData="M105,90 L180,48 L255,90 Z"/>
+    <!-- Chimney -->
+    <path android:fillColor="#4A2010" android:pathData="M200,55 L215,55 L215,40 L200,40 Z"/>
+    <!-- Smoke from chimney -->
+    <path android:strokeColor="#607D8B60" android:strokeWidth="2"
+        android:pathData="M207,40 Q205,30 208,22 Q211,14 209,8"/>
+    <!-- House walls -->
+    <path android:fillColor="#2D1810" android:pathData="M110,90 L110,130 L250,130 L250,90 Z"/>
+    <path android:fillColor="#3D2010" android:pathData="M112,90 L112,130 L248,130 L248,90 Z"/>
+    <!-- Door -->
+    <path android:fillColor="#1A0D08"
+        android:pathData="M165,130 L165,108 Q180,104 195,108 L195,130 Z"/>
+    <path android:strokeColor="#5C3A20" android:strokeWidth="1.5"
+        android:pathData="M165,130 L165,108 Q180,104 195,108 L195,130 Z"/>
+    <!-- Door knob -->
+    <path android:fillColor="#FFD700"
+        android:pathData="M187,119 Q189,117 191,119 Q189,121 187,119 Z"/>
+    <!-- Windows -->
+    <path android:fillColor="#FFB30040" android:pathData="M120,98 L148,98 L148,120 L120,120 Z"/>
+    <path android:fillColor="#FFB30040" android:pathData="M212,98 L240,98 L240,120 L212,120 Z"/>
+    <!-- Window cross -->
+    <path android:fillColor="#3D2010" android:pathData="M133,98 L135,98 L135,120 L133,120 Z"/>
+    <path android:fillColor="#3D2010" android:pathData="M120,108 L148,108 L148,110 L120,110 Z"/>
+    <path android:fillColor="#3D2010" android:pathData="M225,98 L227,98 L227,120 L225,120 Z"/>
+    <path android:fillColor="#3D2010" android:pathData="M212,108 L240,108 L240,110 L212,110 Z"/>
+    <!-- Window warm light glow -->
+    <path android:fillColor="#FFB30020" android:pathData="M115,95 L155,95 L155,125 L115,125 Z"/>
+    <path android:fillColor="#FFB30020" android:pathData="M207,95 L245,95 L245,125 L207,125 Z"/>
+
+    <!-- Family silhouettes outside -->
+    <!-- Adult 1 (father) -->
+    <path android:fillColor="#0D0805"
+        android:pathData="M52,130 L52,100 Q52,94 58,92 Q58,86 54,83 Q49,80 50,88 Q45,81 53,78 Q64,75 67,86 Q72,84 71,94 Q69,100 62,102 Q68,104 70,110 L72,130 Z"/>
+    <!-- Adult 2 (mother) -->
+    <path android:fillColor="#0D0805"
+        android:pathData="M280,130 L280,104 Q282,98 286,96 Q286,91 283,88 Q278,85 279,93 Q274,86 281,82 Q292,79 295,90 Q300,88 298,98 Q296,105 290,106 Q295,108 297,114 L300,130 Z"/>
+    <!-- Child silhouette (smaller) -->
+    <path android:fillColor="#0D0805"
+        android:pathData="M305,130 L305,110 Q305,106 309,105 Q309,100 306,98 Q302,96 303,102 Q299,97 305,94 Q313,92 315,100 Q319,98 318,106 Q316,110 312,111 Q316,112 317,117 L319,130 Z"/>
+
+    <!-- Warm porch light -->
+    <path android:fillColor="#FFB30015"
+        android:pathData="M160,104 Q180,95 200,104 L210,130 L150,130 Z"/>
+
+    <!-- Tree (left) -->
+    <path android:fillColor="#0D0805" android:pathData="M22,130 L24,130 L24,95 L22,95 Z"/>
+    <path android:fillColor="#0F1A05"
+        android:pathData="M23,95 Q10,80 8,65 Q20,68 23,80 Q26,68 38,65 Q36,80 23,95 Z"/>
+
+    <!-- Tree (right) -->
+    <path android:fillColor="#0D0805" android:pathData="M336,130 L338,130 L338,100 L336,100 Z"/>
+    <path android:fillColor="#0F1A05"
+        android:pathData="M337,100 Q325,85 323,70 Q334,73 337,85 Q340,73 352,70 Q350,85 337,100 Z"/>
+
+    <!-- Warm glow on ground from house -->
+    <path android:fillColor="#FFB30008" android:pathData="M140,128 L220,128 L240,180 L120,180 Z"/>
+</vector>

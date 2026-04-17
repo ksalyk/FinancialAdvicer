@@ -1,0 +1,76 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Dark red sky -->
+    <path android:fillColor="#1C0A0A" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+    <path android:fillColor="#2D0F0F" android:pathData="M0,0 L360,0 L360,100 L0,100 Z"/>
+
+    <!-- Ground -->
+    <path android:fillColor="#0D0D0D" android:pathData="M0,140 L360,140 L360,180 L0,180 Z"/>
+
+    <!-- City skyline (crumbling) -->
+    <!-- Building 1 -->
+    <path android:fillColor="#1A1A1A" android:pathData="M20,140 L20,60 L60,60 L60,140 Z"/>
+    <!-- Building 1 windows (dark/broken) -->
+    <path android:fillColor="#FF4444" android:pathData="M28,70 L36,70 L36,78 L28,78 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M44,70 L52,70 L52,78 L44,78 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M28,88 L36,88 L36,96 L28,96 Z"/>
+    <path android:fillColor="#FF444430" android:pathData="M44,88 L52,88 L52,96 L44,96 Z"/>
+
+    <!-- Building 2 (taller) -->
+    <path android:fillColor="#222222" android:pathData="M75,140 L75,30 L115,30 L115,140 Z"/>
+    <path android:fillColor="#FF4444" android:pathData="M83,40 L91,40 L91,50 L83,50 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M99,40 L107,40 L107,50 L99,50 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M83,58 L91,58 L91,68 L83,68 Z"/>
+    <path android:fillColor="#FF4444" android:pathData="M99,58 L107,58 L107,68 L99,68 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M83,76 L91,76 L91,86 L83,86 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M99,76 L107,76 L107,86 L99,86 Z"/>
+
+    <!-- Building 3 -->
+    <path android:fillColor="#181818" android:pathData="M130,140 L130,80 L165,80 L165,140 Z"/>
+    <path android:fillColor="#FF444450" android:pathData="M138,90 L145,90 L145,100 L138,100 Z"/>
+    <path android:fillColor="#2A2A2A" android:pathData="M152,90 L159,90 L159,100 L152,100 Z"/>
+
+    <!-- Cracked piggy bank in center -->
+    <path android:fillColor="#C75C5C"
+        android:pathData="M185,70 Q185,45 205,45 Q225,45 230,60 Q238,55 240,65 Q245,65 245,75 Q245,100 215,105 Q195,105 185,90 Q180,83 185,70 Z"/>
+    <!-- Crack lines -->
+    <path android:strokeColor="#8B0000" android:strokeWidth="2"
+        android:pathData="M205,50 L210,65 L202,75"/>
+    <path android:strokeColor="#8B0000" android:strokeWidth="1.5"
+        android:pathData="M215,48 L218,60"/>
+    <!-- Coin slot -->
+    <path android:fillColor="#8B0000" android:pathData="M208,47 L212,47 L212,50 L208,50 Z"/>
+    <!-- Coin falling (broken) -->
+    <path android:fillColor="#FFD700"
+        android:pathData="M195,108 Q192,116 196,120 Q200,124 204,120 Q208,116 205,108 Z"/>
+    <path android:fillColor="#B8860B"
+        android:pathData="M260,95 Q258,103 261,107 Q264,111 267,107 Q270,103 268,95 Z"/>
+    <!-- Eye -->
+    <path android:fillColor="#8B0000"
+        android:pathData="M235,65 Q237,62 239,65 Q237,68 235,65 Z"/>
+    <!-- Legs -->
+    <path android:fillColor="#C75C5C" android:pathData="M198,103 L196,118 L202,118 L200,103 Z"/>
+    <path android:fillColor="#C75C5C" android:pathData="M210,104 L208,119 L214,119 L212,104 Z"/>
+
+    <!-- Down arrow / stock graph crash -->
+    <path android:fillColor="#FF4444"
+        android:pathData="M290,40 L340,40 L340,44 L316,44 L330,80 L326,82 L315,52 L305,80 L300,78 L312,44 L290,44 Z"/>
+    <!-- Graph line going down -->
+    <path android:strokeColor="#FF6666" android:strokeWidth="2.5"
+        android:pathData="M280,50 L295,55 L305,48 L315,70 L325,60 L340,90 L350,130"/>
+
+    <!-- ₸ symbol cracking -->
+    <path android:fillColor="#FFD70060"
+        android:pathData="M50,145 L70,145 L70,148 L50,148 Z"/>
+    <path android:fillColor="#FFD70060"
+        android:pathData="M50,152 L70,152 L70,155 L50,155 Z"/>
+    <path android:fillColor="#FFD70060"
+        android:pathData="M58,140 L62,140 L62,160 L58,160 Z"/>
+
+    <!-- Red vignette overlay -->
+    <path android:fillColor="#FF000010" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+</vector>

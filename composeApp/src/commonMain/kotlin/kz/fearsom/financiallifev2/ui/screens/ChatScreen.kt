@@ -17,12 +17,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import financiallifev2.composeapp.generated.resources.*
 import kz.fearsom.financiallifev2.model.ChatMessage
 import kz.fearsom.financiallifev2.model.EndingType
 import kz.fearsom.financiallifev2.model.GameOption
@@ -32,6 +34,8 @@ import kz.fearsom.financiallifev2.presentation.GameUiState
 import kz.fearsom.financiallifev2.ui.components.StatsPanelOverlay
 import kz.fearsom.financiallifev2.ui.theme.*
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -193,33 +197,119 @@ private fun DiaryMessageItem(message: ChatMessage, playerState: PlayerState?) {
     }
 }
 
+// ─── Scene Image ──────────────────────────────────────────────────────────────
+
+/**
+ * Maps a semantic scene tag to a compiled drawable resource.
+ * Returns null when no image should be shown (routine/consequence events).
+ * Add new entries here as scene assets are created.
+ */
+@Composable
+private fun sceneDrawableFor(tag: String?): DrawableResource? = when (tag) {
+    "scam"       -> Res.drawable.scene_scam
+    "crisis"     -> Res.drawable.scene_crisis
+    "career"     -> Res.drawable.scene_career
+    "family"     -> Res.drawable.scene_family
+    "investment" -> Res.drawable.scene_investment
+    "mortgage"   -> Res.drawable.scene_mortgage
+    "windfall"   -> Res.drawable.scene_windfall
+    "world"      -> Res.drawable.scene_world
+    else         -> null
+}
+
 // ─── Diary Entry Card (CHARACTER messages) ────────────────────────────────────
 
 @Composable
 private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
-    val colors = LocalAppColors.current
-    val shape  = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
-
-    // Ruled lines drawn behind the text
+    val colors   = LocalAppColors.current
+    val shape    = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
     val lineColor = colors.diaryLine
+    val sceneRes = sceneDrawableFor(message.sceneTag)
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        // ── Scene image (shown only for tagged events) ────────────────────────
+        if (sceneRes != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 12.dp))
+            ) {
+                Image(
+                    painter             = painterResource(sceneRes),
+                    contentDescription  = null,
+                    contentScale        = ContentScale.Crop,
+                    modifier            = Modifier.fillMaxSize()
+                )
+                // Bottom fade-out so scene bleeds into the diary card below
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, colors.diaryPage)
+                            )
+                        )
+                )
+                // Scene tag label (top-left corner pill)
+                val tagLabel = when (message.sceneTag) {
+                    "scam"       -> "⚠️ Осторожно"
+                    "crisis"     -> "📉 Кризис"
+                    "career"     -> "💼 Карьера"
+                    "family"     -> "🏠 Семья"
+                    "investment" -> "📈 Инвестиции"
+                    "mortgage"   -> "🔑 Ипотека"
+                    "windfall"   -> "🎉 Удача"
+                    "world"      -> "🌙 Размышление"
+                    else         -> null
+                }
+                if (tagLabel != null) {
+                    Box(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .align(Alignment.TopStart)
+                    ) {
+                        Text(
+                            tagLabel,
+                            style     = MaterialTheme.typography.labelSmall,
+                            color     = Color.White,
+                            fontSize  = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── Diary text card ───────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(shape)
+                .clip(
+                    if (sceneRes != null)
+                        RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 12.dp)
+                    else
+                        shape
+                )
                 .background(colors.diaryPage)
                 .border(
                     width = 1.dp,
                     brush = Brush.verticalGradient(
                         listOf(DiaryChoiceBorder.copy(alpha = 0.30f), colors.diaryLine)
                     ),
-                    shape = shape
+                    shape = if (sceneRes != null)
+                        RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 12.dp)
+                    else
+                        shape
                 )
-                // Draw horizontal ruled lines
                 .drawBehind {
                     val lineSpacing = 28.dp.toPx()
-                    val startY = 72.dp.toPx() // below the header area
+                    val startY = 72.dp.toPx()
                     var y = startY
                     while (y < size.height - 12.dp.toPx()) {
                         drawLine(
@@ -235,9 +325,9 @@ private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
             Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
                 // Date header row
                 Row(
-                    modifier          = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment     = Alignment.CenterVertically
                 ) {
                     val dateText = if (playerState != null) {
                         "${playerState.month} ${monthNameFull(playerState.month)} ${playerState.year}"

@@ -1,0 +1,81 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Office background gradient -->
+    <path android:fillColor="#0F1923" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+    <path android:fillColor="#152535" android:pathData="M0,0 L360,0 L360,110 L0,110 Z"/>
+
+    <!-- Window with city view -->
+    <path android:fillColor="#0A1520" android:pathData="M40,20 L160,20 L160,130 L40,130 Z"/>
+    <!-- Window frame -->
+    <path android:strokeColor="#2A4A6A" android:strokeWidth="3"
+        android:pathData="M40,20 L160,20 L160,130 L40,130 Z"/>
+    <!-- Window cross bar -->
+    <path android:fillColor="#2A4A6A" android:pathData="M98,20 L102,20 L102,130 L98,130 Z"/>
+    <path android:fillColor="#2A4A6A" android:pathData="M40,73 L160,73 L160,77 L40,77 Z"/>
+    <!-- City lights in window -->
+    <path android:fillColor="#1A3050" android:pathData="M50,80 L65,80 L65,130 L50,130 Z"/>
+    <path android:fillColor="#1A3050" android:pathData="M70,65 L85,65 L85,130 L70,130 Z"/>
+    <path android:fillColor="#1A3050" android:pathData="M110,55 L125,55 L125,130 L110,130 Z"/>
+    <path android:fillColor="#1A3050" android:pathData="M130,75 L145,75 L145,130 L130,130 Z"/>
+    <!-- Window lights -->
+    <path android:fillColor="#FFD700" android:pathData="M52,85 L56,85 L56,89 L52,89 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M59,85 L63,85 L63,89 L59,89 Z"/>
+    <path android:fillColor="#4FC3F7" android:pathData="M72,70 L76,70 L76,74 L72,74 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M112,60 L116,60 L116,64 L112,64 Z"/>
+    <path android:fillColor="#4FC3F7" android:pathData="M119,60 L123,60 L123,64 L119,64 Z"/>
+    <path android:fillColor="#FFD700" android:pathData="M132,80 L136,80 L136,84 L132,84 Z"/>
+    <!-- Moon in window -->
+    <path android:fillColor="#FFE082"
+        android:pathData="M148,28 Q154,22 160,28 Q154,34 148,28 Z"/>
+
+    <!-- Desk -->
+    <path android:fillColor="#1E2D3D" android:pathData="M0,130 L360,130 L360,180 L0,180 Z"/>
+    <path android:fillColor="#253545" android:pathData="M0,130 L360,130 L360,140 L0,140 Z"/>
+
+    <!-- Laptop -->
+    <path android:fillColor="#1A2535" android:pathData="M175,130 L295,130 L300,80 L170,80 Z"/>
+    <path android:fillColor="#0D1520" android:pathData="M178,128 L292,128 L297,84 L173,84 Z"/>
+    <!-- Laptop screen content (growth chart) -->
+    <path android:strokeColor="#4FC3F7" android:strokeWidth="2"
+        android:pathData="M185,120 L200,115 L215,108 L230,100 L245,88 L260,78 L275,70"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M185,122 L200,120 L215,118 L230,112 L245,105 L260,95 L275,85"/>
+    <!-- Laptop base -->
+    <path android:fillColor="#263545" android:pathData="M155,130 L315,130 L310,140 L160,140 Z"/>
+
+    <!-- Coffee mug -->
+    <path android:fillColor="#2A3F55" android:pathData="M318,105 L340,105 L340,130 L318,130 Z"/>
+    <path android:fillColor="#3A5570" android:pathData="M318,105 L340,105 L340,110 L318,110 Z"/>
+    <path android:strokeColor="#3A5570" android:strokeWidth="3"
+        android:pathData="M340,110 Q350,110 350,118 Q350,126 340,126"/>
+    <!-- Steam -->
+    <path android:strokeColor="#607D8B" android:strokeWidth="1.5"
+        android:pathData="M324,98 Q326,90 324,82"/>
+    <path android:strokeColor="#607D8B" android:strokeWidth="1.5"
+        android:pathData="M330,96 Q332,88 330,80"/>
+    <path android:strokeColor="#607D8B" android:strokeWidth="1.5"
+        android:pathData="M336,98 Q338,90 336,82"/>
+
+    <!-- Upward arrow / promotion -->
+    <path android:fillColor="#4CAF50"
+        android:pathData="M330,30 L344,50 L337,50 L337,75 L323,75 L323,50 L316,50 Z"/>
+
+    <!-- Document/papers -->
+    <path android:fillColor="#1E3545" android:pathData="M20,125 L90,125 L90,140 L20,140 Z"/>
+    <path android:fillColor="#243F55" android:pathData="M25,120 L95,120 L95,135 L25,135 Z"/>
+    <path android:fillColor="#2A4A60" android:pathData="M30,115 L100,115 L100,130 L30,130 Z"/>
+    <!-- Lines on document -->
+    <path android:strokeColor="#3A6080" android:strokeWidth="1"
+        android:pathData="M35,119 L95,119"/>
+    <path android:strokeColor="#3A6080" android:strokeWidth="1"
+        android:pathData="M35,122 L80,122"/>
+    <path android:strokeColor="#3A6080" android:strokeWidth="1"
+        android:pathData="M35,125 L90,125"/>
+
+    <!-- Subtle golden light from laptop -->
+    <path android:fillColor="#4FC3F708" android:pathData="M170,80 L300,80 L360,130 L140,130 Z"/>
+</vector>

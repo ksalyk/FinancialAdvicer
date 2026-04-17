@@ -1,0 +1,122 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="180dp"
+    android:viewportWidth="360"
+    android:viewportHeight="180">
+
+    <!-- Dark finance background -->
+    <path android:fillColor="#050D15" android:pathData="M0,0 L360,0 L360,180 L0,180 Z"/>
+
+    <!-- Grid lines (subtle) -->
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M0,36 L360,36"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M0,72 L360,72"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M0,108 L360,108"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M0,144 L360,144"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M72,0 L72,180"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M144,0 L144,180"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M216,0 L216,180"/>
+    <path android:strokeColor="#0D2035" android:strokeWidth="1"
+        android:pathData="M288,0 L288,180"/>
+
+    <!-- Stock chart area fill (green glow) -->
+    <path android:fillColor="#00FF0008"
+        android:pathData="M30,140 L60,130 L90,125 L120,115 L150,105 L180,90 L210,80 L240,65 L270,55 L300,40 L330,30 L330,180 L30,180 Z"/>
+
+    <!-- Main stock line (bullish) -->
+    <path android:strokeColor="#4CAF50" android:strokeWidth="3"
+        android:pathData="M30,140 L60,130 L90,125 L120,115 L150,105 L180,90 L210,80 L240,65 L270,55 L300,40 L330,30"/>
+
+    <!-- Candlestick chart (right side detail) -->
+    <!-- Candle 1 (green) -->
+    <path android:fillColor="#4CAF50" android:pathData="M230,95 L238,95 L238,120 L230,120 Z"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M234,88 L234,95"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M234,120 L234,128"/>
+
+    <!-- Candle 2 (red) -->
+    <path android:fillColor="#FF5252" android:pathData="M244,100 L252,100 L252,115 L244,115 Z"/>
+    <path android:strokeColor="#FF5252" android:strokeWidth="1.5"
+        android:pathData="M248,92 L248,100"/>
+    <path android:strokeColor="#FF5252" android:strokeWidth="1.5"
+        android:pathData="M248,115 L248,122"/>
+
+    <!-- Candle 3 (green, tall) -->
+    <path android:fillColor="#4CAF50" android:pathData="M258,82 L266,82 L266,110 L258,110 Z"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M262,72 L262,82"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M262,110 L262,118"/>
+
+    <!-- Candle 4 (green) -->
+    <path android:fillColor="#4CAF50" android:pathData="M272,70 L280,70 L280,88 L272,88 Z"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M276,62 L276,70"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M276,88 L276,96"/>
+
+    <!-- Candle 5 (red small) -->
+    <path android:fillColor="#FF5252" android:pathData="M286,58 L294,58 L294,72 L286,72 Z"/>
+    <path android:strokeColor="#FF5252" android:strokeWidth="1.5"
+        android:pathData="M290,50 L290,58"/>
+    <path android:strokeColor="#FF5252" android:strokeWidth="1.5"
+        android:pathData="M290,72 L290,80"/>
+
+    <!-- Candle 6 (green, breakout) -->
+    <path android:fillColor="#4CAF50" android:pathData="M300,38 L308,38 L308,58 L300,58 Z"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M304,28 L304,38"/>
+    <path android:strokeColor="#4CAF50" android:strokeWidth="1.5"
+        android:pathData="M304,58 L304,65"/>
+
+    <!-- Gold coin stack (left) -->
+    <!-- Stack base -->
+    <path android:fillColor="#B8860B"
+        android:pathData="M50,155 Q50,150 70,150 Q90,150 90,155 Q90,160 70,160 Q50,160 50,155 Z"/>
+    <path android:fillColor="#DAA520"
+        android:pathData="M52,153 Q52,148 70,148 Q88,148 88,153 Q88,158 70,158 Q52,158 52,153 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M54,151 Q54,146 70,146 Q86,146 86,151 Q86,156 70,156 Q54,156 54,151 Z"/>
+    <path android:fillColor="#B8860B"
+        android:pathData="M50,148 Q50,143 70,143 Q90,143 90,148 Q90,153 70,153 Q50,153 50,148 Z"/>
+    <path android:fillColor="#DAA520"
+        android:pathData="M52,146 Q52,141 70,141 Q88,141 88,146 Q88,151 70,151 Q52,151 52,146 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M54,144 Q54,139 70,139 Q86,139 86,144 Q86,149 70,149 Q54,149 54,144 Z"/>
+    <path android:fillColor="#B8860B"
+        android:pathData="M50,141 Q50,136 70,136 Q90,136 90,141 Q90,146 70,146 Q50,146 50,141 Z"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M54,137 Q54,132 70,132 Q86,132 86,137 Q86,142 70,142 Q54,142 54,137 Z"/>
+    <!-- ₸ on coin -->
+    <path android:fillColor="#B8860B"
+        android:pathData="M64,135 L76,135 L76,136 L64,136 Z"/>
+    <path android:fillColor="#B8860B"
+        android:pathData="M64,138 L76,138 L76,139 L64,139 Z"/>
+    <path android:fillColor="#B8860B"
+        android:pathData="M69,133 L71,133 L71,143 L69,143 Z"/>
+
+    <!-- Upward arrow glow -->
+    <path android:fillColor="#4CAF5040"
+        android:pathData="M155,35 L165,50 L160,50 L160,75 L150,75 L150,50 L145,50 Z"/>
+    <path android:fillColor="#4CAF50"
+        android:pathData="M155,30 L168,50 L161,50 L161,72 L149,72 L149,50 L142,50 Z"/>
+
+    <!-- % symbol -->
+    <path android:fillColor="#FFD700"
+        android:pathData="M105,20 Q108,16 112,20 Q108,24 105,20 Z"/>
+    <path android:strokeColor="#FFD700" android:strokeWidth="1.5"
+        android:pathData="M115,16 L105,28"/>
+    <path android:fillColor="#FFD700"
+        android:pathData="M116,24 Q119,20 123,24 Q119,28 116,24 Z"/>
+
+    <!-- Subtle green glow at top of chart -->
+    <path android:fillColor="#4CAF5015"
+        android:pathData="M270,0 L360,0 L360,60 L270,40 Z"/>
+</vector>

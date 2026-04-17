@@ -338,11 +338,31 @@ class GameEngine(
      * with actual values from the current [PlayerState].
      */
     private fun characterMsg(event: GameEvent, ps: PlayerState) = ChatMessage(
-        id     = "char_${event.id}_${ts()}",
-        sender = MessageSender.CHARACTER,
-        text   = substituteTemplate(event.message, ps),
-        emoji  = event.flavor
+        id       = "char_${event.id}_${ts()}",
+        sender   = MessageSender.CHARACTER,
+        text     = substituteTemplate(event.message, ps),
+        emoji    = event.flavor,
+        sceneTag = primarySceneTag(event.tags)
     )
+
+    /**
+     * Maps a [GameEvent]'s tag set to a single scene category string consumed by the UI.
+     *
+     * Priority order matters: a "scam + crisis" event should show the scam scene.
+     * Returns null for routine events (salary, monthly tick, consequence-only) so
+     * the diary card renders without an image and doesn't visually overload the feed.
+     */
+    private fun primarySceneTag(tags: Set<String>): String? = when {
+        tags.any { it.startsWith("scam") }  -> "scam"
+        "crisis" in tags                    -> "crisis"
+        "mortgage" in tags                  -> "mortgage"
+        "windfall" in tags                  -> "windfall"
+        "career" in tags                    -> "career"
+        "investment" in tags                -> "investment"
+        "family" in tags                    -> "family"
+        "world" in tags || "reflection" in tags -> "world"
+        else                                -> null
+    }
 
     /**
      * Replaces {token} placeholders in event messages with live PlayerState values.
