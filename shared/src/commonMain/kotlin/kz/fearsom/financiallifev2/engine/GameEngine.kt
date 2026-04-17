@@ -185,6 +185,10 @@ class GameEngine(
         if (characterName.isNotEmpty()) currentCharacterName = characterName
         graph         = ScenarioGraphFactory.forCharacter(state.playerState.characterId, state.playerState.eraId)
         eraDefinition = EraRegistry.findById(state.playerState.eraId)
+        // Advance the sequence counter past the already-stored messages so that
+        // IDs generated after restore never collide with IDs in the loaded history.
+        // Compose uses ChatMessage.id as LazyList keys; duplicates cause diff glitches.
+        msgSeq = state.messages.size
         _state.value = state
     }
 

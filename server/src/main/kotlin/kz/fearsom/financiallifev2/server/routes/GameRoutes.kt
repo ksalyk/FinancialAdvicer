@@ -7,6 +7,8 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -14,13 +16,14 @@ import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.PlayerState
-import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kz.fearsom.financiallifev2.server.models.GameStateRequest
 import kz.fearsom.financiallifev2.server.models.GameStateResponse
 import kz.fearsom.financiallifev2.server.repository.GameRepository
 import kz.fearsom.financiallifev2.server.repository.RecordSessionRequest
 import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 
 private val log = LoggerFactory.getLogger("GameRoutes")
 
@@ -34,7 +37,19 @@ data class CharacterDto(
 )
 
 @Serializable
-data class StartGameResponse(val userId: String, val characterName: String)
+data class StartGameRequest(
+    val characterId: String   = "asan",
+    val eraId: String         = "kz_2024",
+    val characterName: String = "Асан"
+)
+
+@Serializable
+data class StartGameResponse(
+    val userId: String,
+    val characterId: String,
+    val eraId: String,
+    val characterName: String
+)
 
 @Serializable
 data class ChoiceResponse(val success: Boolean = false, val message: String = "")
@@ -62,6 +77,18 @@ data class SnapshotDto(
 // All routes here are assumed to be mounted inside authenticate("auth-jwt") {}
 // in Routing.kt, so call.principal<JWTPrincipal>()!! is always non-null.
 
+/**
+ * Per-user mutex that serialises concurrent /game/choose requests for the same userId.
+ *
+ * Without this, two simultaneous POST /game/choose calls both load the same stale stateJson,
+ * compute divergent new states, and the last upsertSession write wins — silently dropping
+ * one choice. The mutex ensures load → process → save is atomic per user.
+ *
+ * The map grows by one entry per distinct userId that ever calls /choose and is never evicted.
+ * For a game with reasonable user counts this is fine; add a size-bound cache if needed.
+ */
+private val choiceLocks = ConcurrentHashMap<String, Mutex>()
+
 fun Route.gameRoutes(
     gameRepository: GameRepository,
     statisticsRepository: StatisticsRepository
@@ -71,20 +98,31 @@ fun Route.gameRoutes(
     route("/game") {
 
         // ── GET /game/character ───────────────────────────────────────────────
+        // Returns the initial state for a given character+era combination.
+        // Query params: characterId (default: asan), eraId (default: kz_2024)
         get("/character") {
+            val characterId = call.request.queryParameters["characterId"] ?: "asan"
+            val eraId       = call.request.queryParameters["eraId"]       ?: "kz_2024"
+
+            val graph = ScenarioGraphFactory.forCharacter(characterId, eraId)
+
             call.respond(CharacterDto(
-                name         = "Асан",
-                description  = "28-летний джун-разработчик из Алматы",
-                initialState = AsanScenarioGraph().initialPlayerState
+                name         = characterId,
+                description  = "$characterId / $eraId",
+                initialState = graph.initialPlayerState
             ))
         }
 
         // ── POST /game/start ──────────────────────────────────────────────────
+        // Body: StartGameRequest (characterId, eraId, characterName).
+        // Defaults to Асан/kz_2024 when body is absent — keeps old clients working.
         post("/start") {
             val userId = call.jwtUserId()
+            val req    = runCatching { call.receive<StartGameRequest>() }
+                .getOrDefault(StartGameRequest())
 
-            val engine = GameEngine()
-            val state  = engine.startGame(characterName = "Асан")
+            val engine = GameEngine.forCharacterAndEra(req.characterId, req.eraId)
+            val state  = engine.startGame(characterName = req.characterName)
 
             gameRepository.upsertSession(
                 userId         = userId,
@@ -92,9 +130,14 @@ fun Route.gameRoutes(
                 currentEventId = state.currentEventId
             )
 
-            log.info("Game started userId={}", userId)
+            log.info("Game started userId={} character={} era={}", userId, req.characterId, req.eraId)
 
-            call.respond(StartGameResponse(userId = userId, characterName = "Асан"))
+            call.respond(StartGameResponse(
+                userId        = userId,
+                characterId   = req.characterId,
+                eraId         = req.eraId,
+                characterName = req.characterName
+            ))
         }
 
         // ── GET /game/event ───────────────────────────────────────────────────
@@ -107,7 +150,14 @@ fun Route.gameRoutes(
                     mapOf("error" to "No active session — call /game/start first")
                 )
 
-            val event = AsanScenarioGraph().findEvent(session.currentEventId)
+            // Decode just enough of the state to resolve the correct graph.
+            val state = json.decodeFromString<GameState>(session.stateJson)
+            val graph = ScenarioGraphFactory.forCharacter(
+                state.playerState.characterId,
+                state.playerState.eraId
+            )
+
+            val event = graph.findEvent(session.currentEventId)
                 ?: return@get call.respond(
                     HttpStatusCode.NotFound,
                     mapOf("error" to "Event '${session.currentEventId}' not in graph")
@@ -129,22 +179,34 @@ fun Route.gameRoutes(
             val optionId = call.parameters["optionId"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing optionId"))
 
-            val session = gameRepository.loadSession(userId)
-                ?: return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "No active session"))
+            // Serialise concurrent choices for the same user so that the
+            // load → process → save sequence is never interleaved.
+            val mutex = choiceLocks.computeIfAbsent(userId) { Mutex() }
+            mutex.withLock {
+                val session = gameRepository.loadSession(userId)
+                    ?: return@withLock call.respond(HttpStatusCode.NotFound, mapOf("error" to "No active session"))
 
-            val engine = GameEngine()
-            engine.loadState(json.decodeFromString<GameState>(session.stateJson))
-            val newState = engine.makeChoice(optionId)
+                // Restore saved state into a correctly wired engine.
+                // loadState() internally calls ScenarioGraphFactory (now cached), so no
+                // redundant graph construction occurs here.
+                val savedState = json.decodeFromString<GameState>(session.stateJson)
+                val engine = GameEngine.forCharacterAndEra(
+                    savedState.playerState.characterId,
+                    savedState.playerState.eraId
+                )
+                engine.loadState(savedState)
+                val newState = engine.makeChoice(optionId)
 
-            gameRepository.upsertSession(
-                userId         = userId,
-                stateJson      = json.encodeToString(newState),
-                currentEventId = newState.currentEventId
-            )
+                gameRepository.upsertSession(
+                    userId         = userId,
+                    stateJson      = json.encodeToString(newState),
+                    currentEventId = newState.currentEventId
+                )
 
-            log.debug("Choice made userId={} optionId={} nextEvent={}", userId, optionId, newState.currentEventId)
+                log.debug("Choice made userId={} optionId={} nextEvent={}", userId, optionId, newState.currentEventId)
 
-            call.respond(ChoiceResponse(success = true))
+                call.respond(ChoiceResponse(success = true))
+            }
         }
 
         // ── POST /game/save ───────────────────────────────────────────────────

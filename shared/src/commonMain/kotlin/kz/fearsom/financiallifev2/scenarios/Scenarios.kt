@@ -1,26 +1,18 @@
 package kz.fearsom.financiallifev2.scenarios
 
 import kz.fearsom.financiallifev2.model.Condition
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.CAPITAL
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.DEBT
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.KNOWLEDGE
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.MONTH
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.STRESS
-import kz.fearsom.financiallifev2.model.Condition.Stat.Op.GT
-import kz.fearsom.financiallifev2.model.Condition.Stat.Op.GTE
-import kz.fearsom.financiallifev2.model.Condition.Stat.Op.LTE
 import kz.fearsom.financiallifev2.model.Effect
 import kz.fearsom.financiallifev2.model.EndingType
 import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.GameOption
-import kz.fearsom.financiallifev2.model.MONTHLY_TICK
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
-import kz.fearsom.financiallifev2.model.moneyFormat
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory.lock
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.ErbolatScenarioGraph
+import kotlin.concurrent.Volatile
 
 // ─── DSL helpers ─────────────────────────────────────────────────────────────
 
@@ -99,14 +91,40 @@ abstract class ScenarioGraph {
 // ─── Factory ──────────────────────────────────────────────────────────────────
 
 object ScenarioGraphFactory {
+
+    /**
+     * Copy-on-write cache of immutable graph instances, keyed by "$characterId:$eraId".
+     *
+     * Why @Volatile + copy-on-write instead of a mutable map with a lock:
+     *   - kotlin.concurrent.locks.ReentrantLock lives in stdlib/jvm, not commonMain.
+     *   - @Volatile is available in commonMain since Kotlin 1.8.20 and guarantees that
+     *     every thread always reads the latest reference.
+     *   - Each write replaces the reference with a brand-new immutable map (+), so readers
+     *     always see either the old or the new snapshot — never a partially-modified one.
+     *   - Worst case under concurrent first-access: two threads both miss, both build the
+     *     same deterministic graph, and one write is lost. The next call re-populates it.
+     *     No data corruption, no infinite loops — just an extra build on cold start.
+     *   - After warmup (≤ 20 character+era combos) every call is a read-only map lookup.
+     */
+    @Volatile
+    private var cache: Map<String, ScenarioGraph> = emptyMap()
+
     /**
      * Returns the ScenarioGraph for the given character + era.
+     * Result is cached — subsequent calls with the same arguments are O(1).
      *
      * Predefined characters → their own graph (era-aware via constructor param).
      * Custom bundles (unknown characterId) → era-based generic graph so the
      * correct historical narrative and event pool are used.
      */
-    fun forCharacter(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
+    fun forCharacter(characterId: String, eraId: String): ScenarioGraph {
+        val key = "$characterId:$eraId"
+        return cache[key] ?: buildGraph(characterId, eraId).also { graph ->
+            cache = cache + (key to graph)
+        }
+    }
+
+    private fun buildGraph(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
         "aidar_90s" -> Aidar90sScenarioGraph()
         "aidar"     -> AidarScenarioGraph(eraId)
         "asan"      -> AsanScenarioGraph()
