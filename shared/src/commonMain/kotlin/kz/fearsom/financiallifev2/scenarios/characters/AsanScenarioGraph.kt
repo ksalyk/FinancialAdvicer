@@ -37,7 +37,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         income = 450_000L,
         expenses = 180_000L,   // rent 130k + food/transport 50k
         debt = 120_000L,
-        debtPaymentMonthly = 15_000L,    // ~15% APR on 120k credit card
+        debtPaymentMonthly = 15_000L,    // ~24% APR credit card (standard KZ consumer loan rate)
         investments = 0L,
         investmentReturnRate = 0.10,       // 10% annual (mixed ETF)
         stress = 25,
@@ -458,7 +458,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 Первые 50 000 ₸ в ETF куплены! 📈
                 Тикер: KASE_IDX на KASE через Halyk Invest.
 
-                Пришло уведомление через месяц: +3.2% → +1 600 ₸.
+                Пришло уведомление через месяц: +0.8% → +400 ₸.
                 Немного, но сложный процент делает своё дело.
 
                 Дальше — набирать позицию регулярно?
@@ -496,9 +496,9 @@ class AsanScenarioGraph : ScenarioGraph() {
                 Ипотека 14 400 000 ₸ под 7.5% на 20 лет.
                 Платёж: ~115 000 ₸/мес.
 
-                Сейчас снимаю за 130 000/мес — разница невелика.
-                Есть 2 800 000 в накоплениях. Не хватает 800 000.
-                Родители готовы одолжить.
+                Сейчас снимаю за 130 000/мес — ипотечный платёж сопоставим.
+                Накопления: {capital}. Для взноса нужно 3 600 000.
+                Родители готовы помочь добрать остаток.
             """.trimIndent(),
                 flavor = "🏠",
                 options = listOf(
@@ -567,7 +567,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 Портфель растёт. Пассивный доход через ETF + дивиденды —
                 уже 45 000 ₸/мес.
 
-                До пассивного дохода = расходам (~10 лет при текущем темпе).
+                До пассивного дохода = расходам (~4-5 лет при текущем темпе).
                 Но путь чёткий. Ты на правильном пути!
             """.trimIndent(),
                 flavor = "🎯",
@@ -829,7 +829,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     "bonus_invest", "Всё в инвестиции", "📈",
                     next = MONTHLY_TICK,
                     fx = Effect(
-                        investmentsDelta = 200_000, capitalDelta = -200_000,
+                        investmentsDelta = 200_000,
                         knowledgeDelta = 5
                     )
                 ),

@@ -797,7 +797,7 @@ class AidarScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph(
             ),
             options = listOf(
                 option("open_iis", "Открыть счёт и перевести знания в действие", "📈", MONTHLY_TICK,
-                    Effect(capitalDelta = -120_000L, investmentsDelta = 130_000L, knowledgeDelta = 5)),
+                    Effect(capitalDelta = -120_000L, investmentsDelta = 120_000L, knowledgeDelta = 5)),
                 option("skip_iis", "Оставить эту дверь на потом", "⏸️", MONTHLY_TICK,
                     Effect())
             )

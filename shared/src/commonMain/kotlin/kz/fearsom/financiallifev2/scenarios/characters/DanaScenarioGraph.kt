@@ -623,7 +623,7 @@ class DanaScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph()
             ),
             options = listOf(
                 option("buy_bonds", "Выбрать предсказуемый инструмент и зафиксировать дисциплину", "📊", MONTHLY_TICK,
-                    Effect(capitalDelta = -200_000L, investmentsDelta = 214_000L, knowledgeDelta = 5)),
+                    Effect(capitalDelta = -200_000L, investmentsDelta = 200_000L, knowledgeDelta = 5)),
                 option("skip_bonds", "Пока оставить деньги ближе к руке", "🏦", MONTHLY_TICK,
                     Effect())
             )
