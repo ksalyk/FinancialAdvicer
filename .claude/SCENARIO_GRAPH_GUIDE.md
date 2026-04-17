@@ -93,7 +93,7 @@ story("First paragraph.", "Second paragraph.")
 
 ```kotlin
 PlayerState(
-    capital              = 50_000L,   // liquid savings in KZT
+    capital              = 50_000L,   // liquid savings in active currency
     income               = 15_000L,   // monthly gross income
     expenses             = 12_000L,   // fixed monthly expenses
     debt                 = 0L,        // total outstanding debt
@@ -105,8 +105,9 @@ PlayerState(
     riskLevel            = 40,        // 0-100 (higher = more risk-tolerant)
     month                = 1,
     year                 = 1993,
-    characterId          = "aidar_90s",  // unique: "{character}_{era_short}"
-    eraId                = "kz_90s",     // lowercase — matches EraRegistry id field
+    characterId          = "aidar_90s",    // unique: "{character}_{era_short}"
+    eraId                = "kz_90s",       // lowercase — matches EraRegistry id field
+    currency             = CurrencyCode.RUB, // starting currency (default KZT)
     flags                = setOf(),
 )
 ```
@@ -117,6 +118,7 @@ PlayerState(
 - `income - expenses`: small positive net flow (1000-5000) to create slow tension
 - `capital`: ~3-6× monthly expenses (not comfortable, not desperate)
 - `investmentReturnRate`: **annual** rate, e.g. `0.05` = 5%/year; engine divides by 12 internally
+- `currency`: omit (defaults to `CurrencyCode.KZT`) unless the character starts before Nov 1993 in `kz_90s` era → use `CurrencyCode.RUB`. Set monetary values in rubles accordingly (pre-reform scale). The `era_tenge_introduced` event will convert them automatically.
 
 **Era IDs (lowercase strings, not enum names):**
 
@@ -144,6 +146,12 @@ Effect(
     setFlags           = setOf("flag.name"),
     clearFlags         = setOf("flag.name"),
     scheduleEvent      = ScheduledEvent(eventId = "event_id", afterMonths = 3),
+    monetaryReform     = MonetaryReform(          // ONLY for real currency reform events
+        from        = CurrencyCode.RUB,
+        to          = CurrencyCode.KZT,
+        numerator   = 1L,
+        denominator = 500L                        // 500 RUB → 1 KZT
+    ),
 )
 ```
 
@@ -152,6 +160,27 @@ Effect(
 - `scheduleEvent` takes a `ScheduledEvent` object — **NOT** a `Pair`
 - `debtDelta` negative = repays debt; positive = adds debt
 - `capitalDelta` is immediate cash, not income
+- `monetaryReform` — scales **all** monetary fields in `PlayerState` by `numerator/denominator` and switches the active currency. Use **only** in historical currency reform events (e.g., `era_tenge_introduced`). Do NOT use for regular devaluation events — those use `capitalDelta` instead.
+
+### MonetaryReform and CurrencyCode
+
+```kotlin
+// Available currency codes:
+CurrencyCode.RUB   // Soviet/Russian ruble (pre-1993 KZ)
+CurrencyCode.KZT   // Kazakhstani tenge (post Nov 1993)
+CurrencyCode.USD   // US dollar
+
+// MonetaryReform applies ratio: new_amount = old_amount * numerator / denominator
+MonetaryReform(from = CurrencyCode.RUB, to = CurrencyCode.KZT, numerator = 1L, denominator = 500L)
+// → every 500 rubles becomes 1 tenge; capital, income, expenses, debt all rescaled
+```
+
+**When to use:**
+- `era_tenge_introduced` (1993): `RUB → KZT, 1/500` — already defined in `EraEventLibrary`, no action needed
+- A future hypothetical redenomination event
+
+**When NOT to use:**
+- Regular devaluation (2015, 2022) — the currency stays KZT, purchasing power drops → use `capitalDelta` or `incomeDelta`
 
 ---
 
@@ -577,6 +606,7 @@ Before submitting a ScenarioGraph, verify:
 - [ ] Starting `capital` = roughly 3-6× monthly expenses
 - [ ] Net monthly flow is slightly positive (`income - expenses > 0`)
 - [ ] `investmentReturnRate` is annual (e.g., `0.07` = 7%/year)
+- [ ] `currency` is set to `CurrencyCode.RUB` if character starts before Nov 1993 in `kz_90s`; otherwise omit (defaults to KZT)
 - [ ] All monetary `Effect` fields use `Long` suffix: `50_000L`, not `50_000`
 - [ ] `scheduleEvent` uses `ScheduledEvent(eventId, afterMonths)` — not `Pair`
 - [ ] `Condition.Stat` uses enum fields: `cond(CAPITAL, LT, 10_000L)` — not strings
@@ -613,6 +643,8 @@ Before submitting a ScenarioGraph, verify:
 | Forgetting to register in `ScenarioGraphFactory` | Add `"char_id" -> MyGraph()` in `Scenarios.kt` |
 | `era_constitution_1995` in era events table | That ID doesn't exist in `EraEventLibrary` |
 | `era_russia_crisis_1998` in era events table | That ID doesn't exist in `EraEventLibrary` |
+| `monetaryReform` on a devaluation choice | `MonetaryReform` is only for currency switches (RUB→KZT); devaluations use `capitalDelta` |
+| `currency = CurrencyCode.KZT` for a 1991 character | Characters starting before Nov 1993 should use `CurrencyCode.RUB` |
 
 ---
 
