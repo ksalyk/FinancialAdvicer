@@ -63,7 +63,14 @@ class AuthPresenter(
             val minDelay = scope.launch { delay(1500L) }
             authRepository.restoreSessionFromStorage()
             minDelay.join()
-            _uiState.value = _uiState.value.copy(isRestoringSession = false)
+            // Atomically merge isRestoringSession=false with the final auth state.
+            // Reading authRepository.authState.value directly avoids the race where
+            // the collector coroutine hasn't yet propagated isLoggedIn=true by the time
+            // we emit isRestoringSession=false, causing a flash to LoginScreen.
+            _uiState.value = _uiState.value.copy(
+                isRestoringSession = false,
+                authState = authRepository.authState.value
+            )
         }
     }
 

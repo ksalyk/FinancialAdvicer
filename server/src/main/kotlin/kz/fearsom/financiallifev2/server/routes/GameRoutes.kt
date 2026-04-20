@@ -10,8 +10,6 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.GameState
@@ -104,6 +102,13 @@ fun Route.gameRoutes(
             val characterId = call.request.queryParameters["characterId"] ?: "asan"
             val eraId       = call.request.queryParameters["eraId"]       ?: "kz_2024"
 
+            if (characterId !in VALID_CHARACTER_IDS && eraId !in VALID_ERA_IDS) {
+                return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Unknown characterId='$characterId' and eraId='$eraId'")
+                )
+            }
+
             val graph = ScenarioGraphFactory.forCharacter(characterId, eraId)
 
             call.respond(CharacterDto(
@@ -118,8 +123,20 @@ fun Route.gameRoutes(
         // Defaults to Асан/kz_2024 when body is absent — keeps old clients working.
         post("/start") {
             val userId = call.jwtUserId()
-            val req    = runCatching { call.receive<StartGameRequest>() }
-                .getOrDefault(StartGameRequest())
+            // Use targeted catch instead of runCatching: the latter catches Throwable,
+            // which silently swallows OOM and other Errors — treating them as "no body".
+            val req = try {
+                call.receive<StartGameRequest>()
+            } catch (_: Exception) {
+                StartGameRequest()
+            }
+
+            if (req.characterId !in VALID_CHARACTER_IDS && req.eraId !in VALID_ERA_IDS) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Unknown characterId='${req.characterId}' and eraId='${req.eraId}'")
+                )
+            }
 
             val engine = GameEngine.forCharacterAndEra(req.characterId, req.eraId)
             val state  = engine.startGame(characterName = req.characterName)
@@ -186,14 +203,11 @@ fun Route.gameRoutes(
                 val session = gameRepository.loadSession(userId)
                     ?: return@withLock call.respond(HttpStatusCode.NotFound, mapOf("error" to "No active session"))
 
-                // Restore saved state into a correctly wired engine.
-                // loadState() internally calls ScenarioGraphFactory (now cached), so no
-                // redundant graph construction occurs here.
+                // loadState() resolves the correct ScenarioGraph and EraDefinition from
+                // savedState.playerState internally — forCharacterAndEra would build the
+                // same graph and then loadState() would immediately overwrite it.
                 val savedState = json.decodeFromString<GameState>(session.stateJson)
-                val engine = GameEngine.forCharacterAndEra(
-                    savedState.playerState.characterId,
-                    savedState.playerState.eraId
-                )
+                val engine = GameEngine()
                 engine.loadState(savedState)
                 val newState = engine.makeChoice(optionId)
 
@@ -314,3 +328,13 @@ fun Route.gameRoutes(
  */
 private fun ApplicationCall.jwtUserId(): String =
     principal<JWTPrincipal>()!!.payload.getClaim("userId").asString()
+
+/**
+ * Allowlists mirroring [ScenarioGraphFactory.buildGraph] / [ScenarioGraphFactory.forEra].
+ *
+ * Unknown characterId falls back to era-based graph, so the server only needs to reject
+ * the case where BOTH are unknown — that's the only path that reaches `error()` in forEra.
+ * Keep in sync with ScenarioGraphFactory whenever new characters or eras are added.
+ */
+private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana", "erbolat")
+private val VALID_ERA_IDS       = setOf("kz_90s", "kz_2005", "kz_2015", "kz_2024")

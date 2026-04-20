@@ -107,12 +107,17 @@ class AuthRepository(
         runCatching {
             val resp: AuthApiResponse = httpClient.get("$baseUrl/auth/me").body()
             if (resp.success) {
+                // Read tokens from tokenStorage rather than from the function args.
+                // By the time /auth/me succeeds, Ktor's Bearer plugin may have silently
+                // refreshed the token pair (401 → /auth/refresh → retry). The args would
+                // then contain the old, already-consumed tokens while tokenStorage holds
+                // the fresh pair that the Ktor plugin stored via onTokensRefreshed.
                 _authState.value = AuthState(
                     isLoggedIn   = true,
                     userId       = resp.userId,
                     username     = resp.username,
-                    accessToken  = accessToken,
-                    refreshToken = refreshToken
+                    accessToken  = tokenStorage.accessToken,
+                    refreshToken = tokenStorage.refreshToken
                 )
                 Napier.d("Session restored userId=${resp.userId}", tag = TAG)
             } else {

@@ -117,10 +117,17 @@ class UserRepository {
             val userId    = row[RefreshTokensTable.userId]
             val expiresAt = row[RefreshTokensTable.expiresAt]
 
-            // Always delete the consumed token to enforce rotation.
-            RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq rawToken }
+            // Check expiry BEFORE deleting. Deleting first breaks idempotent retries:
+            // if the client retries after a network timeout, the token is already gone
+            // and the server returns null → onTokenRefreshFailed → logout, even though
+            // the token was perfectly valid. Expired tokens are still deleted to avoid
+            // leaking dead rows.
+            if (expiresAt < now) {
+                RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq rawToken }
+                return@newSuspendedTransaction null
+            }
 
-            if (expiresAt < now) return@newSuspendedTransaction null
+            RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq rawToken }
 
             UsersTable
                 .selectAll()
