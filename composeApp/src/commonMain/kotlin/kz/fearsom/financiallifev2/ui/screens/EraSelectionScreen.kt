@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.model.Era
 import kz.fearsom.financiallifev2.presentation.NewGameUiState
+import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
@@ -52,38 +53,13 @@ fun EraSelectionScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // ── Top Bar ───────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 52.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Назад", fontSize = 14.sp, color = colors.textSecondary)
-                }
-                Spacer(Modifier.weight(1f))
-            }
+            AppTopBar(
+                title = "Выбери эпоху",
+                subtitle = "Каждая эпоха — уникальные экономические события",
+                onBack = onBack
+            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text(
-                    text       = "Выбери эпоху",
-                    fontSize   = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
-                )
-                Text(
-                    text     = "Каждая эпоха — уникальные экономические события",
-                    fontSize = 13.sp,
-                    color    = colors.textSecondary
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             LazyColumn(
                 modifier            = Modifier.fillMaxSize(),

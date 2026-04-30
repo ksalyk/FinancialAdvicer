@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.model.*
+import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
@@ -75,17 +76,11 @@ fun CharacterDetailScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // ── Top Bar ───────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 52.dp, start = 16.dp, end = 16.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Назад", fontSize = 14.sp, color = colors.textSecondary)
-                }
-            }
+            AppTopBar(
+                title = character.name,
+                subtitle = "${character.profession} · ${character.difficulty.label()}",
+                onBack = onBack
+            )
 
             Column(
                 modifier       = Modifier

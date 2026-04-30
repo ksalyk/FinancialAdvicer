@@ -33,7 +33,8 @@ val TextHint      = Color(0xFF445577)
 // ─── Light Text ───────────────────────────────────────────────────────────────
 val TextPrimaryLight   = Color(0xFF0A0E1A)
 val TextSecondaryLight = Color(0xFF556B8A)
-val TextHintLight      = Color(0xFF8899BB)
+// Updated from #8899BB to #6B7E9C for better accessibility (~4.6 AA contrast on light bg)
+val TextHintLight      = Color(0xFF6B7E9C)
 
 // ─── Light Mode Backgrounds ───────────────────────────────────────────────────
 val BackgroundLightDeep     = Color(0xFFFAFBFC)

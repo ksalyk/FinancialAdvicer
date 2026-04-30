@@ -94,6 +94,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()  // Prevents IME from covering content
                 .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -228,7 +229,6 @@ fun LoginScreen(
                                 )
                             }
                         }
-                        println("ERROR : $error")
                     }
 
                     Spacer(Modifier.height(22.dp))

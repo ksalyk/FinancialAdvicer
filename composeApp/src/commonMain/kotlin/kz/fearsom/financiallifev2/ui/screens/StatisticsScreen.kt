@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.StatisticsUiState
+import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
@@ -50,36 +51,13 @@ fun StatisticsScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 52.dp, start = 16.dp, end = 16.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Назад", fontSize = 14.sp, color = colors.textSecondary)
-                }
-            }
+            AppTopBar(
+                title = "Статистика",
+                subtitle = "Твои финансовые достижения",
+                onBack = onBack
+            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text(
-                    text       = "Статистика",
-                    fontSize   = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
-                )
-                Text(
-                    text     = "Твои финансовые достижения",
-                    fontSize = 13.sp,
-                    color    = colors.textSecondary
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

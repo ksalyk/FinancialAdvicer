@@ -8,9 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -141,6 +144,36 @@ private fun DiaryTopBar(
     onMenuClick: () -> Unit
 ) {
     val colors = LocalAppColors.current
+    var showMenu by remember { mutableStateOf(false) }
+    var showConfirmRestart by remember { mutableStateOf(false) }
+
+    // Confirmation dialog for restart (destructive action)
+    if (showConfirmRestart) {
+        AlertDialog(
+            onDismissRequest = { showConfirmRestart = false },
+            title = { Text("Сбросить прогресс?") },
+            text = { Text("Это удалит всю историю текущей игры. Это действие нельзя отменить.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showConfirmRestart = false
+                        showMenu = false
+                        onRestartClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RedDanger
+                    )
+                ) {
+                    Text("Сбросить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmRestart = false }) {
+                    Text("Отменить")
+                }
+            }
+        )
+    }
 
     Surface(color = colors.backgroundDeep, shadowElevation = 6.dp) {
         Row(
@@ -150,8 +183,15 @@ private fun DiaryTopBar(
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onMenuClick) {
-                Text("🏠", fontSize = 20.sp)
+            IconButton(
+                onClick = onMenuClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Home,
+                    contentDescription = "Домашнее меню",
+                    tint = colors.textPrimary
+                )
             }
 
             Text("📓", fontSize = 26.sp, modifier = Modifier.padding(end = 8.dp))
@@ -175,11 +215,45 @@ private fun DiaryTopBar(
                 )
             }
 
-            IconButton(onClick = onStatsClick) {
-                Text("📊", fontSize = 22.sp)
+            IconButton(
+                onClick = onStatsClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.BarChart,
+                    contentDescription = "Финансовая статистика",
+                    tint = colors.textPrimary
+                )
             }
-            IconButton(onClick = onRestartClick) {
-                Text("🔄", fontSize = 22.sp)
+
+            // Overflow menu (three-dot menu)
+            Box {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "Дополнительные опции",
+                        tint = colors.textPrimary
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Перезагрузить игру") },
+                        onClick = {
+                            showMenu = false
+                            showConfirmRestart = true
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Refresh, contentDescription = null)
+                        }
+                    )
+                }
             }
         }
     }
@@ -352,12 +426,11 @@ private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
                     color     = colors.diaryLine
                 )
 
-                // Main diary text
+                // Main diary text (Phase 2: Updated to use DiaryTextStyle with Caveat font)
                 Text(
                     text       = message.text,
-                    style      = MaterialTheme.typography.bodyMedium,
+                    style      = DiaryTextStyle.copy(color = colors.diaryInk),
                     color      = colors.diaryInk,
-                    lineHeight = 26.sp,
                     fontStyle  = FontStyle.Normal
                 )
             }
@@ -367,6 +440,10 @@ private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
 
 // ─── Choice Note (PLAYER messages) ────────────────────────────────────────────
 
+/**
+ * Player choice rendered as a handwritten note (right-aligned).
+ * Both label and choice text use Kalam for consistent handwritten aesthetic.
+ */
 @Composable
 private fun DiaryChoiceNote(message: ChatMessage) {
     val colors = LocalAppColors.current
@@ -387,17 +464,15 @@ private fun DiaryChoiceNote(message: ChatMessage) {
             Column {
                 Text(
                     "✍️  Я решил:",
-                    style      = MaterialTheme.typography.labelSmall,
+                    style      = DiaryHeaderStyle.copy(fontSize = 13.sp, color = colors.diaryInkSecondary),
                     color      = colors.diaryInkSecondary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize   = 11.sp
+                    fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text       = message.text,
-                    style      = MaterialTheme.typography.bodyMedium,
+                    style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.diaryInk),
                     color      = colors.diaryInk,
-                    lineHeight = 22.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -407,6 +482,10 @@ private fun DiaryChoiceNote(message: ChatMessage) {
 
 // ─── Section Label (SYSTEM messages) ──────────────────────────────────────────
 
+/**
+ * Scene/section header with handwritten aesthetic (Kalam).
+ * Divider lines create visual hierarchy between diary scenes.
+ */
 @Composable
 private fun DiarySectionLabel(message: ChatMessage) {
     val colors = LocalAppColors.current
@@ -422,9 +501,8 @@ private fun DiarySectionLabel(message: ChatMessage) {
         )
         Text(
             text     = "  ${message.text}  ",
-            style    = MaterialTheme.typography.labelSmall,
+            style    = DiaryHeaderStyle.copy(fontSize = 12.sp, color = colors.diaryInkSecondary),
             color    = colors.diaryInkSecondary,
-            fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold
         )
         HorizontalDivider(
@@ -483,6 +561,10 @@ private fun DiaryFinancialEntry(message: ChatMessage) {
 
 // ─── Writing Indicator ────────────────────────────────────────────────────────
 
+/**
+ * "Character is writing..." indicator with handwritten aesthetic (Kalam).
+ * Uses DiaryTextStyle for visual continuity with character messages.
+ */
 @Composable
 private fun DiaryWritingIndicator() {
     val colors = LocalAppColors.current
@@ -501,7 +583,7 @@ private fun DiaryWritingIndicator() {
         Text("✍️", fontSize = 16.sp, modifier = Modifier.padding(end = 8.dp))
         Text(
             "пишет в дневник...",
-            style    = MaterialTheme.typography.bodySmall,
+            style    = DiaryTextStyle.copy(fontSize = 14.sp, color = colors.diaryInkSecondary.copy(alpha = alpha)),
             color    = colors.diaryInkSecondary.copy(alpha = alpha),
             fontStyle = FontStyle.Italic
         )
@@ -525,7 +607,7 @@ private fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) ->
                 Text("✍️", fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
                 Text(
                     "Что я сделаю:",
-                    style    = MaterialTheme.typography.bodySmall,
+                    style    = DiaryHeaderStyle.copy(fontSize = 14.sp, color = colors.textSecondary),
                     color    = colors.textSecondary,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -573,7 +655,7 @@ private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
             }
             Text(
                 option.text,
-                style      = MaterialTheme.typography.bodyMedium,
+                style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.textPrimary),
                 color      = colors.textPrimary,
                 modifier   = Modifier.weight(1f),
                 fontWeight = FontWeight.Medium,
@@ -598,41 +680,171 @@ private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
             null                             -> 0xFF8899BB
         }
     )
-    Surface(color = colors.backgroundDeep, shadowElevation = 16.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+
+    // VFX state management
+    var showVFX by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(2000)  // VFX duration: 2 seconds
+        showVFX = false
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // ── VFX Layer (confetti + vignette + ink-bleed) ──
+        if (showVFX) {
+            GameOverConfetti(endingColor, modifier = Modifier.fillMaxSize())
+            GameOverVignette(modifier = Modifier.fillMaxSize())
+            GameOverInkBleed(endingColor, modifier = Modifier.fillMaxSize())
+        }
+
+        // ── Restart action bar (appears after VFX) ──
+        Surface(
+            color = colors.backgroundDeep,
+            shadowElevation = 16.dp,
+            modifier = Modifier.align(Alignment.BottomCenter)
         ) {
-            Text(
-                when (endingType) {
-                    EndingType.BANKRUPTCY            -> "💔 Банкротство"
-                    EndingType.PAYCHECK_TO_PAYCHECK  -> "😰 Без накоплений"
-                    EndingType.FINANCIAL_STABILITY   -> "😊 Стабильность достигнута"
-                    EndingType.FINANCIAL_FREEDOM     -> "🎯 Финансовая свобода!"
-                    EndingType.WEALTH                -> "🤑 Богатство!"
-                    null                             -> "🏁 Конец"
-                },
-                style      = MaterialTheme.typography.titleMedium,
-                color      = endingColor,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick  = onRestart,
-                modifier = Modifier.fillMaxWidth(),
-                shape    = RoundedCornerShape(14.dp),
-                colors   = ButtonDefaults.buttonColors(
-                    containerColor = GoldPrimary,
-                    contentColor   = colors.backgroundDeep
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("🔄 Начать заново", fontWeight = FontWeight.Bold)
+                Text(
+                    when (endingType) {
+                        EndingType.BANKRUPTCY            -> "💔 Банкротство"
+                        EndingType.PAYCHECK_TO_PAYCHECK  -> "😰 Без накоплений"
+                        EndingType.FINANCIAL_STABILITY   -> "😊 Стабильность достигнута"
+                        EndingType.FINANCIAL_FREEDOM     -> "🎯 Финансовая свобода!"
+                        EndingType.WEALTH                -> "🤑 Богатство!"
+                        null                             -> "🏁 Конец"
+                    },
+                    style      = MaterialTheme.typography.titleMedium,
+                    color      = endingColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick  = onRestart,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape    = RoundedCornerShape(14.dp),
+                    colors   = ButtonDefaults.buttonColors(
+                        containerColor = GoldPrimary,
+                        contentColor   = colors.backgroundDeep
+                    )
+                ) {
+                    Text("🔄 Начать заново", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
+}
+
+// ── Game-Over VFX Components ──────────────────────────────────────────────────
+
+/**
+ * Falling confetti particles in ending-specific color.
+ * Duration: 2.5 seconds with easing fall effect.
+ */
+@Composable
+private fun GameOverConfetti(accentColor: Color, modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "confetti")
+
+    // Create 8 confetti particles at different horizontal positions
+    val confettiPositions = remember {
+        listOf(0.1f, 0.25f, 0.4f, 0.55f, 0.7f, 0.85f, 0.15f, 0.65f)
+    }
+
+    Box(modifier = modifier) {
+        confettiPositions.forEachIndexed { index, xPos ->
+            val animDelay = (index * 100).toLong()
+            val yAnimation by infiniteTransition.animateFloat(
+                initialValue = -0.2f,
+                targetValue = 1.2f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2500, delayMillis = animDelay.toInt(), easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "confetti_$index"
+            )
+
+            // Confetti particle
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawBehind {
+                        val centerX = size.width * xPos
+                        val centerY = size.height * yAnimation
+                        drawCircle(
+                            color = accentColor.copy(alpha = 0.7f),
+                            radius = 6.dp.toPx(),
+                            center = Offset(centerX, centerY)
+                        )
+                    }
+            )
+        }
+    }
+}
+
+/**
+ * Vignette effect: darkening around screen edges.
+ * Fades in over 800ms.
+ */
+@Composable
+private fun GameOverVignette(modifier: Modifier = Modifier) {
+    val vignetteAlpha by animateFloatAsState(
+        targetValue = 0.4f,
+        animationSpec = tween(800, easing = FastOutSlowInEasing),
+        label = "vignette"
+    )
+
+    Box(
+        modifier = modifier.background(
+            Brush.radialGradient(
+                colors = listOf(Color.Transparent, Color.Black.copy(alpha = vignetteAlpha)),
+                radius = 600f
+            )
+        )
+    )
+}
+
+/**
+ * Ink-bleed effect: animated glow/bloom from center.
+ * Fades in from 200-1500ms with bloom effect.
+ */
+@Composable
+private fun GameOverInkBleed(accentColor: Color, modifier: Modifier = Modifier) {
+    val bloomAlpha by animateFloatAsState(
+        targetValue = 0f,
+        animationSpec = tween(
+            durationMillis = 1300,
+            delayMillis = 200,
+            easing = FastOutSlowInEasing
+        ),
+        label = "ink_bleed"
+    )
+
+    // Ink bloom grows and fades
+    val bloomRadius by animateFloatAsState(
+        targetValue = 0f,
+        animationSpec = tween(
+            durationMillis = 1300,
+            delayMillis = 200,
+            easing = FastOutSlowInEasing
+        ),
+        label = "bloom_radius"
+    )
+
+    Box(
+        modifier = modifier.background(
+            Brush.radialGradient(
+                colors = listOf(
+                    accentColor.copy(alpha = 0.3f * (1f - bloomAlpha)),
+                    Color.Transparent
+                ),
+                radius = 400f + (bloomRadius * 200f)
+            )
+        )
+    )
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

@@ -117,9 +117,96 @@ fun StatsPanelOverlay(
                 }
             }
 
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(20.dp))
 
-            // ── Money cards — row 1: capital / income ─────────────────────────
+            // ── HERO TIER: Financial Freedom ──────────────────────────────────
+            val freedomPct = calculateFreedom(playerState)
+            val animPct by animateFloatAsState(
+                targetValue = freedomPct,
+                animationSpec = tween(900, easing = FastOutSlowInEasing),
+                label = "freedom"
+            )
+            Text(
+                "🎯 Финансовая свобода",
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(12.dp))
+
+            // Freedom progress bar (hero size: 12dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth().height(12.dp)
+                    .clip(CircleShape)
+                    .background(colors.backgroundElevated)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animPct)
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .background(
+                            Brush.horizontalGradient(listOf(GoldDark, GoldPrimary, GoldLight))
+                        )
+                )
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Начало", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
+                Text(
+                    "${(animPct * 100).toInt()}%",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GoldPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text("Свобода", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // ── PRIMARY: Net Cash Flow (full width) ────────────────────────────
+            val netCashFlow =
+                playerState.income - playerState.expenses - playerState.debtPaymentMonthly
+            Text(
+                "💸 Денежный поток",
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.textSecondary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(colors.backgroundElevated)
+                    .border(1.5.dp,
+                        if (netCashFlow >= 0) GreenSuccess.copy(0.4f) else RedDanger.copy(0.4f),
+                        RoundedCornerShape(14.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (netCashFlow >= 0) "Прибыль" else "Дефицит",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        (if (netCashFlow >= 0) "+" else "") + formatMoney(netCashFlow),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = if (netCashFlow >= 0) GreenSuccess else RedDanger,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── SECONDARY: Financial Position (balance sheet row) ───────────────
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MoneyCard(
                     label = "💰 Капитал",
@@ -128,41 +215,30 @@ fun StatsPanelOverlay(
                     modifier = Modifier.weight(1f)
                 )
                 MoneyCard(
+                    label = "💳 Долг",
+                    value = formatMoney(playerState.debt),
+                    color = StatDebt,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+
+            // ── DETAIL: Income, Expenses, Investments ──────────────────────────
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MoneyCard(
                     label = "📈 Доход",
                     value = formatMoney(playerState.income) + "/мес",
                     color = GreenSuccess,
                     modifier = Modifier.weight(1f)
                 )
-            }
-            Spacer(Modifier.height(10.dp))
-            // ── row 2: expenses / net worth ───────────────────────────────────
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MoneyCard(
                     label = "🛒 Расходы",
                     value = formatMoney(playerState.expenses) + "/мес",
                     color = StatStress,
                     modifier = Modifier.weight(1f)
                 )
-                val netCashFlow =
-                    playerState.income - playerState.expenses - playerState.debtPaymentMonthly
                 MoneyCard(
-                    label = "💸 Денежный поток",
-                    value = (if (netCashFlow >= 0) "+" else "") + formatMoney(netCashFlow),
-                    color = if (netCashFlow >= 0) GreenSuccess else RedDanger,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            // ── row 3: debt / investments ─────────────────────────────────────
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MoneyCard(
-                    label = "💳 Долг",
-                    value = formatMoney(playerState.debt),
-                    color = StatDebt,
-                    modifier = Modifier.weight(1f)
-                )
-                MoneyCard(
-                    label = "📊 Инвестиции",
+                    label = "📊 Инвесты",
                     value = formatMoney(playerState.investments),
                     color = StatKnowledge,
                     modifier = Modifier.weight(1f)
@@ -184,48 +260,6 @@ fun StatsPanelOverlay(
             Spacer(Modifier.height(10.dp))
             StatBar("🎲 Риск-уровень", playerState.riskLevel, StatRisk)
 
-            Spacer(Modifier.height(20.dp))
-
-            // ── Financial freedom progress bar ────────────────────────────────
-            val freedomPct = calculateFreedom(playerState)
-            val animPct by animateFloatAsState(
-                targetValue = freedomPct,
-                animationSpec = tween(900, easing = FastOutSlowInEasing),
-                label = "freedom"
-            )
-            Text(
-                "🎯 До финансовой свободы",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(Modifier.height(8.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth().height(8.dp)
-                    .clip(CircleShape)
-                    .background(colors.backgroundElevated)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animPct)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .background(
-                            Brush.horizontalGradient(listOf(GoldDark, GoldPrimary, GoldLight))
-                        )
-                )
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Начало", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
-                Text(
-                    "${(animPct * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GoldPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text("Свобода", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
-            }
             Spacer(Modifier.height(8.dp))
         }
     }

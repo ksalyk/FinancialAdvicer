@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -112,64 +114,62 @@ fun MainMenuScreen(
 
             Spacer(Modifier.height(40.dp))
 
-            // ── Active session card ───────────────────────────────────────────
-            AnimatedVisibility(
-                visible = uiState.canContinue && uiState.activeSession != null,
-                enter   = fadeIn() + slideInVertically { -it / 2 },
-                exit    = fadeOut()
-            ) {
+            // ── Hero tier ──────────────────────────────────────────────────────
+            // Two-tier system: hero action first (Continue or New Game), then secondary actions
+
+            if (uiState.canContinue && uiState.activeSession != null) {
+                // Hero: Continue with filled gold button + session context
                 uiState.activeSession?.let { session ->
-                    ActiveSessionCard(session = session, onClick = onContinue)
-                    Spacer(Modifier.height(12.dp))
+                    HeroActionCard(
+                        emoji       = "▶️",
+                        label       = "Продолжить игру",
+                        context     = "${session.characterEmoji} ${session.characterName} · ${session.eraName}",
+                        onClick     = onContinue
+                    )
+                    Spacer(Modifier.height(20.dp))
                 }
+            } else {
+                // Hero: New Game when no active session (promote this as primary action)
+                HeroActionCard(
+                    emoji       = "🎮",
+                    label       = "Новая игра",
+                    context     = "Выбери эпоху и персонажа",
+                    onClick     = onNewGame
+                )
+                Spacer(Modifier.height(20.dp))
             }
 
-            // ── Main buttons ──────────────────────────────────────────────────
+            // ── Secondary tier ────────────────────────────────────────────────
 
-            // Continue (shown only when there's an active session)
+            // New Game (only shown when continuing from active session)
             if (uiState.canContinue) {
-                MenuButton(
-                    emoji       = "▶️",
-                    label       = "Продолжить игру",
-                    description = uiState.activeSession?.let {
-                        "${it.characterEmoji} ${it.characterName} · ${it.eraName}"
-                    } ?: "",
-                    gradient    = listOf(GoldPrimary.copy(alpha = 0.18f), GoldDark.copy(alpha = 0.08f)),
-                    borderColor = GoldPrimary.copy(alpha = 0.6f),
-                    onClick     = onContinue
+                OutlinedMenuButton(
+                    emoji       = "🎮",
+                    label       = "Новая игра",
+                    description = "Выбери эпоху и персонажа",
+                    accentColor = BlueAccent,
+                    onClick     = onNewGame
                 )
                 Spacer(Modifier.height(10.dp))
             }
 
-            MenuButton(
-                emoji       = "🎮",
-                label       = "Новая игра",
-                description = "Выбери эпоху и персонажа",
-                gradient    = listOf(BlueAccent.copy(alpha = 0.18f), BlueAccent.copy(alpha = 0.05f)),
-                borderColor = BlueAccent.copy(alpha = 0.5f),
-                onClick     = onNewGame
-            )
-            Spacer(Modifier.height(10.dp))
-
-            MenuButton(
+            OutlinedMenuButton(
                 emoji       = "👥",
                 label       = "Персонажи",
                 description = "Изучи предысторию и характеристики",
-                gradient    = listOf(PurpleAccent.copy(alpha = 0.18f), PurpleAccent.copy(alpha = 0.05f)),
-                borderColor = PurpleAccent.copy(alpha = 0.5f),
+                accentColor = PurpleAccent,
                 onClick     = onCharacters
             )
             Spacer(Modifier.height(10.dp))
 
-            MenuButton(
+            OutlinedMenuButton(
                 emoji       = "📊",
                 label       = "Статистика",
                 description = uiState.quickStats?.let {
                     "Сыграно игр: ${it.totalGames}" +
                             (it.bestEnding?.let { e -> " · Лучший финал: ${e.emoji()} ${e.label()}" } ?: "")
                 } ?: "Начни свою историю",
-                gradient    = listOf(GreenSuccess.copy(alpha = 0.18f), GreenSuccess.copy(alpha = 0.05f)),
-                borderColor = GreenSuccess.copy(alpha = 0.5f),
+                accentColor = GreenSuccess,
                 onClick     = onStatistics
             )
 
@@ -188,79 +188,110 @@ fun MainMenuScreen(
     }
 }
 
-// ── Active Session Card ────────────────────────────────────────────────────────
+// ── Hero Action Card (primary action) ──────────────────────────────────────────
 
 @Composable
-private fun ActiveSessionCard(session: GameSession, onClick: () -> Unit) {
-    val colors = LocalAppColors.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(GoldPrimary.copy(alpha = 0.07f))
-            .border(1.dp, GoldPrimary.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(session.characterEmoji, fontSize = 26.sp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                text       = session.characterName,
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color      = colors.textPrimary
-            )
-            Text(
-                text     = "${session.eraName} · ${session.currentGameYear}/${session.currentGameMonth.toString().padStart(2, '0')}",
-                fontSize = 11.sp,
-                color    = colors.textSecondary
-            )
-        }
-        Text("▶", fontSize = 16.sp, color = GoldPrimary)
-    }
-}
-
-// ── Menu Button ───────────────────────────────────────────────────────────────
-
-@Composable
-private fun MenuButton(
+private fun HeroActionCard(
     emoji: String,
     label: String,
-    description: String,
-    gradient: List<Color>,
-    borderColor: Color,
+    context: String,
     onClick: () -> Unit
 ) {
     val colors = LocalAppColors.current
-    var pressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue    = if (pressed) 0.97f else 1f,
-        animationSpec  = tween(100),
-        label          = "btn_scale"
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed = interactionSource.collectIsPressedAsState()
+
+    val scale = animateFloatAsState(
+        targetValue = if (isPressed.value) 0.97f else 1f,
+        animationSpec = tween(100),
+        label = "hero_scale"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale.value)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(GoldPrimary.copy(alpha = 0.25f), GoldDark.copy(alpha = 0.12f))
+                )
+            )
+            .border(1.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                onClick = onClick
+            )
+            .padding(horizontal = 20.dp, vertical = 18.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(emoji, fontSize = 32.sp)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text       = label,
+                    fontSize   = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color      = colors.textPrimary
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text     = context,
+                    fontSize = 13.sp,
+                    color    = colors.textSecondary
+                )
+            }
+            Text("▶", fontSize = 20.sp, color = GoldPrimary)
+        }
+    }
+}
+
+// ── Outlined Menu Button (secondary action) ────────────────────────────────────
+
+@Composable
+private fun OutlinedMenuButton(
+    emoji: String,
+    label: String,
+    description: String,
+    accentColor: Color,
+    onClick: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed = interactionSource.collectIsPressedAsState()
+
+    val scale = animateFloatAsState(
+        targetValue = if (isPressed.value) 0.97f else 1f,
+        animationSpec = tween(100),
+        label = "menu_scale"
     )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(scale)
+            .scale(scale.value)
             .clip(RoundedCornerShape(14.dp))
-            .background(Brush.horizontalGradient(gradient))
-            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-            .clickable {
-                pressed = true
-                onClick()
-            }
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .background(
+                Brush.horizontalGradient(
+                    listOf(accentColor.copy(alpha = 0.08f), colors.backgroundCard)
+                )
+            )
+            .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                onClick = onClick
+            )
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(emoji, fontSize = 28.sp)
-        Spacer(Modifier.width(14.dp))
+        Text(emoji, fontSize = 24.sp)
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 text       = label,
-                fontSize   = 16.sp,
+                fontSize   = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color      = colors.textPrimary
             )
@@ -274,6 +305,6 @@ private fun MenuButton(
                 )
             }
         }
-        Text("›", fontSize = 22.sp, color = borderColor)
+        Text("›", fontSize = 18.sp, color = accentColor)
     }
 }

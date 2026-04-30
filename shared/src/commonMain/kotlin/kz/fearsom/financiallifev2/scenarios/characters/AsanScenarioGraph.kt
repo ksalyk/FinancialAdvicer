@@ -490,6 +490,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "mortgage_offer", event(
                 id = "mortgage_offer",
+                conditions = listOf(cond(CAPITAL, GTE, 2_800_000L), cond(DEBT, LTE, 200_000L)),
                 message = """
                 Банк одобрил ипотеку по 7-20-25.
                 Квартира 18 000 000 ₸. Взнос 20% = 3 600 000 ₸.

@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -123,11 +124,13 @@ fun Route.gameRoutes(
         // Defaults to Асан/kz_2024 when body is absent — keeps old clients working.
         post("/start") {
             val userId = call.jwtUserId()
-            // Use targeted catch instead of runCatching: the latter catches Throwable,
-            // which silently swallows OOM and other Errors — treating them as "no body".
+            // Catch only BadRequestException: Ktor's ContentNegotiation wraps both
+            // "missing body" and "malformed JSON" into BadRequestException. This leaves
+            // IOException (connection reset), OOM, and other Errors to propagate normally.
             val req = try {
                 call.receive<StartGameRequest>()
-            } catch (_: Exception) {
+            } catch (_: BadRequestException) {
+                // Body absent or empty — fall back to defaults (backward compat)
                 StartGameRequest()
             }
 

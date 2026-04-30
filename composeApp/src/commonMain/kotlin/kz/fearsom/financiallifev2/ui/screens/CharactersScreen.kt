@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.CharactersUiState
+import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
@@ -50,36 +51,13 @@ fun CharactersScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 52.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Назад", fontSize = 14.sp, color = colors.textSecondary)
-                }
-            }
+            AppTopBar(
+                title = "Персонажи",
+                subtitle = "Нажми на персонажа, чтобы узнать его историю",
+                onBack = onBack
+            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text(
-                    text       = "Персонажи",
-                    fontSize   = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
-                )
-                Text(
-                    text     = "Нажми на персонажа, чтобы узнать его историю",
-                    fontSize = 13.sp,
-                    color    = colors.textSecondary
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
 
             LazyColumn(
                 modifier            = Modifier.fillMaxSize(),

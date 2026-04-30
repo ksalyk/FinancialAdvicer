@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.NewGameUiState
+import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
@@ -54,40 +55,13 @@ fun CharacterSelectionScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // ── Top Bar ───────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 52.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onBack) {
-                    Text("← Назад", fontSize = 14.sp, color = colors.textSecondary)
-                }
-                Spacer(Modifier.weight(1f))
-            }
+            AppTopBar(
+                title = "Выбери персонажа",
+                subtitle = if (selectedEra != null) "${selectedEra.emoji} ${selectedEra.name}" else null,
+                onBack = onBack
+            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text(
-                    text       = "Выбери персонажа",
-                    fontSize   = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
-                )
-                if (selectedEra != null) {
-                    Text(
-                        text     = "${selectedEra.emoji} ${selectedEra.name}",
-                        fontSize = 13.sp,
-                        color    = GoldPrimary
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             // ── Tab switcher ──────────────────────────────────────────────────
             Row(
@@ -416,7 +390,8 @@ private fun MiniStat(emoji: String, value: String, color: Color, modifier: Modif
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(emoji, fontSize = 13.sp)
-        Text(value, fontSize = 10.sp, color = color, fontWeight = FontWeight.SemiBold)
+        // Raised from 10sp to 12sp for accessibility (WCAG AA normal text minimum)
+        Text(value, fontSize = 12.sp, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -427,8 +402,10 @@ private fun DifficultyBadge(difficulty: Difficulty) {
     val color = difficultyColor(difficulty)
     Text(
         text     = difficulty.label(),
-        fontSize = 9.sp,
+        // Raised from 9sp to 11sp for accessibility (below 12sp comfort floor)
+        fontSize = 11.sp,
         color    = color,
+        fontWeight = FontWeight.Medium,
         modifier = Modifier
             .background(color.copy(0.15f), RoundedCornerShape(20.dp))
             .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -444,7 +421,7 @@ private fun difficultyColor(d: Difficulty): Color = when (d) {
     Difficulty.NIGHTMARE -> PurpleAccent
 }
 
-private fun Difficulty.label(): String = when (this) {
+fun Difficulty.label(): String = when (this) {
     Difficulty.EASY      -> "Лёгкий"
     Difficulty.MEDIUM    -> "Средний"
     Difficulty.HARD      -> "Сложный"

@@ -555,6 +555,7 @@ class AidarScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph(
             flavor = "🏠",
             poolWeight = 6,
             tags = setOf("mortgage"),
+            conditions = listOf(cond(CAPITAL, GTE, 2_400_000L), Condition.NotFlag("aidar.has.mortgage")),
             message = story(
                 """
                 Банк шлёт предварительное одобрение. Съёмная квартира вдруг начинает казаться не временным этапом, а затянувшейся жизнью на чужих правилах. Собственное жильё манит не роскошью, а обещанием наконец-то перестать быть гостем.
