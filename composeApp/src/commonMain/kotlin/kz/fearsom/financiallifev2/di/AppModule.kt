@@ -4,6 +4,8 @@ import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
+import kz.fearsom.financiallifev2.i18n.Strings
+import kz.fearsom.financiallifev2.i18n.deviceLocale
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.network.NetworkConfig
 import kz.fearsom.financiallifev2.network.TokenStorage
@@ -25,6 +27,11 @@ import org.koin.dsl.module
  *   NetworkConfig.baseUrl = "http://localhost:8080/api/v1"  // iOS simulator
  */
 val commonModule = module {
+
+    // ── Locale initialisation — must run first ─────────────────────────────────
+    // Set currentLocale once at startup so all Strings lookups use the device
+    // language. Language changes take effect on next app restart.
+    Strings.currentLocale = deviceLocale()
 
     // ── Token storage (in-memory; shared between HttpClient and AuthRepository) ─
     single { TokenStorage() }

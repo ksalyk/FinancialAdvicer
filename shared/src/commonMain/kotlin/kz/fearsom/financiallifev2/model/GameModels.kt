@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.model
 
 import kotlinx.serialization.Serializable
+import kz.fearsom.financiallifev2.i18n.Strings
 
 // ════════════════════════════════════════════════════════════════════
 //  ERA
@@ -126,12 +127,12 @@ fun GameEnding.emoji(): String = when (this) {
 }
 
 fun GameEnding.label(): String = when (this) {
-    GameEnding.BANKRUPTCY           -> "Банкротство"
-    GameEnding.PAYCHECK_TO_PAYCHECK -> "От зарплаты до зарплаты"
-    GameEnding.FINANCIAL_STABILITY  -> "Финансовая стабильность"
-    GameEnding.FINANCIAL_FREEDOM    -> "Финансовая свобода"
-    GameEnding.WEALTH               -> "Богатство"
-    GameEnding.PRISON               -> "Тюрьма"
+    GameEnding.BANKRUPTCY           -> Strings.endingBankruptcy
+    GameEnding.PAYCHECK_TO_PAYCHECK -> Strings.endingPaycheck
+    GameEnding.FINANCIAL_STABILITY  -> Strings.endingStability
+    GameEnding.FINANCIAL_FREEDOM    -> Strings.endingFreedom
+    GameEnding.WEALTH               -> Strings.endingWealth
+    GameEnding.PRISON               -> Strings.endingPrison
 }
 
 // ════════════════════════════════════════════════════════════════════

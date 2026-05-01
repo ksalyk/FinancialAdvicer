@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.StatisticsUiState
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
@@ -52,8 +53,8 @@ fun StatisticsScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Статистика",
-                subtitle = "Твои финансовые достижения",
+                title = Strings.uiStatsTitle,
+                subtitle = Strings.uiStatsSubtitle,
                 onBack = onBack
             )
 
@@ -61,7 +62,7 @@ fun StatisticsScreen(
 
             if (uiState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Загрузка...", color = colors.textSecondary)
+                    Text(Strings.uiStatsLoading, color = colors.textSecondary)
                 }
             } else if (!uiState.hasAnyGames || uiState.stats == null) {
                 EmptyStatsPlaceholder()
@@ -82,21 +83,21 @@ fun StatisticsScreen(
                     ) {
                         SummaryTile(
                             emoji  = "🎮",
-                            label  = "Всего игр",
+                            label  = Strings.uiStatsTotalGames,
                             value  = stats.totalGamesPlayed.toString(),
                             color  = BlueAccent,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryTile(
                             emoji  = "✅",
-                            label  = "Завершено",
+                            label  = Strings.uiStatsCompleted,
                             value  = stats.gamesCompleted.toString(),
                             color  = GreenSuccess,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryTile(
                             emoji  = "💰",
-                            label  = "Средний капитал",
+                            label  = Strings.uiStatsAvgCapital,
                             value  = stats.averageCapitalAtEnd.compactFormat(),
                             color  = GoldPrimary,
                             modifier = Modifier.weight(1f)
@@ -109,7 +110,7 @@ fun StatisticsScreen(
                     // ── Ending distribution ───────────────────────────────────
                     val nonZeroEndings = stats.endingDistribution.filter { it.value > 0 }
                     if (nonZeroEndings.isNotEmpty()) {
-                        StatsSection(title = "📈 Финалы") {
+                        StatsSection(title = Strings.uiStatsTabEndings) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 nonZeroEndings.entries.sortedByDescending { it.value }.forEach { (ending, count) ->
                                     EndingRow(
@@ -124,7 +125,7 @@ fun StatisticsScreen(
 
                     // ── Per character ─────────────────────────────────────────
                     if (stats.perCharacter.isNotEmpty()) {
-                        StatsSection(title = "👥 По персонажам") {
+                        StatsSection(title = Strings.uiStatsTabCharacters) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 stats.perCharacter.sortedByDescending { it.timesPlayed }.forEach { charStat ->
                                     CharacterStatRow(stat = charStat)
@@ -135,7 +136,7 @@ fun StatisticsScreen(
 
                     // ── Per era ───────────────────────────────────────────────
                     if (stats.perEra.isNotEmpty()) {
-                        StatsSection(title = "🗺️ По эпохам") {
+                        StatsSection(title = Strings.uiStatsTabEras) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 stats.perEra.sortedByDescending { it.timesPlayed }.forEach { eraStat ->
                                     EraStatRow(stat = eraStat)
@@ -166,7 +167,7 @@ private fun EmptyStatsPlaceholder() {
             Text("📊", fontSize = 52.sp)
             Spacer(Modifier.height(16.dp))
             Text(
-                text       = "Статистика пуста",
+                text       = Strings.uiStatsEmpty,
                 fontSize   = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color      = colors.textPrimary,
@@ -174,7 +175,7 @@ private fun EmptyStatsPlaceholder() {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text      = "Пройди хотя бы одну игру, чтобы увидеть свои результаты",
+                text      = Strings.uiStatsEmptyHint,
                 fontSize  = 14.sp,
                 color     = colors.textSecondary,
                 textAlign = TextAlign.Center
@@ -229,7 +230,7 @@ private fun BestEndingCard(ending: GameEnding) {
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
-                text       = "Лучший финал",
+                text       = Strings.uiStatsBestEnding,
                 fontSize   = 11.sp,
                 color      = colors.textSecondary,
                 fontWeight = FontWeight.Medium
@@ -301,7 +302,7 @@ private fun CharacterStatRow(stat: CharacterStatistics) {
         Column(Modifier.weight(1f)) {
             Text(stat.characterName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
             Text(
-                "${stat.timesPlayed} игр · Ср. капитал: ${stat.averageCapital.compactFormat()}",
+                "${stat.timesPlayed} ${Strings.uiStatsGames} · ${Strings.uiStatsGamesAvg} ${stat.averageCapital.compactFormat()}",
                 fontSize = 11.sp, color = colors.textSecondary
             )
         }
@@ -325,7 +326,7 @@ private fun EraStatRow(stat: EraStatistics) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(stat.eraName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-            Text("${stat.timesPlayed} игр", fontSize = 11.sp, color = colors.textSecondary)
+            Text("${stat.timesPlayed} ${Strings.uiStatsGames}", fontSize = 11.sp, color = colors.textSecondary)
         }
         stat.bestEnding?.let { Text(it.emoji(), fontSize = 18.sp) }
     }

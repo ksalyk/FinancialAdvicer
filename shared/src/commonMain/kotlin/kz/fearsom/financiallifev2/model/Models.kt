@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.model
 
 import kotlinx.serialization.Serializable
+import kz.fearsom.financiallifev2.i18n.Strings
 
 // ════════════════════════════════════════════════════════════════════
 //  LAYER 1 — NARRATIVE GRAPH
@@ -264,24 +265,19 @@ data class MonthlyReport(
     val stressDelta: Int
 ) {
     fun toMessage(): String = buildString {
-        appendLine("📊 ${month.monthName()} $year — Итоги месяца")
+        appendLine("${Strings.sysMonthlyTitle} ${Strings.monthNames.getOrElse(month) { "?" }} $year")
         appendLine()
-        appendLine("💰 Доход:           +${incomeReceived.moneyFormat(currency)}")
-        appendLine("🏠 Расходы:          -${expensesPaid.moneyFormat(currency)}")
-        if (debtPayment > 0) appendLine("💳 Выплата долга:    -${debtPayment.moneyFormat(currency)}")
-        if (investmentGain > 0) appendLine("📈 Инвестиции:       +${investmentGain.moneyFormat(currency)}")
+        appendLine("${Strings.sysMonthlyIncome}+${incomeReceived.moneyFormat(currency)}")
+        appendLine("${Strings.sysMonthlyExpenses}-${expensesPaid.moneyFormat(currency)}")
+        if (debtPayment > 0) appendLine("${Strings.sysMonthlyDebtPayment}-${debtPayment.moneyFormat(currency)}")
+        if (investmentGain > 0) appendLine("${Strings.sysMonthlyInvestments}+${investmentGain.moneyFormat(currency)}")
         appendLine()
         val sign = if (netFlow >= 0) "+" else ""
-        appendLine("${if (netFlow >= 0) "✅" else "⚠️"} Итого: $sign${netFlow.moneyFormat(currency)}")
-        appendLine("💼 Капитал: ${capitalAfter.moneyFormat(currency)}")
-        if (debtAfter > 0) append("💳 Долг: ${debtAfter.moneyFormat(currency)}")
+        appendLine("${if (netFlow >= 0) Strings.sysMonthlyNetPositive else Strings.sysMonthlyNetNegative} $sign${netFlow.moneyFormat(currency)}")
+        appendLine("${Strings.sysMonthlyCapital}${capitalAfter.moneyFormat(currency)}")
+        if (debtAfter > 0) append("${Strings.sysMonthlyDebtRemaining}${debtAfter.moneyFormat(currency)}")
     }.trimEnd()
 }
-
-private fun Int.monthName() = listOf(
-    "", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
-)[this]
 
 // ════════════════════════════════════════════════════════════════════
 //  CHAT / UI LAYER

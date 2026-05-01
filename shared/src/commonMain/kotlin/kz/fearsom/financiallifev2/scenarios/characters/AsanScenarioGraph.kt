@@ -21,6 +21,7 @@ import kz.fearsom.financiallifev2.scenarios.cond
 import kz.fearsom.financiallifev2.scenarios.event
 import kz.fearsom.financiallifev2.scenarios.option
 import kz.fearsom.financiallifev2.scenarios.story
+import kz.fearsom.financiallifev2.i18n.Strings
 
 // ─── AsanScenarioGraph ────────────────────────────────────────────────────────
 
@@ -72,12 +73,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "😰",
                 options = listOf(
                     option(
-                        "crypto_in", "Вложить 100 000 ₸ в крипту с Димой", "🚀",
+                        "crypto_in", Strings["evt_asan_intro_opt_crypto_in"], "🚀",
                         next = "crypto_result",
                         fx = Effect(capitalDelta = -100_000, riskDelta = 20, stressDelta = 10)
                     ),
                     option(
-                        "pay_debt", "Погасить весь долг по кредитке", "💳",
+                        "pay_debt", Strings["evt_asan_intro_opt_pay_debt"], "💳",
                         next = "debt_paid",
                         fx = Effect(
                             capitalDelta = -120_000, debtDelta = -120_000,
@@ -85,7 +86,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "emergency_fund", "Отложить 60 000 ₸ на подушку безопасности", "🛡️",
+                        "emergency_fund", Strings["evt_asan_intro_opt_emergency_fund"], "🛡️",
                         next = "has_cushion",
                         fx = Effect(
                             capitalDelta = -60_000, stressDelta = -4, knowledgeDelta = 6,
@@ -93,7 +94,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "do_nothing", "Ничего не менять, потрачу как обычно", "😶",
+                        "do_nothing", Strings["evt_asan_intro_opt_do_nothing"], "😶",
                         next = MONTHLY_TICK,
                         fx = Effect(stressDelta = 3)
                     )
@@ -119,12 +120,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "😬",
                 options = listOf(
                     option(
-                        "double_down", "Докупить ещё на 50 000 ₸", "📉",
+                        "double_down", Strings["evt_asan_crypto_result_opt_double_down"], "📉",
                         next = "total_loss",
                         fx = Effect(capitalDelta = -50_000, stressDelta = 20, riskDelta = 15)
                     ),
                     option(
-                        "cut_losses", "Вывести остаток, зафиксировать −40 000", "✂️",
+                        "cut_losses", Strings["evt_asan_crypto_result_opt_cut_losses"], "✂️",
                         next = "lesson_learned",
                         fx = Effect(
                             capitalDelta = 60_000, stressDelta = -10, knowledgeDelta = 18,
@@ -152,7 +153,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "💀",
                 options = listOf(
                     option(
-                        "rebuild", "Начать восстанавливать финансы системно", "💪",
+                        "rebuild", Strings["evt_asan_total_loss_opt_rebuild"], "💪",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             stressDelta = -5, knowledgeDelta = 20,
@@ -177,7 +178,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "📚",
                 options = listOf(
                     option(
-                        "start_etf", "Открыть брокерский счёт, купить ETF на KASE", "📈",
+                        "start_etf", Strings["evt_asan_lesson_learned_opt_start_etf"], "📈",
                         next = "first_etf_bought",
                         fx = Effect(
                             capitalDelta = -50_000, investmentsDelta = 50_000,
@@ -203,12 +204,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🎉",
                 options = listOf(
                     option(
-                        "invest_freed", "Инвестировать 15 000/мес в ETF (автоплатёж)", "📈",
+                        "invest_freed", Strings["evt_asan_debt_paid_opt_invest_freed"], "📈",
                         next = MONTHLY_TICK,
                         fx = Effect(investmentsDelta = 15_000, knowledgeDelta = 8)
                     ),
                     option(
-                        "raise_cushion", "Нарастить подушку до 3 зарплат (1.35 млн)", "🛡️",
+                        "raise_cushion", Strings["evt_asan_debt_paid_opt_raise_cushion"], "🛡️",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             stressDelta = -5, knowledgeDelta = 5,
@@ -216,7 +217,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "lifestyle_creep", "Переехать в квартиру подороже (+40к/мес)", "🏠",
+                        "lifestyle_creep", Strings["evt_asan_debt_paid_opt_lifestyle_creep"], "🏠",
                         next = MONTHLY_TICK,
                         fx = Effect(expensesDelta = 40_000, stressDelta = -3, riskDelta = 5)
                     )
@@ -237,12 +238,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🛡️",
                 options = listOf(
                     option(
-                        "use_cushion_correct", "Использовать подушку — для этого она и есть", "✅",
+                        "use_cushion_correct", Strings["evt_asan_has_cushion_opt_use_cushion_correct"], "✅",
                         next = "cushion_worked",
                         fx = Effect(capitalDelta = -35_000, stressDelta = -10, knowledgeDelta = 12)
                     ),
                     option(
-                        "take_credit_instead", "Взять рассрочку, сохранить подушку нетронутой", "💳",
+                        "take_credit_instead", Strings["evt_asan_has_cushion_opt_take_credit_instead"], "💳",
                         next = "new_credit",
                         fx = Effect(debtDelta = 38_000, debtPaymentDelta = 4_000, stressDelta = 5)
                     )
@@ -263,7 +264,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 options = listOf(
                     option(
                         "rebuild_cushion",
-                        "Восполнять подушку 15 000/мес + начать инвестировать",
+                        Strings["evt_asan_cushion_worked_opt_rebuild_cushion"],
                         "📊",
                         next = MONTHLY_TICK,
                         fx = Effect(knowledgeDelta = 5, stressDelta = -3)
@@ -284,7 +285,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🤔",
                 options = listOf(
                     option(
-                        "close_fast", "Закрыть рассрочку досрочно за 2 месяца", "⚡",
+                        "close_fast", Strings["evt_asan_new_credit_opt_close_fast"], "⚡",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             capitalDelta = -38_000, debtDelta = -38_000,
@@ -292,7 +293,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "pay_minimum", "Платить минимум, деньги пустить в инвестиции", "📈",
+                        "pay_minimum", Strings["evt_asan_new_credit_opt_pay_minimum"], "📈",
                         next = MONTHLY_TICK,
                         fx = Effect(investmentsDelta = 20_000, riskDelta = 5)
                     )
@@ -319,17 +320,17 @@ class AsanScenarioGraph : ScenarioGraph() {
                 tags = setOf("career"),
                 options = listOf(
                     option(
-                        "take_startup", "Принять оффер стартапа (+250к/мес, высокий риск)", "🚀",
+                        "take_startup", Strings["evt_asan_job_offer_opt_take_startup"], "🚀",
                         next = "startup_joined",
                         fx = Effect(incomeDelta = 250_000, riskDelta = 20, stressDelta = 15)
                     ),
                     option(
-                        "negotiate_current", "Показать оффер текущему — попросить 600к", "🤝",
+                        "negotiate_current", Strings["evt_asan_job_offer_opt_negotiate_current"], "🤝",
                         next = "negotiated_raise",
                         fx = Effect(incomeDelta = 150_000, stressDelta = -5, knowledgeDelta = 8)
                     ),
                     option(
-                        "stay_safe", "Остаться — стабильность важнее на текущем этапе", "🛡️",
+                        "stay_safe", Strings["evt_asan_job_offer_opt_stay_safe"], "🛡️",
                         next = "promotion_soon",
                         fx = Effect(stressDelta = -8, knowledgeDelta = 3)
                     )
@@ -354,12 +355,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "😰",
                 options = listOf(
                     option(
-                        "freelance", "Фрилансить пока ищу новое место", "💻",
+                        "freelance", Strings["evt_asan_startup_joined_opt_freelance"], "💻",
                         next = MONTHLY_TICK,
                         fx = Effect(incomeDelta = -200_000, knowledgeDelta = 15, riskDelta = -5)
                     ),
                     option(
-                        "fast_job", "Взять первый попавшийся оффер быстро", "🏃",
+                        "fast_job", Strings["evt_asan_startup_joined_opt_fast_job"], "🏃",
                         next = "back_stable",
                         fx = Effect(stressDelta = -15)
                     )
@@ -381,7 +382,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🎯",
                 options = listOf(
                     option(
-                        "invest_raise", "80% прибавки → инвестиции, 20% → подушка", "📈",
+                        "invest_raise", Strings["evt_asan_negotiated_raise_opt_invest_raise"], "📈",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             investmentsDelta = 120_000,
@@ -390,7 +391,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "lifestyle_raise", "Переехать в лучшую квартиру (+50к/мес)", "🏠",
+                        "lifestyle_raise", Strings["evt_asan_negotiated_raise_opt_lifestyle_raise"], "🏠",
                         next = MONTHLY_TICK,
                         fx = Effect(expensesDelta = 50_000)
                     )
@@ -410,7 +411,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "📈",
                 options = listOf(
                     option(
-                        "skill_up", "Инвестировать в скиллы: курс за 150к", "🎓",
+                        "skill_up", Strings["evt_asan_promotion_soon_opt_skill_up"], "🎓",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             capitalDelta = -150_000, incomeDelta = 100_000,
@@ -418,7 +419,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "invest_extra", "Сразу пустить +100к/мес в ETF", "📊",
+                        "invest_extra", Strings["evt_asan_promotion_soon_opt_invest_extra"], "📊",
                         next = MONTHLY_TICK,
                         fx = Effect(investmentsDelta = 100_000, knowledgeDelta = 5)
                     )
@@ -439,7 +440,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "💼",
                 options = listOf(
                     option(
-                        "rule_50_30_20", "Применить правило 50/30/20 строго", "📊",
+                        "rule_50_30_20", Strings["evt_asan_back_stable_opt_rule_50_30_20"], "📊",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             knowledgeDelta = 20, stressDelta = -10,
@@ -467,7 +468,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 tags = setOf("investment"),
                 options = listOf(
                     option(
-                        "dca_strategy", "DCA: вкладывать 30 000 ₸ каждый месяц", "📅",
+                        "dca_strategy", Strings["evt_asan_first_etf_bought_opt_dca_strategy"], "📅",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             investmentsDelta = 30_000, knowledgeDelta = 8,
@@ -475,7 +476,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "lump_sum", "Вложить ещё 100 000 ₸ сразу", "💰",
+                        "lump_sum", Strings["evt_asan_first_etf_bought_opt_lump_sum"], "💰",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             capitalDelta = -100_000, investmentsDelta = 100_000,
@@ -504,7 +505,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🏠",
                 options = listOf(
                     option(
-                        "mortgage_yes", "Взять ипотеку сейчас, занять у родителей 800к", "🏠",
+                        "mortgage_yes", Strings["evt_asan_mortgage_offer_opt_mortgage_yes"], "🏠",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             capitalDelta = -3_600_000, debtDelta = 14_400_000,
@@ -513,12 +514,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "save_more", "Накопить 3.6 млн самому — ещё ~10 месяцев", "⏳",
+                        "save_more", Strings["evt_asan_mortgage_offer_opt_save_more"], "⏳",
                         next = MONTHLY_TICK,
                         fx = Effect(stressDelta = -5, knowledgeDelta = 8)
                     ),
                     option(
-                        "rent_invest", "Продолжать арендовать, разницу инвестировать", "📈",
+                        "rent_invest", Strings["evt_asan_mortgage_offer_opt_rent_invest"], "📈",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             investmentsDelta = 130_000, knowledgeDelta = 12,
@@ -548,7 +549,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 tags = setOf("career"),
                 options = listOf(
                     option(
-                        "accept_senior", "Принять — продолжать расти", "🎯",
+                        "accept_senior", Strings["evt_asan_senior_offer_opt_accept_senior"], "🎯",
                         next = "financial_freedom_path",
                         fx = Effect(
                             incomeDelta = 450_000, stressDelta = 5,
@@ -574,7 +575,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "🎯",
                 options = listOf(
                     option(
-                        "keep_going", "Продолжать — финансовая свобода неизбежна", "🏆",
+                        "keep_going", Strings["evt_asan_financial_freedom_path_opt_keep_going"], "🏆",
                         next = "ending_freedom",
                         fx = Effect(knowledgeDelta = 10, stressDelta = -15)
                     )
@@ -595,12 +596,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 flavor = "☀️",
                 options = listOf(
                     option(
-                        "focus_savings", "Сократить расходы, увеличить накопления", "💰",
+                        "focus_savings", Strings["evt_asan_normal_life_opt_focus_savings"], "💰",
                         next = MONTHLY_TICK,
                         fx = Effect(expensesDelta = -10_000, stressDelta = 2, knowledgeDelta = 2)
                     ),
                     option(
-                        "focus_invest", "Направить максимум в инвестиции", "📈",
+                        "focus_invest", Strings["evt_asan_normal_life_opt_focus_invest"], "📈",
                         next = MONTHLY_TICK,
                         fx = Effect(
                             investmentsDelta = 50_000, capitalDelta = -50_000,
@@ -608,12 +609,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                         )
                     ),
                     option(
-                        "focus_skills", "Потратить время на развитие скиллов", "🎓",
+                        "focus_skills", Strings["evt_asan_normal_life_opt_focus_skills"], "🎓",
                         next = "skill_check",
                         fx = Effect(knowledgeDelta = 8, stressDelta = 3)
                     ),
                     option(
-                        "check_career", "Посмотреть рынок — может пора менять работу?", "🔍",
+                        "check_career", Strings["evt_asan_normal_life_opt_check_career"], "🔍",
                         next = "job_offer",
                         fx = Effect()
                     )
@@ -634,12 +635,12 @@ class AsanScenarioGraph : ScenarioGraph() {
                 tags = setOf("career"),
                 options = listOf(
                     option(
-                        "talk_recruiter", "Поговорить с рекрутером", "📞",
+                        "talk_recruiter", Strings["evt_asan_skill_check_opt_talk_recruiter"], "📞",
                         next = "senior_offer",
                         fx = Effect(knowledgeDelta = 5)
                     ),
                     option(
-                        "not_ready", "Пока не готов — ещё учиться", "📚",
+                        "not_ready", Strings["evt_asan_skill_check_opt_not_ready"], "📚",
                         next = MONTHLY_TICK,
                         fx = Effect(knowledgeDelta = 10, stressDelta = -2)
                     )
@@ -734,7 +735,7 @@ class AsanScenarioGraph : ScenarioGraph() {
             tags = setOf("debt", "crisis"),
             options = listOf(
                 option(
-                    "debt_restructure", "Договориться о реструктуризации долга", "🤝",
+                    "debt_restructure", Strings["evt_asan_debt_crisis_opt_debt_restructure"], "🤝",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         debtPaymentDelta = 20_000, stressDelta = -20,
@@ -742,7 +743,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     )
                 ),
                 option(
-                    "sell_assets", "Продать всё что можно, закрыть долг", "💸",
+                    "sell_assets", Strings["evt_asan_debt_crisis_opt_sell_assets"], "💸",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         investmentsDelta = -300_000, capitalDelta = -200_000,
@@ -755,7 +756,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // BANKRUPTCY TRIGGER: capital = 0, stress >= 90
         event(
             id = "bankruptcy_trigger",
-            message = "Капитал обнулился. Платить нечем.",
+            message = Strings["evt_asan_bankruptcy_trigger_msg"],
             flavor = "💀",
             priority = 90,
             conditions = listOf(
@@ -764,7 +765,7 @@ class AsanScenarioGraph : ScenarioGraph() {
             ),
             options = listOf(
                 option(
-                    "accept_bankruptcy", "Признать банкротство", "💔",
+                    "accept_bankruptcy", Strings["evt_asan_bankruptcy_trigger_opt_accept_bankruptcy"], "💔",
                     next = "ending_bankruptcy",
                     fx = Effect()
                 )
@@ -792,7 +793,7 @@ class AsanScenarioGraph : ScenarioGraph() {
             tags = setOf("debt"),
             options = listOf(
                 option(
-                    "budget_app", "Установить приложение для учёта расходов", "📱",
+                    "budget_app", Strings["evt_asan_trap_warning_opt_budget_app"], "📱",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         expensesDelta = -30_000, knowledgeDelta = 15,
@@ -800,7 +801,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     )
                 ),
                 option(
-                    "second_income", "Найти подработку (+80к/мес)", "💼",
+                    "second_income", Strings["evt_asan_trap_warning_opt_second_income"], "💼",
                     next = MONTHLY_TICK,
                     fx = Effect(incomeDelta = 80_000, stressDelta = 8)
                 )
@@ -827,7 +828,7 @@ class AsanScenarioGraph : ScenarioGraph() {
             cooldownMonths = 12,
             options = listOf(
                 option(
-                    "bonus_invest", "Всё в инвестиции", "📈",
+                    "bonus_invest", Strings["evt_asan_bonus_received_opt_bonus_invest"], "📈",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         investmentsDelta = 200_000,
@@ -836,7 +837,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     )
                 ),
                 option(
-                    "bonus_cushion", "Пополнить подушку безопасности", "🛡️",
+                    "bonus_cushion", Strings["evt_asan_bonus_received_opt_bonus_cushion"], "🛡️",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         capitalDelta = 200_000,
@@ -845,7 +846,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     )
                 ),
                 option(
-                    "bonus_experience", "Потратить на себя — заслужил!", "🎉",
+                    "bonus_experience", Strings["evt_asan_bonus_received_opt_bonus_experience"], "🎉",
                     next = MONTHLY_TICK,
                     fx = Effect(stressDelta = -12)
                 )
@@ -872,12 +873,12 @@ class AsanScenarioGraph : ScenarioGraph() {
             unique = true,
             options = listOf(
                 option(
-                    "consider_mortgage", "Да, разобраться с ипотекой", "🏠",
+                    "consider_mortgage", Strings["evt_asan_mortgage_unlock_opt_consider_mortgage"], "🏠",
                     next = "mortgage_offer",
                     fx = Effect()
                 ),
                 option(
-                    "keep_investing", "Нет, продолжать инвестировать — аренда дешевле", "📈",
+                    "keep_investing", Strings["evt_asan_mortgage_unlock_opt_keep_investing"], "📈",
                     next = MONTHLY_TICK,
                     fx = Effect(knowledgeDelta = 8)
                 )
@@ -901,12 +902,12 @@ class AsanScenarioGraph : ScenarioGraph() {
             cooldownMonths = 6,
             options = listOf(
                 option(
-                    "take_vacation", "Взять отпуск — потратить 80к на отдых", "🌴",
+                    "take_vacation", Strings["evt_asan_burnout_risk_opt_take_vacation"], "🌴",
                     next = MONTHLY_TICK,
                     fx = Effect(capitalDelta = -80_000, stressDelta = -30)
                 ),
                 option(
-                    "therapy", "Пойти к психологу (20к/мес)", "🧠",
+                    "therapy", Strings["evt_asan_burnout_risk_opt_therapy"], "🧠",
                     next = MONTHLY_TICK,
                     fx = Effect(
                         expensesDelta = 20_000, stressDelta = -15,
@@ -914,7 +915,7 @@ class AsanScenarioGraph : ScenarioGraph() {
                     )
                 ),
                 option(
-                    "push_through", "Продолжать — у меня цели", "💪",
+                    "push_through", Strings["evt_asan_burnout_risk_opt_push_through"], "💪",
                     next = MONTHLY_TICK,
                     fx = Effect(stressDelta = 5, knowledgeDelta = 3)
                 )

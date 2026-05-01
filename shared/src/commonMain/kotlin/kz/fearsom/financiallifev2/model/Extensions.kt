@@ -1,8 +1,10 @@
 package kz.fearsom.financiallifev2.model
 
+import kz.fearsom.financiallifev2.i18n.Strings
+
 private fun CurrencyCode.suffix() = when (this) {
     CurrencyCode.KZT -> "₸"
-    CurrencyCode.RUB -> "руб."
+    CurrencyCode.RUB -> Strings.currencyRub
     CurrencyCode.USD -> "$"
 }
 

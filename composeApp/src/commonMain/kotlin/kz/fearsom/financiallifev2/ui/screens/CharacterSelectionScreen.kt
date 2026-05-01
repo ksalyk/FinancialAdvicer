@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.NewGameUiState
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
@@ -56,7 +57,7 @@ fun CharacterSelectionScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Выбери персонажа",
+                title = Strings.uiCharSelTitle,
                 subtitle = if (selectedEra != null) "${selectedEra.emoji} ${selectedEra.name}" else null,
                 onBack = onBack
             )
@@ -73,13 +74,13 @@ fun CharacterSelectionScreen(
                     .padding(4.dp)
             ) {
                 TabButton(
-                    label    = "👥 Персонажи",
+                    label    = Strings.uiCharSelTabCharacters,
                     selected = activeTab == 0,
                     modifier = Modifier.weight(1f),
                     onClick  = { activeTab = 0 }
                 )
                 TabButton(
-                    label    = "🎭 Бандлы",
+                    label    = Strings.uiCharSelTabBundles,
                     selected = activeTab == 1,
                     modifier = Modifier.weight(1f),
                     onClick  = { activeTab = 1 }
@@ -235,7 +236,7 @@ private fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () 
                     DifficultyBadge(character.difficulty)
                 }
                 Text(
-                    text     = "${character.age} лет · ${character.profession}",
+                    text     = "${character.age} ${Strings.uiCharSelAgeSuffix} ${character.profession}",
                     fontSize = 12.sp,
                     color    = colors.textSecondary
                 )
@@ -259,7 +260,7 @@ private fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () 
         } else {
             Spacer(Modifier.height(8.dp))
             Text(
-                text     = "Разблокируется по условию",
+                text     = Strings.uiCharSelLocked,
                 fontSize = 11.sp,
                 color    = colors.textHint
             )
@@ -356,7 +357,7 @@ private fun BundleCard(bundle: CharacterBundle, onClick: () -> Unit) {
         } else {
             Spacer(Modifier.height(6.dp))
             Text(
-                text     = bundle.unlockCondition?.unlockHint() ?: "Разблокируется по условию",
+                text     = bundle.unlockCondition?.unlockHint() ?: Strings.uiCharSelLocked,
                 fontSize = 11.sp,
                 color    = colors.textHint
             )
@@ -374,7 +375,7 @@ private fun CompactStatsRow(stats: CharacterStats) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         MiniStat("💰", stats.capital.shortFormat(),     GoldPrimary,    Modifier.weight(1f))
-        MiniStat("📈", "${stats.income / 1000}к/мес",  GreenSuccess,   Modifier.weight(1f))
+        MiniStat("📈", "${stats.income / 1000}к${Strings.uiCharSelPerMonth}",  GreenSuccess,   Modifier.weight(1f))
         MiniStat("😰", "${stats.stress}%",              StatStress,     Modifier.weight(1f))
         MiniStat("🎓", "${stats.financialKnowledge}",   StatKnowledge,  Modifier.weight(1f))
     }
@@ -422,10 +423,10 @@ private fun difficultyColor(d: Difficulty): Color = when (d) {
 }
 
 fun Difficulty.label(): String = when (this) {
-    Difficulty.EASY      -> "Лёгкий"
-    Difficulty.MEDIUM    -> "Средний"
-    Difficulty.HARD      -> "Сложный"
-    Difficulty.NIGHTMARE -> "Кошмар"
+    Difficulty.EASY      -> Strings.uiCharSelDiffEasy
+    Difficulty.MEDIUM    -> Strings.uiCharSelDiffMedium
+    Difficulty.HARD      -> Strings.uiCharSelDiffHard
+    Difficulty.NIGHTMARE -> Strings.uiCharSelDiffNightmare
 }
 
 private fun Long.shortFormat(): String = when {
@@ -435,8 +436,8 @@ private fun Long.shortFormat(): String = when {
 }
 
 private fun UnlockCondition.unlockHint(): String = when (this) {
-    is UnlockCondition.FinishGameWith -> "Пройди игру: ${ending.emoji()} ${ending.label()}"
-    is UnlockCondition.ReachCapital   -> "Набери ${amount.shortFormat()}"
-    is UnlockCondition.PlayEra        -> "Сыграй в эпоху $eraId"
-    is UnlockCondition.CompleteGames  -> "Заверши $count игр(ы)"
+    is UnlockCondition.FinishGameWith -> "${Strings.uiCharSelUnlockComplete} ${ending.emoji()} ${ending.label()}"
+    is UnlockCondition.ReachCapital   -> "${Strings.uiCharSelUnlockReach} ${amount.shortFormat()}"
+    is UnlockCondition.PlayEra        -> "${Strings.uiCharSelUnlockEra} $eraId"
+    is UnlockCondition.CompleteGames  -> "${Strings.uiCharSelUnlockCompleteN} $count"
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.Era
 import kz.fearsom.financiallifev2.presentation.NewGameUiState
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
@@ -54,8 +55,8 @@ fun EraSelectionScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Выбери эпоху",
-                subtitle = "Каждая эпоха — уникальные экономические события",
+                title = Strings.uiEraTitle,
+                subtitle = Strings.uiEraSubtitle,
                 onBack = onBack
             )
 
@@ -142,7 +143,7 @@ private fun EraCard(era: Era, onClick: () -> Unit) {
         if (era.isLocked) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text     = "Разблокируйте, пройдя любую другую эпоху",
+                text     = Strings.uiEraLockedHint,
                 fontSize = 11.sp,
                 color    = colors.textHint
             )
@@ -179,12 +180,12 @@ private fun EraCard(era: Era, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StatPill(
-                    label = "Инфляция",
+                    label = Strings.uiEraInflation,
                     value = "${era.baseInflationRate}%",
                     color = if (era.baseInflationRate > 8) RedDanger else GreenSuccess
                 )
                 StatPill(
-                    label = "Зарплаты",
+                    label = Strings.uiEraSalary,
                     value = "${era.baseSalaryMin / 1000}к–${era.baseSalaryMax / 1000}к ₸",
                     color = BlueAccent
                 )

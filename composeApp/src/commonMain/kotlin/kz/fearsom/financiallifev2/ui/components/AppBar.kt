@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 import kz.fearsom.financiallifev2.ui.theme.Spacing
 import kz.fearsom.financiallifev2.ui.theme.Elevation
@@ -42,7 +43,7 @@ fun BackButton(
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Назад",
+            contentDescription = Strings.uiAppbarBack,
             tint = colors.textPrimary
         )
     }
