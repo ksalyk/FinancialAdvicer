@@ -186,7 +186,7 @@ private fun EraCard(era: Era, onClick: () -> Unit) {
                 )
                 StatPill(
                     label = Strings.uiEraSalary,
-                    value = "${era.baseSalaryMin / 1000}к–${era.baseSalaryMax / 1000}к ₸",
+                    value = "${era.baseSalaryMin / 1000}k–${era.baseSalaryMax / 1000}k ₸",
                     color = BlueAccent
                 )
             }

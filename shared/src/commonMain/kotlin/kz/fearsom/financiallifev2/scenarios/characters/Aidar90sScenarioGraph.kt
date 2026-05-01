@@ -48,17 +48,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ОБЯЗАТЕЛЬНО: Стартовое событие ───────────────────────────────
         put("intro", event(
             id = "intro",
-            message = story(
-                """
-                Октябрь 1993-го. Алматы живёт в советских рублях, которые уже почти никто не уважает по-настоящему. Цены скачут так быстро, что люди стараются тратить зарплату в тот же день: сегодня на неё можно взять мешок муки и мясо на свадьбу, через неделю может хватить только на само застолье.
-                """,
-                """
-                Айдару двадцать два. Он ещё слишком молод, чтобы считать себя сломанным, и уже достаточно взрослый, чтобы понять: если семья сейчас не удержится, никто не придёт и не соберёт её обратно. Родители годами откладывали деньги, мечтая о спокойной старости и новой машине, а теперь кухонные разговоры всё чаще звучат одинаково: «копили на жизнь, а вышло на пару хороших столов и один очень плохой год».
-                """,
-                """
-                На руках {capital}. Доход {income}, если вообще заплатят живыми деньгами, а не сахаром или маслом. По городу уже ползут слухи, что скоро у Казахстана будет своя валюта и старые рубли придётся менять в спешке. И прямо сейчас звонит отец: какие-то люди обещают вернуть потерянное, если вложить ещё. В 90-х почти каждая надежда приходит в дом в костюме спасения. Айдару нужно решить, поверить ли в неё ещё раз.
-                """
-            ),
+            message = Strings["hardcoded_story_001_msg"],
             flavor = "📼",
             options = listOf(
                 option(
@@ -88,17 +78,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 1: Выживание (Месяцы 1-3) ──────────────────────────────
         put("parents_conflict", event(
             id = "parents_conflict",
-            message = story(
-                """
-                Отец бросает трубку почти с обидой. В 90-х люди защищают не только деньги, которых уже нет, но и право верить, что их всё-таки можно вернуть. Айдару тяжело слышать в родном голосе недоверие, но ещё тяжелее было бы промолчать.
-                """,
-                """
-                На работе тоже нет ощущения почвы под ногами. Начальство предлагает зарплату не деньгами, а сахаром, маслом и чем-то ещё из того, что пока не обесценилось прямо по дороге домой. Время такое: каждый сам решает, что здесь на самом деле считается оплатой труда.
-                """,
-                """
-                Можно взять товар и превратить его в шанс, ждать живые деньги или окончательно признать: выживание требует искать вторую жизнь вне основной работы.
-                """
-            ),
+            message = Strings["hardcoded_story_002_msg"],
             flavor = "📞",
             tags = setOf("family", "career"),
             options = listOf(
@@ -128,17 +108,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("parents_lost_money", event(
             id = "parents_lost_money",
-            message = story(
-                """
-                Деньги исчезают так же быстро, как и люди, которые их обещали вернуть. Всё повторяется с пугающей точностью: новые лица, те же слова, та же воронка стыда после того, как дверь за мошенниками уже закрылась.
-                """,
-                """
-                Отец не выдерживает. Сердце сдаёт раньше, чем он успевает сказать что-то полезное или попросить прощения. В один день Айдар перестаёт быть просто сыном и становится главным кормильцем семьи, хотя никто не спрашивал, готов ли он к такой роли.
-                """,
-                """
-                Теперь каждый следующий выбор будет тяжелее прежнего. Потому что речь уже не о личной амбиции, а о том, кто вообще сможет удержать дом от окончательного развала.
-                """
-            ),
+            message = Strings["hardcoded_story_003_msg"],
             flavor = "💔",
             tags = setOf("crisis", "family"),
             options = listOf(
@@ -161,17 +131,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("market_opportunity", event(
             id = "market_opportunity",
-            message = story(
-                """
-                На барахолке всё пахнет одинаково: пылью, дешёвым пластиком и шансом выскочить из бедности на один удачный оборот. Айдару предлагают партию китайских часов, и предложение звучит ровно так, как в 90-х звучат почти все опасные возможности: быстро, уверенно и почти правдоподобно.
-                """,
-                """
-                Вокруг полно людей, которые уже перестали верить в долгую честную дорогу. Кто-то торгует обувью, кто-то сигаретами, кто-то чужими обещаниями. На этом фоне риск начинает выглядеть не исключением, а единственной нормой времени.
-                """,
-                """
-                Чтобы зайти, нужно вложить 30 000 ₸. Для кого-то это мелочь, для Айдара почти кусок будущего. Но если партия выстрелит, он впервые почувствует не просто выживание, а движение вверх.
-                """
-            ),
+            message = Strings["hardcoded_story_004_msg"],
             flavor = "⌚",
             tags = setOf("investment", "adventure"),
             options = listOf(
@@ -194,17 +154,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("watches_result", event(
             id = "watches_result",
-            message = story(
-                """
-                Партия приходит спустя недели нервного ожидания. В 90-х ожидание почти всегда хуже самого результата, потому что за это время человек уже успевает прожить и победу, и крах в голове по нескольку раз.
-                """,
-                """
-                Коробки стоят перед Айдаром как немой приговор его дерзости. Либо это первый честный шанс заработать на собственной смелости, либо очередное напоминание, что рынок того времени любит не трудолюбивых, а тех, кому хотя бы раз улыбнулась удача.
-                """,
-                """
-                Дальше придётся быстро решить, как именно прожить этот исход: с достоинством победителя или с грубым уроком человека, который попробовал залезть выше своей опоры.
-                """
-            ),
+            message = Strings["hardcoded_story_005_msg"],
             flavor = "📦",
             tags = setOf("consequence"),
             options = listOf(
@@ -229,11 +179,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("no_computer_life", event(
             id = "no_computer_life",
-            message = """
-                Компьютера нет. Подработки программистом больше нет.
-                Ты спас отца, но отбросил карьеру.
-                Теперь только физический труд.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_001_msg"],
             flavor = "🕯️",
             options = listOf(
                 option(
@@ -249,17 +195,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 2: Введение Тенге (Месяц 4-6) ───────────────────────────
         put("tenge_introduction", event(
             id = "tenge_introduction",
-            message = story(
-                """
-                Ноябрь 1993-го. На улицах говорят только об одном: ввели тенге. Рубли меняют по курсу 500:1, у обменных пунктов давка, а у людей на лицах то самое выражение 90-х, когда никто до конца не понимает, спасают его или просто переводят бедность на новый язык.
-                """,
-                """
-                Для Айдара это не просто государственная новость. Это момент, когда чужая история про «копили много лет, а после обмена хватило на один хороший стол» вдруг перестаёт быть чужой. Если ошибиться сейчас, ошибка будет стоить не процентов, а целых месяцев жизни.
-                """,
-                """
-                Формально у страны теперь свои деньги. По ощущениям у людей всё те же старые нервы. Нужно решить, как пережить реформу и что делать с тенге сразу после обмена.
-                """
-            ),
+            message = Strings["hardcoded_story_006_msg"],
             flavor = "📰",
             tags = setOf("era", "crisis"),
             options = listOf(
@@ -318,13 +254,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("inflation_crisis", event(
             id = "inflation_crisis",
-            message = """
-                📈 Цены в магазине выросли на 40% за месяц!
-                Хлеб: 5 ₸ → 7 ₸
-                Молоко: 12 ₸ → 17 ₸
-                
-                Твоей зарплаты хватает только на еду.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_002_msg"],
             flavor = "📈",
             tags = setOf("crisis"),
             options = listOf(
@@ -355,13 +285,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 3: Предпринимательство (Месяц 7-12) ────────────────────
         put("business_opportunity", event(
             id = "business_opportunity",
-            message = """
-                🏪 Друг предлагает открыть ларек с китайскими товарами.
-                Вложение: 200 000 ₸.
-                Доход: до 50 000 ₸/мес.
-                
-                Нужен партнер. Ты в деле?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_003_msg"],
             flavor = "🏪",
             tags = setOf("investment", "career"),
             options = listOf(
@@ -391,12 +315,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("kiosk_opened", event(
             id = "kiosk_opened",
-            message = """
-                🎉 Ларек открыт!
-                Первые покупатели пошли.
-                
-                Но налоговая уже интересуется...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_004_msg"],
             flavor = "🎉",
             tags = setOf("consequence"),
             options = listOf(
@@ -419,10 +338,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("kiosk_negotiation", event(
             id = "kiosk_negotiation",
-            message = """
-                Друг согласился на 60% долю тебе.
-                Но он обиделся. Отношения натянуты.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_005_msg"],
             flavor = "💬",
             tags = setOf("consequence"),
             options = listOf(
@@ -446,11 +362,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 4: Повторный Скам (Месяц 13-18) ────────────────────────
         put("parents_scam_again", event(
             id = "parents_scam_again",
-            message = """
-                📞 Отец снова звонит.
-                «Ты был прав в прошлый раз. Но сейчас точно надежно! МММ-2».
-                Они хотят взять кредит под залог квартиры.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_006_msg"],
             flavor = "📞",
             tags = setOf("family", "scam"),
             options = listOf(
@@ -480,13 +392,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("parents_lost_money_2", event(
             id = "parents_lost_money_2",
-            message = """
-                😱 Они взяли кредит 500 000 ₸ и вложили в МММ.
-                Пирамида лопнула через 2 месяца.
-                
-                Теперь ты должен помочь выплатить кредит.
-                Или они потеряют квартиру.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_007_msg"],
             flavor = "💔",
             tags = setOf("crisis", "family"),
             options = listOf(
@@ -510,13 +416,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 5: Конституция 1995 (Месяц 19-24) ──────────────────────
         put("constitution_1995", event(
             id = "constitution_1995",
-            message = """
-                📜 30 августа 1995 — принята новая Конституция!
-                Частная собственность защищена законом.
-                
-                Землю можно брать в аренду на 99 лет.
-                Интересует сельское хозяйство?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_008_msg"],
             flavor = "📜",
             tags = setOf("era", "investment"),
             options = listOf(
@@ -539,17 +439,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("chechen_war_broadcast", event(
             id = "chechen_war_broadcast",
-            message = story(
-                """
-                Декабрь 1994-го. Вечером весь двор липнет к телевизорам: в новостях показывают Грозный. В кадре чужая война, но в 90-х чужая беда слишком быстро становится общей тревогой. На кухнях спорят, кто прав, а кто виноват, но обычному человеку прежде всего страшно от другого: опять мальчишек отправляют умирать, опять будущее звучит как приказ, а не как выбор.
-                """,
-                """
-                У Айдара в России живёт двоюродный брат. Мать просит позвонить тёте, соседи обсуждают бензин, границы и то, не поползёт ли нестабильность дальше по всему региону. Даже те, кто не интересовался политикой, теперь слушают новости с тем особым вниманием, которое приходит, когда понимаешь: мир вокруг может сорваться быстрее, чем ты успеешь накопить на зиму.
-                """,
-                """
-                Обычный человек не может остановить войну. Но он может решить, как жить рядом с этой новостью: держаться за близких, искать смысл в чужом опыте или просто выключить телевизор, чтобы сохранить остатки нервов.
-                """
-            ),
+            message = Strings["hardcoded_story_007_msg"],
             flavor = "📺",
             tags = setOf("era", "world", "family"),
             unique = true,
@@ -580,17 +470,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("chechen_war_veteran_story", event(
             id = "chechen_war_veteran_story",
-            message = story(
-                """
-                Сосед-афганец говорит тихо, без героизма. На войне быстро исчезают красивые слова, остаются только усталость, госпитали и люди, которым потом годами трудно снова жить обычную жизнь. Айдар слушает и впервые замечает, как теленовости превращаются в бытовые решения: кто-то боится брать кредит, кто-то откладывает свадьбу, кто-то спешно собирает документы на выезд.
-                """,
-                """
-                Война далеко, но тревога уже поселилась во дворе. И всё же в этом разговоре есть странная польза: когда слышишь живого человека, пропадает соблазн смотреть на чужую беду как на абстрактную политику. Она всегда приходит в чьи-то семьи, а потом отбрасывает длинную тень на всех остальных.
-                """,
-                """
-                Иногда важный выбор не в том, чтобы что-то выиграть, а в том, чтобы вовремя понять цену стабильности и не путать шум телевизора с настоящей силой.
-                """
-            ),
+            message = Strings["hardcoded_story_008_msg"],
             flavor = "🕯️",
             tags = setOf("world", "reflection"),
             options = listOf(
@@ -613,17 +493,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("nuclear_disarmament_reaction", event(
             id = "nuclear_disarmament_reaction",
-            message = story(
-                """
-                Весна 1995-го. В газетах и на кухнях обсуждают, что Казахстан окончательно выводит ядерное оружие, доставшееся после распада Союза. Для мира это большая политика, а для обычных людей — странная смесь облегчения, гордости и недоверия.
-                """,
-                """
-                Одни говорят: «С ядеркой нас бы все боялись». Другие вспоминают Семипалатинский полигон, больных детей, усталые лица родственников из тех краёв и отвечают жёстче: страна уже заплатила слишком много просто за право жить рядом с атомом. Айдар никогда не держал в руках ничего опаснее монтировки для гаража, но даже он понимает простую вещь 90-х: сила государства тоже измеряется тем, что оно отказывается повторять.
-                """,
-                """
-                Ему остаётся решить, что делать с этой новостью у себя в голове: гордиться мирным выбором, жалеть об утраченной мощи или попытаться понять, что чувствуют те, кто жил рядом с полигоном не по телевизору, а по-настоящему.
-                """
-            ),
+            message = Strings["hardcoded_story_009_msg"],
             flavor = "☢️",
             tags = setOf("era", "world", "reflection"),
             unique = true,
@@ -654,17 +524,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("semey_memory_story", event(
             id = "semey_memory_story",
-            message = story(
-                """
-                Старший сосед вспоминает поездку к родственникам под Семей: вечные разговоры о здоровье, привычку не задавать лишних вопросов врачам и то особое молчание, которое бывает в местах, где люди слишком долго жили рядом с невидимой угрозой. Для Айдара эта история звучит сильнее любой официальной речи.
-                """,
-                """
-                В 90-х деньги важны почти всегда, но есть вещи, которые не купишь ни за доллары, ни за ваучеры: чистую землю, спокойный сон родителей и уверенность, что ребёнок родится не после чьего-то эксперимента над чужой судьбой. История про ядерку вдруг становится не геополитикой, а разговором про цену обычной человеческой жизни.
-                """,
-                """
-                Иногда взросление начинается не с первой прибыли, а с понимания, что не всякая сила стоит цены, которую за неё платят обычные семьи.
-                """
-            ),
+            message = Strings["hardcoded_story_010_msg"],
             flavor = "🌫️",
             tags = setOf("world", "reflection"),
             options = listOf(
@@ -687,17 +547,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("capital_move_debate", event(
             id = "capital_move_debate",
-            message = story(
-                """
-                Декабрь 1997-го. Столицу переносят из Алматы в Акмолу. В автобусах смеются: кто в здравом уме поедет в степь и ветер? Но те, кто умеет слушать эпоху, уже чувствуют другое: вместе со столицей туда потянутся чиновники, стройка, аренда, новые деньги и новая география амбиций.
-                """,
-                """
-                Для Айдара это не абстрактная реформа. Каждый такой поворот в 90-х означает бытовой вопрос: где завтра будут возможности, какие города начнут расти и кто успеет первым заметить, что страна меняет не только адрес на карте, но и направление движения. Даже если он сам никуда не поедет, эпоха всё равно немного сдвигает мебель в его голове.
-                """,
-                """
-                Можно отмахнуться, можно посмеяться, а можно присмотреться к перемене как к редкому моменту, когда историю ещё не успели разложить по готовым выводам.
-                """
-            ),
+            message = Strings["hardcoded_story_011_msg"],
             flavor = "🏙️",
             tags = setOf("era", "world", "career"),
             unique = true,
@@ -728,17 +578,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("capital_move_opportunity", event(
             id = "capital_move_opportunity",
-            message = story(
-                """
-                Чем дольше Айдар слушает разговоры про Акмолу, тем яснее понимает: большие государственные решения редко выглядят удобными в моменте, зато почти всегда создают новый рынок для тех, кто не смеётся слишком рано. Кто-то поедет строить, кто-то сдавать квартиры, кто-то открывать столовые и магазины рядом с новой чиновничьей волной.
-                """,
-                """
-                Он может и не срываться с места прямо сейчас, но сама мысль оказывается полезной. В 90-х выигрывает не всегда самый смелый. Иногда выигрывает тот, кто чуть раньше других замечает, куда потечёт жизнь и где завтра начнут расти цены, зарплаты и чужие надежды.
-                """,
-                """
-                Даже если этот эпизод не принесёт ему денег сегодня, он оставит после себя важную привычку: смотреть на новости не как на шум, а как на карту будущих возможностей.
-                """
-            ),
+            message = Strings["hardcoded_story_012_msg"],
             flavor = "🗺️",
             tags = setOf("career", "reflection"),
             options = listOf(
@@ -762,13 +602,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 6: Кризис 1998 (Месяц 25-36) ───────────────────────────
         put("russia_crisis_1998", event(
             id = "russia_crisis_1998",
-            message = """
-                🚨 РОССИЯ ДЕВАЛЬВИРОВАЛА РУБЛЬ!
-                Кризис ударил по Казахстану.
-                
-                Тенге падает. Импорт дорожает.
-                Твой бизнес под угрозой.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_009_msg"],
             flavor = "🚨",
             tags = setOf("era", "crisis"),
             options = listOf(
@@ -799,15 +633,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ГЛАВА 7: Финал (Месяц 37+) ───────────────────────────────────
         put("final_choice", event(
             id = "final_choice",
-            message = """
-                🎯 1999 год. Ты прошел через всё.
-                
-                Капитал: {capital}
-                Доход: {income}/мес
-                Знания: {knowledge}/100
-                
-                Что дальше? Эмиграция или остаться строить бизнес?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_010_msg"],
             flavor = "🎯",
             tags = setOf("ending"),
             options = listOf(
@@ -838,15 +664,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── КОНЦОВКИ ─────────────────────────────────────────────────────
         put("ending_freedom", event(
             id = "ending_freedom",
-            message = """
-                🏆 ФИНАНСОВАЯ НЕЗАВИСИМОСТЬ (90-е Style)
-                
-                Айдар смог ухватить волну. 
-                Капитал: {capital} (или $10,000).
-                Ты открыл свой магазин или уехал в Москву.
-                
-                Родители спасены. 90-е пройдены.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_011_msg"],
             flavor = "🏆",
             isEnding = true,
             endingType = EndingType.FINANCIAL_FREEDOM,
@@ -855,14 +673,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("ending_business", event(
             id = "ending_business",
-            message = """
-                🏢 БИЗНЕС-ИМПЕРИЯ
-                
-                Твой ларек вырос в сеть магазинов.
-                Ты один из тех, кто построил новый Казахстан.
-                
-                Но сколько здоровья это стоило?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_012_msg"],
             flavor = "🏢",
             isEnding = true,
             endingType = EndingType.WEALTH,
@@ -871,15 +682,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("ending_emigration", event(
             id = "ending_emigration",
-            message = """
-                ✈️ ЭМИГРАЦИЯ
-                
-                Ты уехал в поисках лучшей жизни.
-                В Германии/России ты начал с нуля.
-                
-                Но дети будут говорить по-немецки/русски.
-                Родина осталась в прошлом.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_013_msg"],
             flavor = "✈️",
             isEnding = true,
             endingType = EndingType.FINANCIAL_STABILITY,
@@ -888,15 +691,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("ending_bankruptcy", event(
             id = "ending_bankruptcy",
-            message = """
-                💔 КРАХ.
-                
-                Инфляция съела остатки. 
-                Родители в долгах. 
-                Ты остался без жилья и средств.
-                
-                90-е не прощают ошибок.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_014_msg"],
             flavor = "💀",
             isEnding = true,
             endingType = EndingType.BANKRUPTCY,
@@ -905,14 +700,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("ending_paycheck", event(
             id = "ending_paycheck",
-            message = """
-                😐 ОТ ЗАРПЛАТЫ ДО ЗАРПЛАТЫ
-                
-                Ты выжил. Но не более.
-                90-е закончились, а ты всё ещё считаешь каждый тенге.
-                
-                Жизнь продолжается...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_015_msg"],
             flavor = "😐",
             isEnding = true,
             endingType = EndingType.PAYCHECK_TO_PAYCHECK,
@@ -922,12 +710,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── HUB: Обычная жизнь ───────────────────────────────────────────
         put("normal_life", event(
             id = "normal_life",
-            message = """
-                Месяц прошел. Свет дают по графику.
-                Цены в магазине выросли на 10%.
-                
-                Что в приоритете?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_016_msg"],
             flavor = "📺",
             poolWeight = 20,
             options = listOf(
@@ -965,12 +748,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // ── ДОПОЛНИТЕЛЬНЫЕ СОБЫТИЯ ПУЛА ──────────────────────────────────
         put("job_offer", event(
             id = "job_offer",
-            message = """
-                💼 Предложили работу в новой фирме.
-                Зарплата: 25 000 ₸/мес (vs текущие 15 000).
-                
-                Но фирма сомнительная — могут закрыть через месяц.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_017_msg"],
             flavor = "💼",
             poolWeight = 10,
             tags = setOf("career"),
@@ -994,12 +772,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("health_issue", event(
             id = "health_issue",
-            message = """
-                🏥 Здоровье подводит.
-                Стресс и плохое питание сказываются.
-                
-                Лечение: 20 000 ₸. Или терпеть?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_018_msg"],
             flavor = "🏥",
             poolWeight = 8,
             tags = setOf("crisis"),
@@ -1023,12 +796,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("friend_investment", event(
             id = "friend_investment",
-            message = """
-                🤝 Друг предлагает вложиться в общий бизнес.
-                Нужно 50 000 ₸. Обещают 30% годовых.
-                
-                Доверяешь ли ты ему?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_019_msg"],
             flavor = "🤝",
             poolWeight = 12,
             tags = setOf("investment", "scam"),
@@ -1052,12 +820,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("black_market", event(
             id = "black_market",
-            message = """
-                🌑 На черном рынке предлагают доллары по курсу ниже официального.
-                Можно купить на 20% выгоднее.
-                
-                Но риск нарваться на фальшивки или милицию.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_020_msg"],
             flavor = "🌑",
             poolWeight = 10,
             tags = setOf("investment", "adventure"),
@@ -1081,12 +844,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("family_celebration", event(
             id = "family_celebration",
-            message = """
-                🎉 У родственника той (свадьба).
-                Нужно подарить минимум 5 000 ₸.
-                
-                Но у тебя сейчас туго с деньгами...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_021_msg"],
             flavor = "🎉",
             poolWeight = 15,
             tags = setOf("family"),
@@ -1110,12 +868,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("utility_bills", event(
             id = "utility_bills",
-            message = """
-                💡 Пришли счета за коммунальные услуги.
-                Свет, вода, отопление: 8 000 ₸.
-                
-                Свет отключают за неуплату...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_022_msg"],
             flavor = "💡",
             poolWeight = 18,
             tags = setOf("crisis"),
@@ -1146,13 +899,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("education_opportunity", event(
             id = "education_opportunity",
-            message = """
-                🎓 Открылись курсы по бухгалтерии/праву.
-                Стоимость: 30 000 ₸.
-                Длительность: 3 месяца.
-                
-                Это может открыть новые возможности.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_023_msg"],
             flavor = "🎓",
             poolWeight = 10,
             tags = setOf("career"),
@@ -1176,12 +923,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("car_purchase", event(
             id = "car_purchase",
-            message = """
-                🚗 Продают старую «девятку» за 150 000 ₸.
-                Машина нужна для бизнеса/такси.
-                
-                Но это все твои накопления...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_024_msg"],
             flavor = "🚗",
             poolWeight = 8,
             tags = setOf("investment"),
@@ -1205,12 +947,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("apartment_rent", event(
             id = "apartment_rent",
-            message = """
-                🏠 Хозяйка квартиры повышает аренду на 5 000 ₸/мес.
-                Или ищи новое жилье.
-                
-                Переезд стоит 10 000 ₸ и куча нервов.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_025_msg"],
             flavor = "🏠",
             poolWeight = 15,
             tags = setOf("crisis"),
@@ -1234,12 +971,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("winter_prep", event(
             id = "winter_prep",
-            message = """
-                ❄️ Зима близко. Нужно запастись углем/дровами.
-                Стоимость: 15 000 ₸.
-                
-                Без отопления не выжить в алматинской зиме.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_026_msg"],
             flavor = "❄️",
             poolWeight = 12,
             tags = setOf("crisis"),
@@ -1263,12 +995,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("tax_inspection", event(
             id = "tax_inspection",
-            message = """
-                📋 Налоговая пришла с проверкой.
-                Нашли нарушения на 50 000 ₸.
-                
-                Платить или «договориться»?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_027_msg"],
             flavor = "📋",
             poolWeight = 6,
             tags = setOf("crisis"),
@@ -1292,12 +1019,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("lottery_win", event(
             id = "lottery_win",
-            message = """
-                🎰 Выиграл в лотерею 10 000 ₸!
-                Не богато, но приятно.
-                
-                Что сделаешь с выигрышем?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_028_msg"],
             flavor = "🎰",
             poolWeight = 5,
             tags = setOf("windfall"),
@@ -1328,12 +1050,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("old_friend_return", event(
             id = "old_friend_return",
-            message = """
-                👋 Вернулся старый друг из России.
-                Привез деньги, предлагает совместный бизнес.
-                
-                Доверяешь ли ты ему после стольких лет?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_029_msg"],
             flavor = "👋",
             poolWeight = 8,
             tags = setOf("career", "investment"),
@@ -1357,12 +1074,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("child_birth", event(
             id = "child_birth",
-            message = """
-                👶 У тебя родился ребенок!
-                Поздравляем! 🎉
-                
-                Но расходы вырастут на 10 000 ₸/мес...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_030_msg"],
             flavor = "👶",
             poolWeight = 4,
             tags = setOf("family"),
@@ -1386,12 +1098,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("theft_victim", event(
             id = "theft_victim",
-            message = """
-                🚨 Тебя обокрали!
-                Украли 20 000 ₸ из кармана.
-                
-                Милиция не поможет — у них своих проблем хватает.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_031_msg"],
             flavor = "🚨",
             poolWeight = 6,
             tags = setOf("crisis"),
@@ -1415,12 +1122,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("currency_exchange", event(
             id = "currency_exchange",
-            message = """
-                💱 Курс доллара резко вырос!
-                Те, кто купил раньше — в плюсе.
-                
-                Покупать сейчас или ждать падения?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_032_msg"],
             flavor = "💱",
             poolWeight = 12,
             tags = setOf("investment"),
@@ -1444,12 +1146,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("business_partner_betray", event(
             id = "business_partner_betray",
-            message = """
-                😡 Партнер по бизнесу исчез с деньгами!
-                Твоя доля: 50 000 ₸.
-                
-                Искать его или принять потерю?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_033_msg"],
             flavor = "😡",
             poolWeight = 5,
             tags = setOf("crisis", "scam"),
@@ -1473,12 +1170,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("government_subsidy", event(
             id = "government_subsidy",
-            message = """
-                🏛️ Государство выделило субсидии для малого бизнеса.
-                Можно получить 100 000 ₸ под 5% годовых.
-                
-                Но paperwork займет 2 месяца...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_034_msg"],
             flavor = "🏛️",
             poolWeight = 8,
             tags = setOf("investment"),
@@ -1502,12 +1194,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("medical_emergency", event(
             id = "medical_emergency",
-            message = """
-                🚑 Срочная госпитализация родственника.
-                Нужно 100 000 ₸ немедленно.
-                
-                Это всё твои накопления...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_035_msg"],
             flavor = "🚑",
             poolWeight = 4,
             tags = setOf("crisis", "family"),
@@ -1531,12 +1218,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("new_year_bonus", event(
             id = "new_year_bonus",
-            message = """
-                🎄 Начислили новогодний бонус: 30 000 ₸!
-                Неожиданная удача.
-                
-                Как распорядишься?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_036_msg"],
             flavor = "🎄",
             poolWeight = 10,
             tags = setOf("windfall"),
@@ -1567,12 +1249,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("apartment_purchase", event(
             id = "apartment_purchase",
-            message = """
-                🏠 Продается 1-комнатная квартира за 2 000 000 ₸.
-                Можно взять в рассрочку: 500к сразу + 50к/мес.
-                
-                Это твой шанс обзавестись жильем!
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_037_msg"],
             flavor = "🏠",
             poolWeight = 6,
             tags = setOf("investment"),
@@ -1596,12 +1273,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("political_change", event(
             id = "political_change",
-            message = """
-                🗳️ В стране политические изменения.
-                Новые законы для бизнеса.
-                
-                Адаптироваться или уходить в тень?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_038_msg"],
             flavor = "🗳️",
             poolWeight = 8,
             tags = setOf("era"),
@@ -1625,17 +1297,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("newsstand_digest", event(
             id = "newsstand_digest",
-            message = story(
-                """
-                У газетного киоска люди спорят громче продавщицы. На первой полосе — курс доллара, Чечня, приватизация, цены на бензин и очередная колонка о том, что мир после Союза собирается заново, но уже без инструкции. В 90-х даже покупка газеты выглядит не как привычка, а как попытка хоть за что-то ухватиться умом.
-                """,
-                """
-                Айдар замечает, как мировые новости всегда упираются в бытовое. Если где-то война, завтра может снова подорожать бензин. Если где-то кризис, знакомый челнок сорвёт поставку. Если государство обещает реформу, дома вечером опять будут считать, хватит ли денег до следующей получки. Большая история здесь всё время превращается в семейную математику.
-                """,
-                """
-                Можно пройти мимо, можно купить газету ради спокойствия, а можно задержаться и попытаться понять эпоху по этим мелким разговорам у киоска.
-                """
-            ),
+            message = Strings["hardcoded_story_013_msg"],
             flavor = "🗞️",
             poolWeight = 9,
             tags = setOf("world", "reflection"),
@@ -1666,17 +1328,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("newsstand_world_page", event(
             id = "newsstand_world_page",
-            message = story(
-                """
-                Внутри газеты всё одно к одному: репортажи о войнах, заметки о новых границах, разговоры про нефть, курс доллара и очередной спор о том, кто теперь кому должен после распада большой страны. Айдар ловит себя на простой мысли: 90-е страшны не только бедностью, но и ощущением, что весь мир будто живёт без перил.
-                """,
-                """
-                И всё же в этом чтении есть польза. Когда начинаешь видеть связь между большими событиями и своей маленькой жизнью, становится чуть легче выбирать: держать ли деньги в долларах, лезть ли в сомнительную схему, паниковать ли из-за каждого нового заголовка. Знание не кормит сразу, но часто спасает от самой дорогой глупости.
-                """,
-                """
-                Газета заканчивается, а эпоха нет. Но теперь Айдар хотя бы лучше понимает, в каком ветре ему приходится жить.
-                """
-            ),
+            message = Strings["hardcoded_story_014_msg"],
             flavor = "📚",
             tags = setOf("world", "reflection"),
             options = listOf(
@@ -1699,12 +1351,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("child_education", event(
             id = "child_education",
-            message = """
-                🎓 Ребенок подрос. Нужна школа.
-                Частная: 50 000 ₸/мес. Государственная: бесплатно.
-                
-                Но в гос. школе нет будущего...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_039_msg"],
             flavor = "🎓",
             poolWeight = 10,
             tags = setOf("family"),
@@ -1728,12 +1375,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("retirement_planning", event(
             id = "retirement_planning",
-            message = """
-                👴 Пенсия в 90-е — миф.
-                Но копить на старость нужно уже сейчас.
-                
-                Откладывать 10% дохода?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_040_msg"],
             flavor = "👴",
             poolWeight = 8,
             tags = setOf("investment"),
@@ -1757,12 +1399,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("inflation_spike", event(
             id = "inflation_spike",
-            message = """
-                📈 Инфляция подскочила до 30% в месяц!
-                Цены меняются каждый день.
-                
-                Твои сбережения тают на глазах.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_041_msg"],
             flavor = "📈",
             poolWeight = 10,
             tags = setOf("crisis"),
@@ -1786,12 +1423,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("gang_protection", event(
             id = "gang_protection",
-            message = """
-                🚔 Местные «авторитеты» предлагают крышу.
-                10 000 ₸/мес за защиту.
-                
-                Откажешься — могут быть проблемы...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_042_msg"],
             flavor = "🚔",
             poolWeight = 6,
             tags = setOf("crisis"),
@@ -1815,12 +1447,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("export_opportunity", event(
             id = "export_opportunity",
-            message = """
-                🌍 Китайцы ищут поставщиков зерна из Казахстана.
-                Контракт на 500 000 ₸.
-                
-                Но нужна лицензия и связи...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_043_msg"],
             flavor = "🌍",
             poolWeight = 5,
             tags = setOf("investment", "career"),
@@ -1844,12 +1471,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("bank_collapse", event(
             id = "bank_collapse",
-            message = """
-                🏦 Банк, где ты хранил деньги, лопнул!
-                Вклад 100 000 ₸ потерян.
-                
-                Государство не компенсирует...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_044_msg"],
             flavor = "🏦",
             poolWeight = 4,
             tags = setOf("crisis"),
@@ -1873,12 +1495,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("wedding_expense", event(
             id = "wedding_expense",
-            message = """
-                💒 Твоя свадьба!
-                Той стоит минимум 200 000 ₸.
-                
-                Но это важно для семьи и статуса...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_045_msg"],
             flavor = "💒",
             poolWeight = 3,
             tags = setOf("family"),
@@ -1902,12 +1519,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("corruption_demand", event(
             id = "corruption_demand",
-            message = """
-                🤫 Чиновник требует «подарок» за разрешение.
-                30 000 ₸ или дело не сдвинется.
-                
-                Платить или жаловаться?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_046_msg"],
             flavor = "🤫",
             poolWeight = 6,
             tags = setOf("crisis"),
@@ -1931,12 +1543,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("stock_market_90s", event(
             id = "stock_market_90s",
-            message = """
-                📈 Появилась фондовая биржа в Алматы!
-                Можно купить акции privatized предприятий.
-                
-                Риск огромный, но и доходность тоже...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_047_msg"],
             flavor = "📈",
             poolWeight = 8,
             tags = setOf("investment"),
@@ -1960,12 +1567,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("family_immigration", event(
             id = "family_immigration",
-            message = """
-                ✈️ Родственники уезжают в Германию.
-                Предлагают забрать тебя с семьей.
-                
-                Но нужно 500 000 ₸ на оформление...
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_048_msg"],
             flavor = "✈️",
             poolWeight = 5,
             tags = setOf("family"),
@@ -1989,12 +1591,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
 
         put("millennium_eve", event(
             id = "millennium_eve",
-            message = """
-                🎆 31 декабря 1999 года.
-                Ты пережил лихие 90-е.
-                
-                Что ты вынес из этого десятилетия?
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_049_msg"],
             flavor = "🎆",
             poolWeight = 3,
             tags = setOf("ending"),
@@ -2032,7 +1629,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Долговой кризис
         event(
             id = "debt_crisis",
-            message = "⚠️ КРИЗИС! Тебе должны вернуть долг, но не отдают.",
+            message = Strings["hardcoded_aidar90s_072_msg"],
             flavor = "🚨",
             priority = 100,
             conditions = listOf(cond(DEBT, GT, 100_000L)),
@@ -2045,11 +1642,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Повторный скам на родителей
         event(
             id = "parents_scam_again_conditional",
-            message = """
-                📞 Отец снова звонит.
-                «Ты был прав в прошлый раз. Но сейчас точно надежно! МММ-2».
-                Они хотят взять кредит под залог квартиры.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_050_msg"],
             flavor = "📞",
             priority = 80,
             conditions = listOf(
@@ -2079,7 +1672,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Выгорание
         event(
             id = "burnout_90s",
-            message = "😮‍💨 Нервы на пределе. Постоянная тревога за будущее.",
+            message = Strings["hardcoded_aidar90s_073_msg"],
             flavor = "🔥",
             priority = 60,
             conditions = listOf(cond(STRESS, GT, 75L)),
@@ -2092,12 +1685,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Введение тенге (эра-событие)
         event(
             id = "era_tenge_introduced",
-            message = """
-                📰 15 ноября 1993 — ввели тенге.
-                Рубли меняют по курсу 500:1, а в очередях все обсуждают одно и то же:
-                кто-то годами копил, а теперь боится, что после обмена от старых запасов
-                останется только память и чувство, что тебя опять обогнало время.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_051_msg"],
             flavor = "📰",
             priority = 95,
             conditions = listOf(
@@ -2146,10 +1734,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Конституция 1995
         event(
             id = "era_constitution_1995",
-            message = """
-                📜 30 августа 1995 — принята новая Конституция!
-                Частная собственность защищена законом.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_052_msg"],
             flavor = "📜",
             priority = 95,
             conditions = listOf(
@@ -2167,10 +1752,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Кризис 1998
         event(
             id = "era_russia_crisis_1998",
-            message = """
-                🚨 РОССИЯ ДЕВАЛЬВИРОВАЛА РУБЛЬ!
-                Кризис ударил по Казахстану.
-            """.trimIndent(),
+            message = Strings["hardcoded_aidar90s_053_msg"],
             flavor = "🚨",
             priority = 95,
             conditions = listOf(
@@ -2188,7 +1770,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Ловушка зарплата-в-зарплату
         event(
             id = "trap_warning",
-            message = "⚠️ Ты живешь от зарплаты до зарплаты уже 6 месяцев.",
+            message = Strings["hardcoded_aidar90s_074_msg"],
             flavor = "⚠️",
             priority = 50,
             conditions = listOf(
@@ -2205,7 +1787,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         // Бонус за успех
         event(
             id = "bonus_received",
-            message = "🎉 Годовой бонус! Ты справляешься отлично.",
+            message = Strings["hardcoded_aidar90s_075_msg"],
             flavor = "🎉",
             priority = 30,
             conditions = listOf(

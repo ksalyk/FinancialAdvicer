@@ -3,10 +3,8 @@ package kz.fearsom.financiallifev2.i18n.translations
 // ════════════════════════════════════════════════════════════════════
 //  KAZAKH STRINGS
 //
-//  Only UI strings are translated here.
-//  Game-content strings (evt_*, scam_*, era event messages) are NOT
-//  included — they fall back to Russian via Strings.get() fallback.
-//  Add a "// TODO i18n" comment where a content key is missing.
+//  UI strings live here. Game-content strings are generated in
+//  kk_content.kt and merged below.
 // ════════════════════════════════════════════════════════════════════
 
 val kkStrings: Map<String, String> = mapOf(
@@ -112,6 +110,15 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_settings_language_kazakh"    to "Қазақша",
     "ui_settings_language_english"   to "English",
 
+    // ── Settings — Gameplay ───────────────────────────────────────────
+    "ui_settings_gameplay"           to "Ойын процесі",
+    "ui_settings_typing_anim"        to "Теру анимациясы",
+    "ui_settings_typing_anim_sub"    to "Мәтін біртіндеп пайда болады, теріп жатқандай",
+    "ui_settings_typing_pace"        to "Теру жылдамдығы",
+    "ui_settings_pace_slow"          to "Баяу",
+    "ui_settings_pace_normal"        to "Қалыпты",
+    "ui_settings_pace_fast"          to "Жылдам",
+
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Прогресті тастау керек пе?",
     "ui_chat_reset_message"          to "Бұл барлық чат тарихын өшіреді және кейіпкерді бастапқы күйге қайтарады.",
@@ -125,6 +132,7 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_chat_player_prefix"          to "✍️  Мен шештім:",
     "ui_chat_action_label"           to "Мен не істеймін:",
     "ui_chat_writing"                to "күнделікке жазуда...",
+    "ui_chat_skip"                   to "Өткізіп жіберу",
     "ui_chat_monthly_report"         to "Ай нәтижелері",
     "ui_chat_scene_scam"             to "⚠️ Абай болыңыз",
     "ui_chat_scene_crisis"           to "📉 Дағдарыс",
@@ -247,7 +255,10 @@ val kkStrings: Map<String, String> = mapOf(
     "err_auth_server_unavailable"    to "Сервер қолжетімсіз (%d)",
     "err_auth_login_too_short"       to "Логин кемінде 3 таңба",
     "err_auth_password_too_short"    to "Құпия сөз кемінде 6 таңба",
+    "err_auth_user_exists"           to "Пайдаланушы бұрыннан бар",
+    "err_auth_user_not_found"        to "Пайдаланушы табылмады",
+    "err_auth_wrong_password"        to "Құпия сөз қате",
+    "err_auth_refresh_missing"       to "Refresh token жоқ",
+    "err_auth_refresh_invalid"       to "Refresh token жарамсыз немесе мерзімі өткен",
 
-    // Game content strings intentionally absent — fallback to ruStrings.
-    // TODO i18n: translate evt_*, scam_*, era event messages to Kazakh.
-)
+) + kkContentStrings + kkHardcodedStrings

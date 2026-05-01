@@ -145,12 +145,12 @@ class AuthRepository(
                 setBody(AuthRequest(username.trim(), password))
             }
             if (!response.status.isSuccess()) {
-                val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
+                val msg = runCatching { response.body<AuthApiResponse>().message.localizedAuthMessage() }.getOrNull()
                 throw IllegalStateException(msg?.ifBlank { null } ?: "${Strings.errAuthServerUnavailable} (${response.status.value})")
             }
             val resp = response.body<AuthApiResponse>()
 
-            if (!resp.success) throw IllegalArgumentException(resp.message)
+            if (!resp.success) throw IllegalArgumentException(resp.message.localizedAuthMessage())
 
             tokenStorage.update(resp.accessToken, resp.refreshToken)
             withContext(Dispatchers.Default) {
@@ -187,12 +187,12 @@ class AuthRepository(
                 setBody(AuthRequest(username.trim(), password))
             }
             if (!response.status.isSuccess()) {
-                val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
+                val msg = runCatching { response.body<AuthApiResponse>().message.localizedAuthMessage() }.getOrNull()
                 throw IllegalStateException(msg?.ifBlank { null } ?: "${Strings.errAuthServerUnavailable} (${response.status.value})")
             }
             val resp = response.body<AuthApiResponse>()
 
-            if (!resp.success) throw IllegalArgumentException(resp.message)
+            if (!resp.success) throw IllegalArgumentException(resp.message.localizedAuthMessage())
 
             tokenStorage.update(resp.accessToken, resp.refreshToken)
             withContext(Dispatchers.Default) {
@@ -221,4 +221,16 @@ class AuthRepository(
 
     // Convenience accessor — prefer reading from authState.collectAsState() in UI.
     val currentAccessToken: String get() = _authState.value.accessToken
+
+    private fun String.localizedAuthMessage(): String = when (this) {
+        "err_auth_fill_fields" -> Strings.errAuthFillFields
+        "err_auth_login_too_short" -> Strings.errAuthLoginTooShort
+        "err_auth_password_too_short" -> Strings.errAuthPasswordTooShort
+        "err_auth_user_exists" -> Strings.errAuthUserExists
+        "err_auth_user_not_found", "User not found" -> Strings.errAuthUserNotFound
+        "err_auth_wrong_password" -> Strings.errAuthWrongPassword
+        "err_auth_refresh_missing", "Missing refresh token" -> Strings.errAuthRefreshMissing
+        "err_auth_refresh_invalid", "Invalid or expired refresh token" -> Strings.errAuthRefreshInvalid
+        else -> this
+    }
 }

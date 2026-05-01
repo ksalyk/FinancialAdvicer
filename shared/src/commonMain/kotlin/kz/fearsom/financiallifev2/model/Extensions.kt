@@ -12,7 +12,7 @@ fun Long.moneyFormat(currency: CurrencyCode = CurrencyCode.KZT): String = when {
     currency == CurrencyCode.USD && this >= 1_000_000L -> "${this / 1_000_000L}M ${currency.suffix()}"
     currency == CurrencyCode.USD && this >= 1_000L -> "${this / 1_000L}k ${currency.suffix()}"
     currency == CurrencyCode.USD -> "$this ${currency.suffix()}"
-    this >= 1_000_000L -> "${this / 1_000_000L} М ${currency.suffix()}"
-    this >= 1_000L -> "${this / 1_000L}к ${currency.suffix()}"
+    this >= 1_000_000L -> "${this / 1_000_000L}M ${currency.suffix()}"
+    this >= 1_000L -> "${this / 1_000L}k ${currency.suffix()}"
     else -> "$this ${currency.suffix()}"
 }

@@ -21,13 +21,17 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import financiallifev2.composeapp.generated.resources.*
+import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.ChatMessage
 import kz.fearsom.financiallifev2.model.EndingType
@@ -46,6 +50,8 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun ChatScreen(
     uiState: GameUiState,
+    typingAnimationEnabled: Boolean = true,
+    typingAnimationPace: TypingPace = TypingPace.NORMAL,
     onChoiceSelected: (String) -> Unit,
     onToggleStats: () -> Unit,
     onRestart: () -> Unit,
@@ -56,10 +62,39 @@ fun ChatScreen(
     val messages    = uiState.gameState?.messages ?: emptyList()
     val playerState = uiState.gameState?.playerState
 
+    // ID of the latest CHARACTER message — the only one that gets animated.
+    // All earlier messages render instantly (scroll restore, history, etc.)
+    val latestCharacterMessageId = remember(messages) {
+        messages.lastOrNull { it.sender == MessageSender.CHARACTER }?.id
+    }
+
+    // Skip flag: flipped to true by the skip button, reset when a new message arrives.
+    // We use an Int (generation counter) so the LaunchedEffect key changes even if the
+    // latestCharacterMessageId hasn't changed yet (e.g. same message re-composed).
+    var skipGeneration by remember { mutableIntStateOf(0) }
+    LaunchedEffect(latestCharacterMessageId) { skipGeneration = 0 }
+
+    // Whether any animation is currently running — drives skip button visibility.
+    var isAnimating by remember { mutableStateOf(false) }
+
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             delay(80)
             listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Track-scroll to bottom while the typing animation reveals characters.
+    // Each character grows the card height, pushing content past the viewport edge.
+    // scrollToItem with Int.MAX_VALUE offset is clamped by Compose to the item's
+    // actual end — effectively "scroll to absolute bottom of this item".
+    // Keyed on both isAnimating AND messages.size so the effect always captures the
+    // correct last-item index even if a message arrives while animation is running.
+    LaunchedEffect(isAnimating, messages.size) {
+        if (!isAnimating) return@LaunchedEffect
+        while (isAnimating) {
+            listState.scrollToItem(messages.size - 1, Int.MAX_VALUE)
+            delay(50) // 20 fps — sufficient for text-growth tracking
         }
     }
 
@@ -87,29 +122,46 @@ fun ChatScreen(
                 onMenuClick      = onNavigateToMenu
             )
 
-            LazyColumn(
-                state               = listState,
-                modifier            = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(messages, key = { it.id }) { message ->
-                    AnimatedVisibility(
-                        visible = true,
-                        enter   = fadeIn(tween(400)) + slideInVertically(tween(350)) { it / 3 }
-                    ) {
-                        DiaryMessageItem(message, playerState)
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    state               = listState,
+                    modifier            = Modifier.fillMaxSize(),
+                    contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        // AnimatedMessageEntry is a separate composable to break the
+                        // ColumnScope implicit receiver chain — calling AnimatedVisibility
+                        // directly here would cause the compiler to select the
+                        // ColumnScope overload from the outer Column, then fail.
+                        AnimatedMessageEntry {
+                            DiaryMessageItem(
+                                message        = message,
+                                playerState    = playerState,
+                                isLatestChar   = typingAnimationEnabled &&
+                                        message.id == latestCharacterMessageId,
+                                pace           = typingAnimationPace,
+                                skipGeneration = skipGeneration,
+                                onAnimating    = { isAnimating = it }
+                            )
+                        }
+                    }
+                    if (uiState.isTyping) {
+                        item(key = "typing") {
+                            DiaryWritingIndicator()
+                        }
                     }
                 }
-                if (uiState.isTyping) {
-                    item(key = "typing") {
-                        DiaryWritingIndicator()
-                    }
-                }
+
+                // ── Skip pill — extracted to break ColumnScope implicit receiver ─
+                SkipButtonOverlay(
+                    visible = isAnimating,
+                    onSkip  = { skipGeneration++ }
+                )
             }
 
             AnimatedVisibility(
-                visible = uiState.currentOptions.isNotEmpty() && !uiState.isTyping,
+                visible = uiState.currentOptions.isNotEmpty() && !uiState.isTyping && !isAnimating,
                 enter   = slideInVertically { it } + fadeIn(),
                 exit    = slideOutVertically { it } + fadeOut()
             ) {
@@ -263,9 +315,23 @@ private fun DiaryTopBar(
 // ─── Message router ───────────────────────────────────────────────────────────
 
 @Composable
-private fun DiaryMessageItem(message: ChatMessage, playerState: PlayerState?) {
+private fun DiaryMessageItem(
+    message: ChatMessage,
+    playerState: PlayerState?,
+    isLatestChar: Boolean = false,
+    pace: TypingPace = TypingPace.NORMAL,
+    skipGeneration: Int = 0,
+    onAnimating: (Boolean) -> Unit = {}
+) {
     when (message.sender) {
-        MessageSender.CHARACTER      -> DiaryEntryCard(message, playerState)
+        MessageSender.CHARACTER      -> DiaryEntryCard(
+            message        = message,
+            playerState    = playerState,
+            isLatestChar   = isLatestChar,
+            pace           = pace,
+            skipGeneration = skipGeneration,
+            onAnimating    = onAnimating
+        )
         MessageSender.PLAYER         -> DiaryChoiceNote(message)
         MessageSender.SYSTEM         -> DiarySectionLabel(message)
         MessageSender.MONTHLY_REPORT -> DiaryFinancialEntry(message)
@@ -295,11 +361,63 @@ private fun sceneDrawableFor(tag: String?): DrawableResource? = when (tag) {
 // ─── Diary Entry Card (CHARACTER messages) ────────────────────────────────────
 
 @Composable
-private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
+private fun DiaryEntryCard(
+    message: ChatMessage,
+    playerState: PlayerState?,
+    isLatestChar: Boolean = false,
+    pace: TypingPace = TypingPace.NORMAL,
+    skipGeneration: Int = 0,
+    onAnimating: (Boolean) -> Unit = {}
+) {
     val colors   = LocalAppColors.current
     val shape    = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
     val lineColor = colors.diaryLine
     val sceneRes = sceneDrawableFor(message.sceneTag)
+
+    // ── Typing animation state ────────────────────────────────────────────────
+    // `displayedLength` grows from 0 → message.text.length while animating.
+    // Keyed on message.id so the state resets for each new message; all
+    // previous messages start fully revealed (isLatestChar == false).
+    var displayedLength by remember(message.id) {
+        mutableIntStateOf(if (isLatestChar) 0 else message.text.length)
+    }
+
+    LaunchedEffect(message.id, skipGeneration) {
+        if (!isLatestChar || displayedLength >= message.text.length) {
+            // Not the animated card, or already complete — nothing to do.
+            if (isLatestChar && displayedLength >= message.text.length) {
+                onAnimating(false)
+            }
+            return@LaunchedEffect
+        }
+        // skipGeneration changed → jump to end immediately
+        if (skipGeneration > 0) {
+            displayedLength = message.text.length
+            onAnimating(false)
+            return@LaunchedEffect
+        }
+        onAnimating(true)
+        for (i in displayedLength until message.text.length) {
+            delay(pace.charDelayMs)
+            displayedLength = i + 1
+            // Re-check skip on every char (user can tap skip mid-animation)
+            if (skipGeneration > 0) break
+        }
+        displayedLength = message.text.length
+        onAnimating(false)
+    }
+
+    val displayedText = message.text.take(displayedLength)
+
+    // Blinking cursor — only visible while animation is still running
+    val cursorVisible = isLatestChar && displayedLength < message.text.length
+    val cursorAlpha by rememberInfiniteTransition(label = "cursor")
+        .animateFloat(
+            initialValue  = 1f,
+            targetValue   = 0f,
+            animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+            label         = "cursorAlpha"
+        )
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // ── Scene image (shown only for tagged events) ────────────────────────
@@ -427,12 +545,23 @@ private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
                     color     = colors.diaryLine
                 )
 
-                // Main diary text (Phase 2: Updated to use DiaryTextStyle with Caveat font)
+                // Main diary text — uses animated displayedText when this is the
+                // latest character message; otherwise shows the full text instantly.
+                val annotatedText = remember(displayedText, cursorVisible, cursorAlpha) {
+                    buildAnnotatedString {
+                        append(displayedText)
+                        if (cursorVisible) {
+                            // Blinking block cursor appended after revealed text
+                            withStyle(SpanStyle(color = colors.diaryInk.copy(alpha = cursorAlpha))) {
+                                append("▌")
+                            }
+                        }
+                    }
+                }
                 Text(
-                    text       = message.text,
-                    style      = DiaryTextStyle.copy(color = colors.diaryInk),
-                    color      = colors.diaryInk,
-                    fontStyle  = FontStyle.Normal
+                    text      = annotatedText,
+                    style     = DiaryTextStyle.copy(color = colors.diaryInk),
+                    fontStyle = FontStyle.Normal
                 )
             }
         }
@@ -588,6 +717,65 @@ private fun DiaryWritingIndicator() {
             color    = colors.diaryInkSecondary.copy(alpha = alpha),
             fontStyle = FontStyle.Italic
         )
+    }
+}
+
+// ─── Receiver-isolation composables ──────────────────────────────────────────
+//
+// Any AnimatedVisibility call inside a lambda that already has ColumnScope
+// as an outer implicit receiver (items{}, Box inside Column, etc.) will cause
+// the compiler to select ColumnScope.AnimatedVisibility and then error because
+// that receiver is inaccessible in those nested contexts.
+//
+// The fix: push each AnimatedVisibility into its own @Composable function.
+// The new function has a clean implicit-receiver chain — no ColumnScope — so
+// the call resolves to the standard top-level AnimatedVisibility overload.
+
+/** Entry animation for each chat message row. */
+@Composable
+private fun AnimatedMessageEntry(content: @Composable () -> Unit) {
+    AnimatedVisibility(
+        visible = true,
+        enter   = fadeIn(tween(400)) + slideInVertically(tween(350)) { it / 3 }
+    ) {
+        content()
+    }
+}
+
+// ─── Skip Button Overlay ──────────────────────────────────────────────────────
+
+@Composable
+private fun SkipButtonOverlay(visible: Boolean, onSkip: () -> Unit) {
+    val colors = LocalAppColors.current
+    // Box fills the parent (the weight(1f) Box) and pins content to bottom-end
+    Box(
+        modifier         = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomEnd
+    ) {
+        // AnimatedVisibility here has no ColumnScope in its receiver chain →
+        // resolves to the standard top-level overload with no ambiguity.
+        AnimatedVisibility(
+            visible = visible,
+            enter   = fadeIn(tween(200)) + scaleIn(tween(200)),
+            exit    = fadeOut(tween(150)) + scaleOut(tween(150))
+        ) {
+            FilledTonalButton(
+                onClick        = onSkip,
+                modifier       = Modifier.padding(end = 16.dp, bottom = 8.dp),
+                shape          = RoundedCornerShape(50),
+                colors         = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colors.backgroundElevated.copy(alpha = 0.92f)
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    "⏭  ${Strings.uiChatSkip}",
+                    style      = MaterialTheme.typography.labelMedium,
+                    color      = colors.textPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 

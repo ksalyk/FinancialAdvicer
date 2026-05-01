@@ -23,6 +23,15 @@ import java.util.*
 
 private val log = LoggerFactory.getLogger("AuthRoutes")
 
+private const val ERR_AUTH_LOGIN_TOO_SHORT = "err_auth_login_too_short"
+private const val ERR_AUTH_PASSWORD_TOO_SHORT = "err_auth_password_too_short"
+private const val ERR_AUTH_USER_EXISTS = "err_auth_user_exists"
+private const val ERR_AUTH_FILL_FIELDS = "err_auth_fill_fields"
+private const val ERR_AUTH_USER_NOT_FOUND = "err_auth_user_not_found"
+private const val ERR_AUTH_WRONG_PASSWORD = "err_auth_wrong_password"
+private const val ERR_AUTH_REFRESH_MISSING = "err_auth_refresh_missing"
+private const val ERR_AUTH_REFRESH_INVALID = "err_auth_refresh_invalid"
+
 fun Route.authRoutes(userRepository: UserRepository) {
     route("/auth") {
 
@@ -36,17 +45,17 @@ fun Route.authRoutes(userRepository: UserRepository) {
 
             if (username.length < 3) {
                 call.respond(HttpStatusCode.BadRequest,
-                    AuthResponse(success = false, message = "Логин минимум 3 символа"))
+                    AuthResponse(success = false, message = ERR_AUTH_LOGIN_TOO_SHORT))
                 return@post
             }
             if (password.length < 6) {
                 call.respond(HttpStatusCode.BadRequest,
-                    AuthResponse(success = false, message = "Пароль минимум 6 символов"))
+                    AuthResponse(success = false, message = ERR_AUTH_PASSWORD_TOO_SHORT))
                 return@post
             }
             if (userRepository.existsByUsername(username)) {
                 call.respond(HttpStatusCode.Conflict,
-                    AuthResponse(success = false, message = "Пользователь уже существует"))
+                    AuthResponse(success = false, message = ERR_AUTH_USER_EXISTS))
                 return@post
             }
 
@@ -74,7 +83,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
 
             if (req.username.isBlank() || req.password.isBlank()) {
                 call.respond(HttpStatusCode.BadRequest,
-                    AuthResponse(success = false, message = "Заполните все поля"))
+                    AuthResponse(success = false, message = ERR_AUTH_FILL_FIELDS))
                 return@post
             }
 
@@ -82,14 +91,14 @@ fun Route.authRoutes(userRepository: UserRepository) {
             if (user == null) {
                 log.warn("Login failed: user not found username={}", req.username)
                 call.respond(HttpStatusCode.Unauthorized,
-                    AuthResponse(success = false, message = "Пользователь не найден"))
+                    AuthResponse(success = false, message = ERR_AUTH_USER_NOT_FOUND))
                 return@post
             }
 
             if (!userRepository.verifyPassword(req.password, user.passwordHash)) {
                 log.warn("Login failed: wrong password userId={}", user.id)
                 call.respond(HttpStatusCode.Unauthorized,
-                    AuthResponse(success = false, message = "Неверный пароль"))
+                    AuthResponse(success = false, message = ERR_AUTH_WRONG_PASSWORD))
                 return@post
             }
 
@@ -117,7 +126,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
 
             if (req.refreshToken.isBlank()) {
                 call.respond(HttpStatusCode.BadRequest,
-                    AuthResponse(success = false, message = "Missing refresh token"))
+                    AuthResponse(success = false, message = ERR_AUTH_REFRESH_MISSING))
                 return@post
             }
 
@@ -126,7 +135,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
             if (user == null) {
                 log.warn("Token refresh failed: invalid or expired token")
                 call.respond(HttpStatusCode.Unauthorized,
-                    AuthResponse(success = false, message = "Invalid or expired refresh token"))
+                    AuthResponse(success = false, message = ERR_AUTH_REFRESH_INVALID))
                 return@post
             }
 
@@ -155,7 +164,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
 
                 val user = userRepository.findById(userId)
                     ?: return@get call.respond(HttpStatusCode.Unauthorized,
-                        AuthResponse(false, message = "User not found"))
+                        AuthResponse(false, message = ERR_AUTH_USER_NOT_FOUND))
 
                 call.respond(AuthResponse(
                     success  = true,

@@ -7,7 +7,7 @@ class MoneyFormatTest {
 
     @Test
     fun `kzt values use tenge symbol once`() {
-        assertEquals("80к ₸", 80_000L.moneyFormat())
-        assertEquals("2 М ₸", 2_000_000L.moneyFormat())
+        assertEquals("80k ₸", 80_000L.moneyFormat())
+        assertEquals("2M ₸", 2_000_000L.moneyFormat())
     }
 }

@@ -11,7 +11,12 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_WEALTH
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_FILL_FIELDS
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_LOGIN_TOO_SHORT
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_PASSWORD_TOO_SHORT
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_REFRESH_INVALID
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_REFRESH_MISSING
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_SERVER_UNAVAILABLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_EXISTS
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_NOT_FOUND
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_WRONG_PASSWORD
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_2015_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_90S_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_MODERN_KZ_2024_NAME
@@ -108,6 +113,7 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SCENE_MORTGAGE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SCENE_SCAM
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SCENE_WINDFALL
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SCENE_WORLD
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SKIP
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_1
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_10
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_11
@@ -149,13 +155,20 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SETTINGS_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_START_STORY
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_STATS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_TAGLINE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_GAMEPLAY
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_ENGLISH
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_KAZAKH
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_RUSSIAN
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_SUBTITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_PACE_FAST
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_PACE_NORMAL
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_PACE_SLOW
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_TITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_TYPING_ANIM
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_TYPING_ANIM_SUB
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_TYPING_PACE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_AVG_CAPITAL
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_BEST_ENDING
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_COMPLETED
@@ -336,6 +349,15 @@ object Strings {
     val uiSettingsLanguageKazakh   get() = get(UI_SETTINGS_LANGUAGE_KAZAKH)
     val uiSettingsLanguageEnglish  get() = get(UI_SETTINGS_LANGUAGE_ENGLISH)
 
+    // ── Settings — Gameplay / Feature Flags ──────────────────────────
+    val uiSettingsGameplay         get() = get(UI_SETTINGS_GAMEPLAY)
+    val uiSettingsTypingAnim       get() = get(UI_SETTINGS_TYPING_ANIM)
+    val uiSettingsTypingAnimSub    get() = get(UI_SETTINGS_TYPING_ANIM_SUB)
+    val uiSettingsTypingPace       get() = get(UI_SETTINGS_TYPING_PACE)
+    val uiSettingsPaceSlow         get() = get(UI_SETTINGS_PACE_SLOW)
+    val uiSettingsPaceNormal       get() = get(UI_SETTINGS_PACE_NORMAL)
+    val uiSettingsPaceFast         get() = get(UI_SETTINGS_PACE_FAST)
+
     // ── ChatScreen ───────────────────────────────────────────────────
     val uiChatResetTitle           get() = get(UI_CHAT_RESET_TITLE)
     val uiChatResetMessage         get() = get(UI_CHAT_RESET_MESSAGE)
@@ -349,6 +371,7 @@ object Strings {
     val uiChatPlayerPrefix         get() = get(UI_CHAT_PLAYER_PREFIX)
     val uiChatActionLabel          get() = get(UI_CHAT_ACTION_LABEL)
     val uiChatWriting              get() = get(UI_CHAT_WRITING)
+    val uiChatSkip                 get() = get(UI_CHAT_SKIP)
     val uiChatMonthlyReport        get() = get(UI_CHAT_MONTHLY_REPORT)
     val uiChatSceneScam            get() = get(UI_CHAT_SCENE_SCAM)
     val uiChatSceneCrisis          get() = get(UI_CHAT_SCENE_CRISIS)
@@ -444,4 +467,9 @@ object Strings {
     val errAuthServerUnavailable   get() = get(ERR_AUTH_SERVER_UNAVAILABLE)
     val errAuthLoginTooShort       get() = get(ERR_AUTH_LOGIN_TOO_SHORT)
     val errAuthPasswordTooShort    get() = get(ERR_AUTH_PASSWORD_TOO_SHORT)
+    val errAuthUserExists          get() = get(ERR_AUTH_USER_EXISTS)
+    val errAuthUserNotFound        get() = get(ERR_AUTH_USER_NOT_FOUND)
+    val errAuthWrongPassword       get() = get(ERR_AUTH_WRONG_PASSWORD)
+    val errAuthRefreshMissing      get() = get(ERR_AUTH_REFRESH_MISSING)
+    val errAuthRefreshInvalid      get() = get(ERR_AUTH_REFRESH_INVALID)
 }

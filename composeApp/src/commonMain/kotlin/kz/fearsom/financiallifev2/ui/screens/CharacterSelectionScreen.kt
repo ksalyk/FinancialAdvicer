@@ -375,7 +375,7 @@ private fun CompactStatsRow(stats: CharacterStats) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         MiniStat("💰", stats.capital.shortFormat(),     GoldPrimary,    Modifier.weight(1f))
-        MiniStat("📈", "${stats.income / 1000}к${Strings.uiCharSelPerMonth}",  GreenSuccess,   Modifier.weight(1f))
+        MiniStat("📈", "${stats.income / 1000}k${Strings.uiCharSelPerMonth}",  GreenSuccess,   Modifier.weight(1f))
         MiniStat("😰", "${stats.stress}%",              StatStress,     Modifier.weight(1f))
         MiniStat("🎓", "${stats.financialKnowledge}",   StatKnowledge,  Modifier.weight(1f))
     }
@@ -430,8 +430,8 @@ fun Difficulty.label(): String = when (this) {
 }
 
 private fun Long.shortFormat(): String = when {
-    this >= 1_000_000L -> "${this / 1_000_000}М₸"
-    this >= 1_000L     -> "${this / 1_000}к₸"
+    this >= 1_000_000L -> "${this / 1_000_000}M₸"
+    this >= 1_000L     -> "${this / 1_000}k₸"
     else               -> "$this₸"
 }
 

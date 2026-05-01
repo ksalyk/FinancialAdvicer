@@ -1,5 +1,8 @@
 package kz.fearsom.financiallifev2.i18n
 
+import kz.fearsom.financiallifev2.i18n.translations.enStrings
+import kz.fearsom.financiallifev2.i18n.translations.kkStrings
+import kz.fearsom.financiallifev2.i18n.translations.ruStrings
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -197,5 +200,38 @@ class StringsTest {
 
         Strings.currentLocale = "kk"
         assertEquals("Баптаулар", Strings.uiSettingsTitle)
+    }
+
+    @Test
+    fun `en and kk cover every ru key`() {
+        val missingEn = ruStrings.keys - enStrings.keys
+        val missingKk = ruStrings.keys - kkStrings.keys
+
+        assertTrue(missingEn.isEmpty(), "Missing English keys: $missingEn")
+        assertTrue(missingKk.isEmpty(), "Missing Kazakh keys: $missingKk")
+    }
+
+    @Test
+    fun `game content keys are localized in en and kk`() {
+        val key = "evt_dana_2005_intro_msg"
+        val ruValue = ruStrings.getValue(key)
+
+        Strings.currentLocale = "en"
+        assertNotEquals(ruValue, Strings[key])
+
+        Strings.currentLocale = "kk"
+        assertNotEquals(ruValue, Strings[key])
+    }
+
+    @Test
+    fun `localized strings preserve interpolation placeholders`() {
+        val placeholderRegex = Regex("""\{[A-Za-z_][A-Za-z0-9_]*}|%[sd]""")
+
+        fun placeholders(value: String) = placeholderRegex.findAll(value).map { it.value }.sorted().toList()
+
+        ruStrings.forEach { (key, ruValue) ->
+            assertEquals(placeholders(ruValue), placeholders(enStrings.getValue(key)), "English placeholders mismatch for $key")
+            assertEquals(placeholders(ruValue), placeholders(kkStrings.getValue(key)), "Kazakh placeholders mismatch for $key")
+        }
     }
 }

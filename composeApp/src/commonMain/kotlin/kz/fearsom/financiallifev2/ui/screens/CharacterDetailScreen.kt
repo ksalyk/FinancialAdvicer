@@ -324,7 +324,7 @@ private fun StatCell(label: String, value: String, color: Color, modifier: Modif
 // ── Number format ─────────────────────────────────────────────────────────────
 
 private fun Long.longFormat(): String = when {
-    this >= 1_000_000L -> "${this / 1_000_000}.${(this % 1_000_000) / 100_000}М ₸"
-    this >= 1_000L     -> "${this / 1_000}к ₸"
+    this >= 1_000_000L -> "${this / 1_000_000}.${(this % 1_000_000) / 100_000}M ₸"
+    this >= 1_000L     -> "${this / 1_000}k ₸"
     else               -> "$this ₸"
 }

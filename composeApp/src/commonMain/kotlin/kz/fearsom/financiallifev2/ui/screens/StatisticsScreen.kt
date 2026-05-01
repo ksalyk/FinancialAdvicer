@@ -363,7 +363,7 @@ private fun endingAccentColor(ending: GameEnding): Color = when (ending) {
 }
 
 private fun Long.compactFormat(): String = when {
-    this >= 1_000_000L -> "${this / 1_000_000}М₸"
-    this >= 1_000L     -> "${this / 1_000}к₸"
+    this >= 1_000_000L -> "${this / 1_000_000}M₸"
+    this >= 1_000L     -> "${this / 1_000}k₸"
     else               -> "$this₸"
 }

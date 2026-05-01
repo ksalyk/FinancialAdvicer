@@ -56,7 +56,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Логин минимум 3 символа", body.message)
+        assertEquals("err_auth_login_too_short", body.message)
     }
 
     @Test
@@ -71,7 +71,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Пароль минимум 6 символов", body.message)
+        assertEquals("err_auth_password_too_short", body.message)
     }
 
     @Test
@@ -93,7 +93,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.Conflict, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Пользователь уже существует", body.message)
+        assertEquals("err_auth_user_exists", body.message)
     }
 
     @Test
@@ -131,7 +131,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Пользователь не найден", body.message)
+        assertEquals("err_auth_user_not_found", body.message)
     }
 
     @Test
@@ -153,7 +153,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Неверный пароль", body.message)
+        assertEquals("err_auth_wrong_password", body.message)
     }
 
     @Test
@@ -168,7 +168,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
         val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("Заполните все поля", body.message)
+        assertEquals("err_auth_fill_fields", body.message)
     }
 
     @Test

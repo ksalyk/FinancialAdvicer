@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Main background gradient: purple → cyan, diagonal -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#7C3AED"/>
+      <stop offset="50%"  stop-color="#5B21B6"/>
+      <stop offset="100%" stop-color="#0891B2"/>
+    </linearGradient>
+    <!-- Top-left glow -->
+    <radialGradient id="glowGrad" cx="38%" cy="22%" r="55%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#A78BFA" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Bottom-right ambient -->
+    <radialGradient id="ambientGrad" cx="78%" cy="80%" r="45%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#06B6D4" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
+  <!-- Glows for depth -->
+  <rect width="1024" height="1024" fill="url(#glowGrad)"/>
+  <rect width="1024" height="1024" fill="url(#ambientGrad)"/>
+
+  <!-- ===== PERSON SILHOUETTE ===== -->
+  <g fill="white" opacity="0.95">
+
+    <!-- HEAD -->
+    <circle cx="512" cy="255" r="92"/>
+
+    <!-- NECK / upper torso connector -->
+    <rect x="484" y="320" width="56" height="28" rx="10"/>
+
+    <!-- TORSO (trapezoid, slightly narrowing at waist) -->
+    <polygon points="448,330 576,330 582,592 442,592"/>
+
+    <!-- LEFT ARM raised ~50° above horizontal -->
+    <!-- Parallelogram from shoulder to arm tip, 62px wide -->
+    <polygon points="452,350 412,396 228,246 268,200"/>
+    <!-- Rounded arm-tip cap -->
+    <circle cx="248" cy="223" r="33"/>
+    <!-- Rounded shoulder cap -->
+    <circle cx="432" cy="373" r="33"/>
+
+    <!-- RIGHT ARM (mirror) -->
+    <polygon points="572,350 612,396 796,246 756,200"/>
+    <circle cx="776" cy="223" r="33"/>
+    <circle cx="592" cy="373" r="33"/>
+
+    <!-- LEFT LEG (slight outward angle) -->
+    <polygon points="442,562 510,562 476,836 412,836"/>
+    <!-- Leg bottom rounded caps -->
+    <ellipse cx="444" cy="836" rx="32" ry="14"/>
+
+    <!-- RIGHT LEG -->
+    <polygon points="514,562 582,562 612,836 548,836"/>
+    <ellipse cx="580" cy="836" rx="32" ry="14"/>
+
+  </g>
+
+  <!-- Subtle white shine overlay at top (depth/glass effect) -->
+  <ellipse cx="512" cy="80" rx="380" ry="120" fill="white" opacity="0.06"/>
+</svg>

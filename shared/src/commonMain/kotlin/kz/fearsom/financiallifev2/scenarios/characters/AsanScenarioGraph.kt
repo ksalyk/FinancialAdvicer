@@ -59,17 +59,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "intro", event(
                 id = "intro",
-                message = story(
-                    """
-                    2024 год. Асан выходит из офиса позже всех и ловит себя на глупой взрослой мысли: зарплата вроде уже нормальная, а спокойствия всё ещё нет. Алматы гудит стартапами, криптой, карьерными скачками и чужими историями быстрого роста, будто обычная размеренная жизнь здесь больше не считается достойной.
-                    """,
-                    """
-                    Он умный, способный и уже устал от собственной импульсивности. Слишком много раз Асан пытался почувствовать себя «настоящим взрослым» через резкие решения: купить, вложить, резко ускориться, доказать. Почти каждый такой рывок оставлял после себя не свободу, а новый внутренний шум.
-                    """,
-                    """
-                    На руках {capital}. Долг по кредитке 120 000 ₸, аренда и жизнь съедают большую часть дохода. И именно в этот момент звонит Дима с предложением, которое звучит как быстрый выход из режима вечного догоняющего: крипта, x2 за месяц, «надо только не тормозить».
-                    """
-                ),
+                message = Strings["hardcoded_story_015_msg"],
                 flavor = "😰",
                 options = listOf(
                     option(
@@ -106,17 +96,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "crypto_result", event(
                 id = "crypto_result",
-                message = story(
-                    """
-                    Прошёл месяц, и вся красивая уверенность схлопнулась до сухих цифр на экране. Крипта просела, Дима исчез из чатов ровно тогда, когда стал особенно нужен, а у Асана внутри поднимается знакомое чувство: злость на рынок, на друга и особенно на самого себя.
-                    """,
-                    """
-                    Ему неприятно не только из-за минуса. Ему неприятно из-за того, насколько предсказуемо он снова купился на обещание слишком быстрого облегчения. Асан ведь не наивный. Он просто устал от медленного пути и каждый раз надеется, что в этот раз правила почему-то отменят именно для него.
-                    """,
-                    """
-                    На бирже осталось 60 000 ₸. И как раз сейчас Дима возвращается с классической репликой всех убыточных авантюр: «Это просто просадка, надо добирать на дне». Вопрос уже не про рынок. Вопрос про способность Асана вовремя выйти из собственной иллюзии.
-                    """
-                ),
+                message = Strings["hardcoded_story_016_msg"],
                 flavor = "😬",
                 options = listOf(
                     option(
@@ -139,17 +119,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "total_loss", event(
                 id = "total_loss",
-                message = story(
-                    """
-                    Биржа оказывается пустышкой, Дима растворяется, как будто его и не было, а Асан остаётся наедине с неприятной тишиной после собственной ошибки. Не той, про которую рассказывают потом с иронией. Той, из-за которой реально тяжелеет тело, когда открываешь банковское приложение.
-                    """,
-                    """
-                    Потеря 150 000 ₸ бьёт не только по счёту. Она бьёт по образу себя как разумного человека. И это, возможно, самый полезный удар за всё последнее время. Потому что теперь фраза «быстрые деньги» наконец звучит не как шанс, а как предупреждение.
-                    """,
-                    """
-                    У Асана ещё есть время собрать себя по-взрослому. Но дальше это получится только через систему, а не через красивую надежду.
-                    """
-                ),
+                message = Strings["hardcoded_story_017_msg"],
                 flavor = "💀",
                 options = listOf(
                     option(
@@ -167,14 +137,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "lesson_learned", event(
                 id = "lesson_learned",
-                message = """
-                Потерял 40 000 ₸, но усвоил урок на всю жизнь.
-
-                Прочитал 3 книги по инвестициям. Понял:
-                индексные ETF > хайп проекты.
-
-                Готов начать инвестировать правильно?
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_001_msg"],
                 flavor = "📚",
                 options = listOf(
                     option(
@@ -193,14 +156,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "debt_paid", event(
                 id = "debt_paid",
-                message = """
-                Долг закрыт! 🎉 Освободилось 15 000 ₸/мес.
-
-                Капитал: ${(200_000L - 120_000L).moneyFormat()}.
-                Расходы снизились на 15 000/мес.
-
-                Что делать с освободившимися деньгами?
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_002_msg"],
                 flavor = "🎉",
                 options = listOf(
                     option(
@@ -229,12 +185,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "has_cushion", event(
                 id = "has_cushion",
-                message = """
-                Подушка создана — 60 000 ₸ лежат нетронутыми.
-
-                Новость: сломался телефон. Нужно 35 000 ₸.
-                Подушка существует именно для этого.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_003_msg"],
                 flavor = "🛡️",
                 options = listOf(
                     option(
@@ -254,12 +205,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "cushion_worked", event(
                 id = "cushion_worked",
-                message = """
-                Именно так и работает подушка безопасности! ✅
-
-                Купил телефон без стресса и без долгов.
-                Теперь восполняю подушку — 15 000/мес пока не будет 90 000.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_004_msg"],
                 flavor = "💪",
                 options = listOf(
                     option(
@@ -276,12 +222,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "new_credit", event(
                 id = "new_credit",
-                message = """
-                Взял рассрочку 38 000 ₸ под 20% годовых.
-                Подушка цела, но появился новый долг.
-
-                Стратегически — спорно. Подушка нужна была именно для этого.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_005_msg"],
                 flavor = "🤔",
                 options = listOf(
                     option(
@@ -305,17 +246,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "job_offer", event(
                 id = "job_offer",
-                message = story(
-                    """
-                    Оффер приходит как раз тогда, когда Асан почти успел привыкнуть к своей текущей жизни. Стартап предлагает 700 000 ₸ и почти рекламный билет в следующую версию себя: быстрее рост, сильнее команда, меньше бюрократии, больше ощущения, что ты не винтик, а часть чего-то настоящего.
-                    """,
-                    """
-                    Но он уже знает цену красивых ускорений. В найме у банка скучнее, зато предсказуемо. В стартапе громче, интереснее и опаснее. Для Асана это не просто карьерное решение. Это старая внутренняя развилка между зрелостью и тягой к резкому прыжку.
-                    """,
-                    """
-                    Разница по деньгам большая. Разница по качеству риска — ещё больше. И выбирать придётся не тем человеком, которым Асан хочет казаться, а тем, кем он реально является сегодня.
-                    """
-                ),
+                message = Strings["hardcoded_story_018_msg"],
                 flavor = "💼",
                 tags = setOf("career"),
                 options = listOf(
@@ -341,17 +272,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "startup_joined", event(
                 id = "startup_joined",
-                message = story(
-                    """
-                    Первые месяцы в стартапе ощущаются как правильная версия карьеры: живые люди, быстрые решения, уважение к мозгам, деньги, которые наконец похожи на признание. Асан даже начинает думать, что нашёл тот самый темп, в котором может расти без раздражения.
-                    """,
-                    """
-                    Поэтому новость о том, что инвесторы не продлевают финансирование, бьёт особенно подло. Всё не рушится драматично, просто тихо заканчивается. В одну неделю крутая история становится строчкой в опыте и вопросом: как именно он теперь будет платить за жизнь.
-                    """,
-                    """
-                    На счету подушка примерно на две зарплаты. Этого достаточно, чтобы не паниковать вслух. Но недостаточно, чтобы делать вид, будто решение не имеет цены.
-                    """
-                ),
+                message = Strings["hardcoded_story_019_msg"],
                 flavor = "😰",
                 options = listOf(
                     option(
@@ -371,14 +292,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "negotiated_raise", event(
                 id = "negotiated_raise",
-                message = """
-                Шеф согласился на 600 000 ₸! 🎉
-
-                Показал оффер — и это сработало.
-                Стабильность + рост зарплаты = идеально.
-
-                +150к/мес. Что с ними делать?
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_006_msg"],
                 flavor = "🎯",
                 options = listOf(
                     option(
@@ -402,12 +316,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "promotion_soon", event(
                 id = "promotion_soon",
-                message = """
-                Остался — через месяц объявили повышение!
-                Теперь мидл с зарплатой 550 000 ₸. 🎉
-
-                +100к/мес. Это первый шаг к senior.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_007_msg"],
                 flavor = "📈",
                 options = listOf(
                     option(
@@ -430,13 +339,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "back_stable", event(
                 id = "back_stable",
-                message = """
-                Вышел на новое место — 500к/мес.
-                Немного меньше стартапа, но стабильно.
-
-                Опыт сокращения научил: подушка безопасности — это не опция.
-                Теперь правило 50/30/20.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_008_msg"],
                 flavor = "💼",
                 options = listOf(
                     option(
@@ -455,15 +358,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "first_etf_bought", event(
                 id = "first_etf_bought",
-                message = """
-                Первые 50 000 ₸ в ETF куплены! 📈
-                Тикер: KASE_IDX на KASE через Halyk Invest.
-
-                Пришло уведомление через месяц: +0.8% → +400 ₸.
-                Немного, но сложный процент делает своё дело.
-
-                Дальше — набирать позицию регулярно?
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_009_msg"],
                 flavor = "📈",
                 tags = setOf("investment"),
                 options = listOf(
@@ -492,16 +387,7 @@ class AsanScenarioGraph : ScenarioGraph() {
             "mortgage_offer", event(
                 id = "mortgage_offer",
                 conditions = listOf(cond(CAPITAL, GTE, 2_800_000L), cond(DEBT, LTE, 200_000L)),
-                message = """
-                Банк одобрил ипотеку по 7-20-25.
-                Квартира 18 000 000 ₸. Взнос 20% = 3 600 000 ₸.
-                Ипотека 14 400 000 ₸ под 7.5% на 20 лет.
-                Платёж: ~115 000 ₸/мес.
-
-                Сейчас снимаю за 130 000/мес — ипотечный платёж сопоставим.
-                Накопления: {capital}. Для взноса нужно 3 600 000.
-                Родители готовы помочь добрать остаток.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_010_msg"],
                 flavor = "🏠",
                 options = listOf(
                     option(
@@ -534,17 +420,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "senior_offer", event(
                 id = "senior_offer",
-                message = story(
-                    """
-                    Оффер senior приходит не как чудо, а как тихое подтверждение: всё это время Асан всё-таки рос, даже когда сам видел в себе в основном беспорядок, долги и хаотичные попытки ускориться.
-                    """,
-                    """
-                    Почти удвоение зарплаты кажется не только финансовой новостью, но и психологической. Он больше не парень, который постоянно тушит последствия прошлых решений. По крайней мере, у него впервые появляется шанс перестать таким быть.
-                    """,
-                    """
-                    Но более высокий доход сам по себе ещё никого не спасал. Теперь важно, сможет ли он прожить этот новый уровень иначе, чем проживал прошлые прибавки и прошлые надежды.
-                    """
-                ),
+                message = Strings["hardcoded_story_020_msg"],
                 flavor = "🚀",
                 tags = setOf("career"),
                 options = listOf(
@@ -563,15 +439,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "financial_freedom_path", event(
                 id = "financial_freedom_path",
-                message = """
-                Доход 900к/мес. Расходы 200к. Инвестирую 400к/мес.
-
-                Портфель растёт. Пассивный доход через ETF + дивиденды —
-                уже 45 000 ₸/мес.
-
-                До пассивного дохода = расходам (~4-5 лет при текущем темпе).
-                Но путь чёткий. Ты на правильном пути!
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_011_msg"],
                 flavor = "🎯",
                 options = listOf(
                     option(
@@ -587,12 +455,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "normal_life", event(
                 id = "normal_life",
-                message = """
-                Жизнь идёт своим чередом.
-                Работаешь, откладываешь, иногда балуешь себя.
-
-                Что в фокусе этого месяца?
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_012_msg"],
                 flavor = "☀️",
                 options = listOf(
                     option(
@@ -625,12 +488,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "skill_check", event(
                 id = "skill_check",
-                message = """
-                Изучил новую технологию. Написал статью на Medium.
-                150 лайков, 2 рекрутера написали в личку.
-
-                Один предлагает Senior-позицию прямо сейчас.
-            """.trimIndent(),
+                message = Strings["hardcoded_asan_013_msg"],
                 flavor = "📝",
                 tags = setOf("career"),
                 options = listOf(
@@ -652,17 +510,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "ending_freedom", event(
                 id = "ending_freedom",
-                message = story(
-                    """
-                    Финансовая свобода приходит к Асану не салютом и не красивым постом в соцсетях. Она приходит в виде одной очень простой мысли: можно больше не принимать решения из паники. Можно не хвататься за любой шанс только потому, что страшно отстать.
-                    """,
-                    """
-                    Портфель вырос, пассивный доход наконец перестал быть теорией, а собственная жизнь перестала напоминать бесконечную попытку догнать кого-то из ленты. Это, возможно, главная победа: не только накопить деньги, но и вырастить внутри себя более устойчивого человека.
-                    """,
-                    """
-                    Асан собрал капитал и собрался сам. Для него это оказалось одним и тем же маршрутом.
-                    """
-                ),
+                message = Strings["hardcoded_story_021_msg"],
                 flavor = "🏆",
                 isEnding = true,
                 endingType = EndingType.FINANCIAL_FREEDOM,
@@ -673,17 +521,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "ending_bankruptcy", event(
                 id = "ending_bankruptcy",
-                message = story(
-                    """
-                    Здесь заканчивается не жизнь, а очередная версия Асана, которая всё пыталась перепрыгнуть через дисциплину. Банкротство болезненно именно тем, что больше нельзя выдумывать о себе утешительные истории.
-                    """,
-                    """
-                    Денег нет, долгов слишком много, стресс давно превратился в фон. Но вместе с крахом приходит и очень жёсткая ясность: многие провалы были не несчастным случаем, а следствием привычки принимать решения из тревоги и жадного нетерпения.
-                    """,
-                    """
-                    Это тяжёлая концовка. Но в ней есть одна полезная вещь: теперь Асан точно знает, какую версию себя нельзя снова пускать за руль.
-                    """
-                ),
+                message = Strings["hardcoded_story_022_msg"],
                 flavor = "💔",
                 isEnding = true,
                 endingType = EndingType.BANKRUPTCY,
@@ -694,17 +532,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         put(
             "ending_paycheck", event(
                 id = "ending_paycheck",
-                message = story(
-                    """
-                    Самая тихая неудача выглядит именно так: зарплата приходит, жизнь не рушится, но ничего по-настоящему не меняется. Асан больше не в кризисе, но и не на маршруте к свободе.
-                    """,
-                    """
-                    Это не драматичный финал, зато очень узнаваемый. Человек вроде бы уже выбрался из глупых ошибок, но так и не собрал для себя новую систему. Каждый месяц утекает в текучку, и будущее остаётся чем-то, что начнётся «чуть позже».
-                    """,
-                    """
-                    Для Асана это важный урок: отсутствие катастрофы ещё не означает наличие направления.
-                    """
-                ),
+                message = Strings["hardcoded_story_023_msg"],
                 flavor = "😔",
                 isEnding = true,
                 endingType = EndingType.PAYCHECK_TO_PAYCHECK,
@@ -722,13 +550,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // CRISIS: debt > 1 000 000 — highest priority
         event(
             id = "debt_crisis",
-            message = """
-                ⚠️ ДОЛГОВОЙ КРИЗИС!
-
-                Долг превысил 1 000 000 ₸.
-                Банк звонит. Коллекторы шлют письма.
-                Стресс максимальный. Нужны срочные меры.
-            """.trimIndent(),
+            message = Strings["hardcoded_asan_014_msg"],
             flavor = "🚨",
             priority = 100,
             conditions = listOf(cond(DEBT, GT, 1_000_000L)),
@@ -775,14 +597,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // PAYCHECK-TO-PAYCHECK WARNING
         event(
             id = "trap_warning",
-            message = """
-                😰 Ловушка «от зарплаты до зарплаты»
-
-                Уже 6 месяцев нет никаких накоплений.
-                Каждый месяц — ноль.
-
-                Нужно что-то менять.
-            """.trimIndent(),
+            message = Strings["hardcoded_asan_015_msg"],
             flavor = "⚠️",
             priority = 50,
             conditions = listOf(
@@ -811,14 +626,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // WINDFALL: annual bonus
         event(
             id = "bonus_received",
-            message = """
-                🎁 Неожиданно: годовой бонус!
-
-                Компания показала рекордную прибыль.
-                Тебе выплатили 200 000 ₸ сверху.
-
-                Куда направить?
-            """.trimIndent(),
+            message = Strings["hardcoded_asan_016_msg"],
             flavor = "🎁",
             priority = 30,
             conditions = listOf(
@@ -856,14 +664,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // MORTGAGE UNLOCK: capital >= 2.8M, low debt
         event(
             id = "mortgage_unlock",
-            message = """
-                🏠 Накопил на первый взнос!
-
-                На счёте уже 2 800 000 ₸.
-                Банк предварительно одобрил ипотеку по 7-20-25.
-
-                Стоит рассмотреть?
-            """.trimIndent(),
+            message = Strings["hardcoded_asan_017_msg"],
             flavor = "🏠",
             priority = 40,
             conditions = listOf(
@@ -888,14 +689,7 @@ class AsanScenarioGraph : ScenarioGraph() {
         // HIGH STRESS: stress > 70
         event(
             id = "burnout_risk",
-            message = """
-                😮‍💨 Выгорание на горизонте.
-
-                Стресс очень высокий. Сон плохой.
-                Продуктивность падает.
-
-                Нужно замедлиться.
-            """.trimIndent(),
+            message = Strings["hardcoded_asan_018_msg"],
             flavor = "🔥",
             priority = 60,
             conditions = listOf(cond(STRESS, GT, 70L)),

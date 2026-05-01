@@ -122,6 +122,15 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_settings_language_kazakh"    to "Қазақша",
     "ui_settings_language_english"   to "English",
 
+    // ── Settings — Gameplay ───────────────────────────────────────────
+    "ui_settings_gameplay"           to "Геймплей",
+    "ui_settings_typing_anim"        to "Анимация печатания",
+    "ui_settings_typing_anim_sub"    to "Текст появляется постепенно, как при наборе",
+    "ui_settings_typing_pace"        to "Скорость набора",
+    "ui_settings_pace_slow"          to "Медленно",
+    "ui_settings_pace_normal"        to "Нормально",
+    "ui_settings_pace_fast"          to "Быстро",
+
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Сбросить прогресс?",
     "ui_chat_reset_message"          to "Это удалит всю историю чата и вернёт персонажа к начальному состоянию.",
@@ -135,6 +144,7 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_chat_player_prefix"          to "✍️  Я решил:",
     "ui_chat_action_label"           to "Что я сделаю:",
     "ui_chat_writing"                to "пишет в дневник...",
+    "ui_chat_skip"                   to "Пропустить",
     "ui_chat_monthly_report"         to "Итоги месяца",
     "ui_chat_scene_scam"             to "⚠️ Осторожно",
     "ui_chat_scene_crisis"           to "📉 Кризис",
@@ -257,6 +267,11 @@ val ruStrings: Map<String, String> = mapOf(
     "err_auth_server_unavailable"    to "Сервер недоступен (%d)",
     "err_auth_login_too_short"       to "Логин минимум 3 символа",
     "err_auth_password_too_short"    to "Пароль минимум 6 символов",
+    "err_auth_user_exists"           to "Пользователь уже существует",
+    "err_auth_user_not_found"        to "Пользователь не найден",
+    "err_auth_wrong_password"        to "Неверный пароль",
+    "err_auth_refresh_missing"       to "Отсутствует refresh token",
+    "err_auth_refresh_invalid"       to "Refresh token недействителен или истёк",
 
     // ════════════════════════════════════════════════════════════════════
     //  ERA EVENT LIBRARY — EraDefinition.kt
@@ -1230,4 +1245,4 @@ val ruStrings: Map<String, String> = mapOf(
     "seed_bundle_crypto_profession" to "Блогер/трейдер",
     "seed_bundle_crypto_trait_1" to "импульсивный",
 
-)
+) + ruHardcodedStrings

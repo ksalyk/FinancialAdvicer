@@ -1,7 +1,9 @@
 package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
@@ -31,7 +33,7 @@ val commonModule = module {
 
     // ── Locale initialisation — must run first ─────────────────────────────────
     // Seed currentLocale with device language. LocaleRepository applies the
-    // persisted manual override when AppNavigation creates LocalePresenter.
+    // persisted manual override when AppNavigation creates SettingsPresenter.
     Strings.currentLocale = deviceLocale()
 
     // ── Token storage (in-memory; shared between HttpClient and AuthRepository) ─
@@ -71,6 +73,10 @@ val commonModule = module {
 
     // ── Locale repository (manual override persisted in SecureStorage) ───────
     single { LocaleRepository(secureStorage = get<SecureStorage>()) }
+
+    // ── Feature flags (local; swap impl here when remote config is added) ────
+    // Bound as the interface so all callers are agnostic of the storage backend.
+    single<FeatureFlagRepository> { LocalFeatureFlagRepository(storage = get<SecureStorage>()) }
 
     // ── Game API service (statistics persistence) ─────────────────────────────
     single { GameApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl) }

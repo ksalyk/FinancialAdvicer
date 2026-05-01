@@ -39,7 +39,7 @@ data class CharacterDto(
 data class StartGameRequest(
     val characterId: String   = "asan",
     val eraId: String         = "kz_2024",
-    val characterName: String = "Асан"
+    val characterName: String = "Asan"
 )
 
 @Serializable
@@ -121,7 +121,7 @@ fun Route.gameRoutes(
 
         // ── POST /game/start ──────────────────────────────────────────────────
         // Body: StartGameRequest (characterId, eraId, characterName).
-        // Defaults to Асан/kz_2024 when body is absent — keeps old clients working.
+        // Defaults to asan/kz_2024 when body is absent — keeps old clients working.
         post("/start") {
             val userId = call.jwtUserId()
             // Catch only BadRequestException: Ktor's ContentNegotiation wraps both

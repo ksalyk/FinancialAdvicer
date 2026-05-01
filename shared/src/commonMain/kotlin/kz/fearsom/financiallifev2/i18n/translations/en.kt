@@ -3,10 +3,8 @@ package kz.fearsom.financiallifev2.i18n.translations
 // ════════════════════════════════════════════════════════════════════
 //  ENGLISH STRINGS
 //
-//  Only UI strings are translated here.
-//  Game-content strings (evt_*, scam_*, era event messages) are NOT
-//  included — they fall back to Russian via Strings.get() fallback.
-//  Add a "// TODO i18n" comment where a content key is missing.
+//  UI strings live here. Game-content strings are generated in
+//  en_content.kt and merged below.
 // ════════════════════════════════════════════════════════════════════
 
 val enStrings: Map<String, String> = mapOf(
@@ -112,6 +110,15 @@ val enStrings: Map<String, String> = mapOf(
     "ui_settings_language_kazakh"    to "Қазақша",
     "ui_settings_language_english"   to "English",
 
+    // ── Settings — Gameplay ───────────────────────────────────────────
+    "ui_settings_gameplay"           to "Gameplay",
+    "ui_settings_typing_anim"        to "Typing animation",
+    "ui_settings_typing_anim_sub"    to "Text appears gradually, as if being typed",
+    "ui_settings_typing_pace"        to "Typing speed",
+    "ui_settings_pace_slow"          to "Slow",
+    "ui_settings_pace_normal"        to "Normal",
+    "ui_settings_pace_fast"          to "Fast",
+
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Reset progress?",
     "ui_chat_reset_message"          to "This will delete all chat history and return the character to their initial state.",
@@ -125,6 +132,7 @@ val enStrings: Map<String, String> = mapOf(
     "ui_chat_player_prefix"          to "✍️  I decided:",
     "ui_chat_action_label"           to "What I'll do:",
     "ui_chat_writing"                to "writing in diary...",
+    "ui_chat_skip"                   to "Skip",
     "ui_chat_monthly_report"         to "Monthly summary",
     "ui_chat_scene_scam"             to "⚠️ Watch out",
     "ui_chat_scene_crisis"           to "📉 Crisis",
@@ -247,7 +255,10 @@ val enStrings: Map<String, String> = mapOf(
     "err_auth_server_unavailable"    to "Server unavailable (%d)",
     "err_auth_login_too_short"       to "Username must be at least 3 characters",
     "err_auth_password_too_short"    to "Password must be at least 6 characters",
+    "err_auth_user_exists"           to "User already exists",
+    "err_auth_user_not_found"        to "User not found",
+    "err_auth_wrong_password"        to "Incorrect password",
+    "err_auth_refresh_missing"       to "Missing refresh token",
+    "err_auth_refresh_invalid"       to "Invalid or expired refresh token",
 
-    // Game content strings intentionally absent — fallback to ruStrings.
-    // TODO i18n: translate evt_*, scam_*, era event messages to English.
-)
+) + enContentStrings + enHardcodedStrings

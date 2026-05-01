@@ -151,11 +151,7 @@ class DanaScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph()
                     Effect(investmentsDelta = 20_000L, capitalDelta = -20_000L, knowledgeDelta = 5))
             )
         ))
-        put("child_education", commonChildEducationEvent(
-            """
-            Дочь подрастает, и Дана впервые чувствует, как все её финансовые решения складываются в один большой вопрос: какое детство они могут ей позволить не на словах, а на практике.
-            """.trimIndent()
-        ))
+        put("child_education", commonChildEducationEvent())
         commonDanaPoolAndEndings("2005")
     }
 
@@ -208,11 +204,7 @@ class DanaScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph()
                     Effect(capitalDelta = -60_000L, investmentsDelta = 60_000L, knowledgeDelta = 8))
             )
         ))
-        put("child_education", commonChildEducationEvent(
-            """
-            Время выбирать не только школу, а общую модель жизни семьи: платить больше сейчас ради уверенности ребёнка или признать, что любовь родителей не всегда измеряется самой дорогой опцией.
-            """.trimIndent()
-        ))
+        put("child_education", commonChildEducationEvent())
         commonDanaPoolAndEndings("2015")
     }
 
@@ -265,15 +257,11 @@ class DanaScenarioGraph(private val eraId: String = "kz_2024") : ScenarioGraph()
                     Effect(capitalDelta = -100_000L, investmentsDelta = 100_000L, knowledgeDelta = 9))
             )
         ))
-        put("child_education", commonChildEducationEvent(
-            """
-            Теперь образование дочери для Даны не просто расход. Это зеркало всего, что она строила столько лет: выдержит ли их семейная система следующий уровень ответственности.
-            """.trimIndent()
-        ))
+        put("child_education", commonChildEducationEvent())
         commonDanaPoolAndEndings("2024")
     }
 
-    private fun commonChildEducationEvent(introParagraph: String) = event(
+    private fun commonChildEducationEvent() = event(
         id = "child_education",
         flavor = "👧",
         message = Strings["evt_dana_2024_child_education_msg"],

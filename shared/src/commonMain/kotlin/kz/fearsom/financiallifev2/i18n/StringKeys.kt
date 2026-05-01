@@ -119,6 +119,15 @@ object StringKeys {
     const val UI_SETTINGS_LANGUAGE_KAZAKH     = "ui_settings_language_kazakh"
     const val UI_SETTINGS_LANGUAGE_ENGLISH    = "ui_settings_language_english"
 
+    // ── Settings — Gameplay / Feature Flags ──────────────────────────
+    const val UI_SETTINGS_GAMEPLAY           = "ui_settings_gameplay"
+    const val UI_SETTINGS_TYPING_ANIM        = "ui_settings_typing_anim"
+    const val UI_SETTINGS_TYPING_ANIM_SUB    = "ui_settings_typing_anim_sub"
+    const val UI_SETTINGS_TYPING_PACE        = "ui_settings_typing_pace"
+    const val UI_SETTINGS_PACE_SLOW          = "ui_settings_pace_slow"
+    const val UI_SETTINGS_PACE_NORMAL        = "ui_settings_pace_normal"
+    const val UI_SETTINGS_PACE_FAST          = "ui_settings_pace_fast"
+
     // ── ChatScreen ───────────────────────────────────────────────────
     const val UI_CHAT_RESET_TITLE             = "ui_chat_reset_title"
     const val UI_CHAT_RESET_MESSAGE           = "ui_chat_reset_message"
@@ -132,6 +141,7 @@ object StringKeys {
     const val UI_CHAT_PLAYER_PREFIX           = "ui_chat_player_prefix"
     const val UI_CHAT_ACTION_LABEL            = "ui_chat_action_label"
     const val UI_CHAT_WRITING                 = "ui_chat_writing"
+    const val UI_CHAT_SKIP                    = "ui_chat_skip"
     const val UI_CHAT_MONTHLY_REPORT          = "ui_chat_monthly_report"
     const val UI_CHAT_SCENE_SCAM              = "ui_chat_scene_scam"
     const val UI_CHAT_SCENE_CRISIS            = "ui_chat_scene_crisis"
@@ -255,4 +265,9 @@ object StringKeys {
     const val ERR_AUTH_SERVER_UNAVAILABLE     = "err_auth_server_unavailable"
     const val ERR_AUTH_LOGIN_TOO_SHORT        = "err_auth_login_too_short"
     const val ERR_AUTH_PASSWORD_TOO_SHORT     = "err_auth_password_too_short"
+    const val ERR_AUTH_USER_EXISTS            = "err_auth_user_exists"
+    const val ERR_AUTH_USER_NOT_FOUND         = "err_auth_user_not_found"
+    const val ERR_AUTH_WRONG_PASSWORD         = "err_auth_wrong_password"
+    const val ERR_AUTH_REFRESH_MISSING        = "err_auth_refresh_missing"
+    const val ERR_AUTH_REFRESH_INVALID        = "err_auth_refresh_invalid"
 }

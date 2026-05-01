@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
@@ -51,6 +52,7 @@ fun AppNavigation() {
     val sessionRepo    : GameSessionRepository  = koinInject()
     val gameApiService : GameApiService         = koinInject()
     val localeRepo     : LocaleRepository       = koinInject()
+    val featureFlags   : FeatureFlagRepository  = koinInject()
 
     val scope = rememberCoroutineScope()
 
@@ -61,15 +63,15 @@ fun AppNavigation() {
     val newGamePresenter  = remember { NewGamePresenter(sessionRepo, scope) }
     val charsPresenter    = remember { CharactersPresenter(sessionRepo, scope) }
     val statsPresenter    = remember { StatisticsPresenter(sessionRepo, scope, gameApiService) }
-    val localePresenter   = remember { LocalePresenter(localeRepo, scope) }
+    val settingsPresenter = remember { SettingsPresenter(localeRepo, featureFlags, scope) }
 
-    val authUiState     by authPresenter.uiState.collectAsStateWithLifecycle()
-    val gameUiState     by gamePresenter.uiState.collectAsStateWithLifecycle()
-    val mainMenuUiState by mainMenuPresenter.uiState.collectAsStateWithLifecycle()
-    val newGameUiState  by newGamePresenter.uiState.collectAsStateWithLifecycle()
-    val charsUiState    by charsPresenter.uiState.collectAsStateWithLifecycle()
-    val statsUiState    by statsPresenter.uiState.collectAsStateWithLifecycle()
-    val localeUiState   by localePresenter.uiState.collectAsStateWithLifecycle()
+    val authUiState      by authPresenter.uiState.collectAsStateWithLifecycle()
+    val gameUiState      by gamePresenter.uiState.collectAsStateWithLifecycle()
+    val mainMenuUiState  by mainMenuPresenter.uiState.collectAsStateWithLifecycle()
+    val newGameUiState   by newGamePresenter.uiState.collectAsStateWithLifecycle()
+    val charsUiState     by charsPresenter.uiState.collectAsStateWithLifecycle()
+    val statsUiState     by statsPresenter.uiState.collectAsStateWithLifecycle()
+    val settingsUiState  by settingsPresenter.uiState.collectAsStateWithLifecycle()
 
     // ── Back stack ────────────────────────────────────────────────────────────
     var backStack  by remember { mutableStateOf(listOf<AppScreen>(AppScreen.Splash)) }
@@ -120,7 +122,7 @@ fun AppNavigation() {
 
     val currentScreen = backStack.lastOrNull() ?: AppScreen.Login
 
-    key(localeUiState.currentLocale) {
+    key(settingsUiState.currentLocale) {
         AnimatedContent(
             targetState  = currentScreen,
             transitionSpec = {
@@ -228,18 +230,22 @@ fun AppNavigation() {
 
                 // ── Settings ─────────────────────────────────────────────────
                 AppScreen.Settings -> SettingsScreen(
-                    currentLocale    = localeUiState.currentLocale,
-                    onLocaleSelected = localePresenter::selectLocale,
-                    onBack           = ::goBack
+                    uiState            = settingsUiState,
+                    onLocaleSelected   = settingsPresenter::selectLocale,
+                    onTypingAnimToggle = settingsPresenter::setTypingAnimationEnabled,
+                    onTypingPaceChange = settingsPresenter::setTypingAnimationPace,
+                    onBack             = ::goBack
                 )
 
                 // ── Game (Chat) ───────────────────────────────────────────────
                 is AppScreen.Game -> ChatScreen(
-                    uiState          = gameUiState,
-                    onChoiceSelected = gamePresenter::onChoiceSelected,
-                    onToggleStats    = gamePresenter::toggleStats,
-                    onRestart        = gamePresenter::restartGame,
-                    onNavigateToMenu = {
+                    uiState                = gameUiState,
+                    typingAnimationEnabled = settingsUiState.typingAnimationEnabled,
+                    typingAnimationPace    = settingsUiState.typingAnimationPace,
+                    onChoiceSelected       = gamePresenter::onChoiceSelected,
+                    onToggleStats          = gamePresenter::toggleStats,
+                    onRestart              = gamePresenter::restartGame,
+                    onNavigateToMenu       = {
                         gamePresenter.saveAndPause()
                         navForward = false
                         backStack  = listOf(AppScreen.MainMenu)
