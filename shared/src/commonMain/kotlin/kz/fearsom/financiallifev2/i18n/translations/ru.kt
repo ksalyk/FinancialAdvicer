@@ -44,6 +44,8 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_main_games_played"           to "Сыграно игр:",
     "ui_main_best_ending"            to "Лучший финал:",
     "ui_main_start_story"            to "Начни свою историю",
+    "ui_main_settings"               to "Настройки",
+    "ui_main_settings_subtitle"      to "Язык и профиль",
     "ui_main_logout"                 to "Выйти из аккаунта",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
@@ -110,6 +112,15 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_stats_tab_eras"              to "🗺️ По эпохам",
     "ui_stats_games_avg"             to "игр · Ср. капитал:",
     "ui_stats_games"                 to "игр",
+
+    // ── SettingsScreen ───────────────────────────────────────────────
+    "ui_settings_title"              to "Настройки",
+    "ui_settings_subtitle"           to "Язык приложения",
+    "ui_settings_language"           to "Язык",
+    "ui_settings_language_subtitle"  to "Изменение применяется сразу и сохраняется на устройстве.",
+    "ui_settings_language_russian"   to "Русский",
+    "ui_settings_language_kazakh"    to "Қазақша",
+    "ui_settings_language_english"   to "English",
 
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Сбросить прогресс?",

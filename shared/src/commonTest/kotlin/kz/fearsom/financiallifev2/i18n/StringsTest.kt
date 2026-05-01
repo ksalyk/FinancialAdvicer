@@ -102,6 +102,10 @@ class StringsTest {
             "ui_login_btn_login",
             "ui_login_btn_register",
             "ui_main_tagline",
+            "ui_main_settings",
+            "ui_settings_title",
+            "ui_settings_language",
+            "ui_settings_language_english",
             "ui_chat_reset_title",
             "ui_stats_title",
             "ending_bankruptcy",
@@ -135,6 +139,8 @@ class StringsTest {
         assertTrue(Strings.eraKz90sName.isNotEmpty())
         assertTrue(Strings.eraKz2015Name.isNotEmpty())
         assertTrue(Strings.sysMonthlyTitle.isNotEmpty())
+        assertTrue(Strings.uiSettingsTitle.isNotEmpty())
+        assertTrue(Strings.uiSettingsLanguageEnglish.isNotEmpty())
     }
 
     @Test
@@ -179,5 +185,17 @@ class StringsTest {
 
         Strings.currentLocale = "ru"
         assertEquals(ruValue, Strings["ui_login_subtitle"])
+    }
+
+    @Test
+    fun `settings language labels switch by locale`() {
+        Strings.currentLocale = "ru"
+        assertEquals("Настройки", Strings.uiSettingsTitle)
+
+        Strings.currentLocale = "en"
+        assertEquals("Settings", Strings.uiSettingsTitle)
+
+        Strings.currentLocale = "kk"
+        assertEquals("Баптаулар", Strings.uiSettingsTitle)
     }
 }

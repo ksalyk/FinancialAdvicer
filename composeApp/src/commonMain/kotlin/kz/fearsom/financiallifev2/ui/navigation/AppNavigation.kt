@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.presentation.*
@@ -23,6 +24,7 @@ sealed interface AppScreen {
     object Characters                                    : AppScreen
     data class CharacterDetail(val characterId: String)  : AppScreen
     object Statistics                                    : AppScreen
+    object Settings                                      : AppScreen
     data class Game(val sessionId: String)               : AppScreen
 }
 
@@ -36,6 +38,7 @@ private fun AppScreen.depth(): Int = when (this) {
     AppScreen.Characters             -> 2
     is AppScreen.CharacterDetail     -> 3
     AppScreen.Statistics             -> 2
+    AppScreen.Settings               -> 2
     is AppScreen.Game                -> 4
 }
 
@@ -47,6 +50,7 @@ fun AppNavigation() {
     val gameEngine     : GameEngine             = koinInject()
     val sessionRepo    : GameSessionRepository  = koinInject()
     val gameApiService : GameApiService         = koinInject()
+    val localeRepo     : LocaleRepository       = koinInject()
 
     val scope = rememberCoroutineScope()
 
@@ -57,6 +61,7 @@ fun AppNavigation() {
     val newGamePresenter  = remember { NewGamePresenter(sessionRepo, scope) }
     val charsPresenter    = remember { CharactersPresenter(sessionRepo, scope) }
     val statsPresenter    = remember { StatisticsPresenter(sessionRepo, scope, gameApiService) }
+    val localePresenter   = remember { LocalePresenter(localeRepo, scope) }
 
     val authUiState     by authPresenter.uiState.collectAsStateWithLifecycle()
     val gameUiState     by gamePresenter.uiState.collectAsStateWithLifecycle()
@@ -64,6 +69,7 @@ fun AppNavigation() {
     val newGameUiState  by newGamePresenter.uiState.collectAsStateWithLifecycle()
     val charsUiState    by charsPresenter.uiState.collectAsStateWithLifecycle()
     val statsUiState    by statsPresenter.uiState.collectAsStateWithLifecycle()
+    val localeUiState   by localePresenter.uiState.collectAsStateWithLifecycle()
 
     // ── Back stack ────────────────────────────────────────────────────────────
     var backStack  by remember { mutableStateOf(listOf<AppScreen>(AppScreen.Splash)) }
@@ -114,122 +120,132 @@ fun AppNavigation() {
 
     val currentScreen = backStack.lastOrNull() ?: AppScreen.Login
 
-    AnimatedContent(
-        targetState  = currentScreen,
-        transitionSpec = {
-            val dir = if (navForward) 1 else -1
-            slideInHorizontally(initialOffsetX = { it * dir }, animationSpec = tween(320)) +
-                    fadeIn(tween(320)) togetherWith
-                    slideOutHorizontally(targetOffsetX = { -it * dir }, animationSpec = tween(320)) +
-                    fadeOut(tween(200))
-        },
-        label = "appNav"
-    ) { screen ->
-        when (screen) {
+    key(localeUiState.currentLocale) {
+        AnimatedContent(
+            targetState  = currentScreen,
+            transitionSpec = {
+                val dir = if (navForward) 1 else -1
+                slideInHorizontally(initialOffsetX = { it * dir }, animationSpec = tween(320)) +
+                        fadeIn(tween(320)) togetherWith
+                        slideOutHorizontally(targetOffsetX = { -it * dir }, animationSpec = tween(320)) +
+                        fadeOut(tween(200))
+            },
+            label = "appNav"
+        ) { screen ->
+            when (screen) {
 
-            // ── Splash ────────────────────────────────────────────────────────
-            AppScreen.Splash -> SplashScreen()
+                // ── Splash ────────────────────────────────────────────────────
+                AppScreen.Splash -> SplashScreen()
 
-            // ── Login ─────────────────────────────────────────────────────────
-            AppScreen.Login -> LoginScreen(
-                isLoading      = authUiState.isLoading,
-                error          = authUiState.error,
-                isRegisterMode = authUiState.isRegisterMode,
-                onLogin        = authPresenter::login,
-                onRegister     = authPresenter::register,
-                onToggleMode   = authPresenter::toggleMode
-            )
+                // ── Login ─────────────────────────────────────────────────────
+                AppScreen.Login -> LoginScreen(
+                    isLoading      = authUiState.isLoading,
+                    error          = authUiState.error,
+                    isRegisterMode = authUiState.isRegisterMode,
+                    onLogin        = authPresenter::login,
+                    onRegister     = authPresenter::register,
+                    onToggleMode   = authPresenter::toggleMode
+                )
 
-            // ── Main Menu ─────────────────────────────────────────────────────
-            AppScreen.MainMenu -> MainMenuScreen(
-                uiState      = mainMenuUiState,
-                onContinue   = {
-                    val activeId = mainMenuUiState.activeSession?.id
-                    if (activeId != null) {
-                        gamePresenter.continueGame(activeId)
-                        navigate(AppScreen.Game(activeId))
+                // ── Main Menu ─────────────────────────────────────────────────
+                AppScreen.MainMenu -> MainMenuScreen(
+                    uiState      = mainMenuUiState,
+                    onContinue   = {
+                        val activeId = mainMenuUiState.activeSession?.id
+                        if (activeId != null) {
+                            gamePresenter.continueGame(activeId)
+                            navigate(AppScreen.Game(activeId))
+                        }
+                    },
+                    onNewGame    = { navigate(AppScreen.EraSelection) },
+                    onCharacters = { navigate(AppScreen.Characters) },
+                    onStatistics = { navigate(AppScreen.Statistics) },
+                    onSettings   = { navigate(AppScreen.Settings) },
+                    onLogout     = {
+                        gamePresenter.saveAndPause()
+                        authPresenter.logout()
                     }
-                },
-                onNewGame    = { navigate(AppScreen.EraSelection) },
-                onCharacters = { navigate(AppScreen.Characters) },
-                onStatistics = { navigate(AppScreen.Statistics) },
-                onLogout     = {
-                    gamePresenter.saveAndPause()
-                    authPresenter.logout()
-                }
-            )
+                )
 
-            // ── Era Selection ─────────────────────────────────────────────────
-            AppScreen.EraSelection -> EraSelectionScreen(
-                uiState       = newGameUiState,
-                onEraSelected = { eraId ->
-                    newGamePresenter.selectEra(eraId)
-                    navigate(AppScreen.CharacterSelection(eraId))
-                },
-                onBack = ::goBack
-            )
+                // ── Era Selection ─────────────────────────────────────────────
+                AppScreen.EraSelection -> EraSelectionScreen(
+                    uiState       = newGameUiState,
+                    onEraSelected = { eraId ->
+                        newGamePresenter.selectEra(eraId)
+                        navigate(AppScreen.CharacterSelection(eraId))
+                    },
+                    onBack = ::goBack
+                )
 
-            // ── Character Selection ───────────────────────────────────────────
-            is AppScreen.CharacterSelection -> CharacterSelectionScreen(
-                uiState            = newGameUiState,
-                onSelectPredefined = { charId ->
-                    val sessionId = newGamePresenter.startWithPredefined(charId)
-                    if (sessionId != null) {
-                        gamePresenter.startNewGame(sessionId)
-                        navForward = true
-                        backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
+                // ── Character Selection ───────────────────────────────────────
+                is AppScreen.CharacterSelection -> CharacterSelectionScreen(
+                    uiState            = newGameUiState,
+                    onSelectPredefined = { charId ->
+                        val sessionId = newGamePresenter.startWithPredefined(charId)
+                        if (sessionId != null) {
+                            gamePresenter.startNewGame(sessionId)
+                            navForward = true
+                            backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
+                        }
+                    },
+                    onSelectBundle = { bundleId ->
+                        val sessionId = newGamePresenter.startWithBundle(bundleId)
+                        if (sessionId != null) {
+                            gamePresenter.startNewGame(sessionId)
+                            navForward = true
+                            backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
+                        }
+                    },
+                    onBack = ::goBack
+                )
+
+                // ── Characters ────────────────────────────────────────────────
+                AppScreen.Characters -> CharactersScreen(
+                    uiState          = charsUiState,
+                    onCharacterClick = { charId -> navigate(AppScreen.CharacterDetail(charId)) },
+                    onBack           = ::goBack
+                )
+
+                // ── Character Detail ──────────────────────────────────────────
+                is AppScreen.CharacterDetail -> CharacterDetailScreen(
+                    characterId = screen.characterId,
+                    onBack      = ::goBack,
+                    onStartGame = { charId ->
+                        val sessionId = newGamePresenter.quickStartWithCharacter(charId)
+                        if (sessionId != null) {
+                            gamePresenter.startNewGame(sessionId)
+                            navForward = true
+                            backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
+                        }
                     }
-                },
-                onSelectBundle = { bundleId ->
-                    val sessionId = newGamePresenter.startWithBundle(bundleId)
-                    if (sessionId != null) {
-                        gamePresenter.startNewGame(sessionId)
-                        navForward = true
-                        backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
+                )
+
+                // ── Statistics ────────────────────────────────────────────────
+                AppScreen.Statistics -> StatisticsScreen(
+                    uiState = statsUiState,
+                    onBack  = ::goBack
+                )
+
+                // ── Settings ─────────────────────────────────────────────────
+                AppScreen.Settings -> SettingsScreen(
+                    currentLocale    = localeUiState.currentLocale,
+                    onLocaleSelected = localePresenter::selectLocale,
+                    onBack           = ::goBack
+                )
+
+                // ── Game (Chat) ───────────────────────────────────────────────
+                is AppScreen.Game -> ChatScreen(
+                    uiState          = gameUiState,
+                    onChoiceSelected = gamePresenter::onChoiceSelected,
+                    onToggleStats    = gamePresenter::toggleStats,
+                    onRestart        = gamePresenter::restartGame,
+                    onNavigateToMenu = {
+                        gamePresenter.saveAndPause()
+                        navForward = false
+                        backStack  = listOf(AppScreen.MainMenu)
                     }
-                },
-                onBack = ::goBack
-            )
-
-            // ── Characters ────────────────────────────────────────────────────
-            AppScreen.Characters -> CharactersScreen(
-                uiState          = charsUiState,
-                onCharacterClick = { charId -> navigate(AppScreen.CharacterDetail(charId)) },
-                onBack           = ::goBack
-            )
-
-            // ── Character Detail ──────────────────────────────────────────────
-            is AppScreen.CharacterDetail -> CharacterDetailScreen(
-                characterId = screen.characterId,
-                onBack      = ::goBack,
-                onStartGame = { charId ->
-                    val sessionId = newGamePresenter.quickStartWithCharacter(charId)
-                    if (sessionId != null) {
-                        gamePresenter.startNewGame(sessionId)
-                        navForward = true
-                        backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
-                    }
-                }
-            )
-
-            // ── Statistics ────────────────────────────────────────────────────
-            AppScreen.Statistics -> StatisticsScreen(
-                uiState = statsUiState,
-                onBack  = ::goBack
-            )
-
-            // ── Game (Chat) ───────────────────────────────────────────────────
-            is AppScreen.Game -> ChatScreen(
-                uiState          = gameUiState,
-                onChoiceSelected = gamePresenter::onChoiceSelected,
-                onToggleStats    = gamePresenter::toggleStats,
-                onRestart        = gamePresenter::restartGame,
-                onNavigateToMenu = {
-                    gamePresenter.saveAndPause()
-                    navForward = false
-                    backStack  = listOf(AppScreen.MainMenu)
-                }
-            )
+                )
+            }
         }
     }
 }

@@ -41,6 +41,8 @@ object StringKeys {
     const val UI_MAIN_GAMES_PLAYED            = "ui_main_games_played"
     const val UI_MAIN_BEST_ENDING             = "ui_main_best_ending"
     const val UI_MAIN_START_STORY             = "ui_main_start_story"
+    const val UI_MAIN_SETTINGS                = "ui_main_settings"
+    const val UI_MAIN_SETTINGS_SUBTITLE       = "ui_main_settings_subtitle"
     const val UI_MAIN_LOGOUT                  = "ui_main_logout"
 
     // ── EraSelectionScreen ───────────────────────────────────────────
@@ -107,6 +109,15 @@ object StringKeys {
     const val UI_STATS_TAB_ERAS               = "ui_stats_tab_eras"
     const val UI_STATS_GAMES_AVG              = "ui_stats_games_avg"
     const val UI_STATS_GAMES                  = "ui_stats_games"
+
+    // ── SettingsScreen ───────────────────────────────────────────────
+    const val UI_SETTINGS_TITLE               = "ui_settings_title"
+    const val UI_SETTINGS_SUBTITLE            = "ui_settings_subtitle"
+    const val UI_SETTINGS_LANGUAGE            = "ui_settings_language"
+    const val UI_SETTINGS_LANGUAGE_SUBTITLE   = "ui_settings_language_subtitle"
+    const val UI_SETTINGS_LANGUAGE_RUSSIAN    = "ui_settings_language_russian"
+    const val UI_SETTINGS_LANGUAGE_KAZAKH     = "ui_settings_language_kazakh"
+    const val UI_SETTINGS_LANGUAGE_ENGLISH    = "ui_settings_language_english"
 
     // ── ChatScreen ───────────────────────────────────────────────────
     const val UI_CHAT_RESET_TITLE             = "ui_chat_reset_title"

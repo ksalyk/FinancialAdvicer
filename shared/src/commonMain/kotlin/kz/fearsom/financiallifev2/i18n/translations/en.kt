@@ -34,6 +34,8 @@ val enStrings: Map<String, String> = mapOf(
     "ui_main_games_played"           to "Games played:",
     "ui_main_best_ending"            to "Best ending:",
     "ui_main_start_story"            to "Start your story",
+    "ui_main_settings"               to "Settings",
+    "ui_main_settings_subtitle"      to "Language and profile",
     "ui_main_logout"                 to "Sign Out",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
@@ -100,6 +102,15 @@ val enStrings: Map<String, String> = mapOf(
     "ui_stats_tab_eras"              to "🗺️ By era",
     "ui_stats_games_avg"             to "games · Avg. capital:",
     "ui_stats_games"                 to "games",
+
+    // ── SettingsScreen ───────────────────────────────────────────────
+    "ui_settings_title"              to "Settings",
+    "ui_settings_subtitle"           to "App language",
+    "ui_settings_language"           to "Language",
+    "ui_settings_language_subtitle"  to "Changes apply immediately and are saved on this device.",
+    "ui_settings_language_russian"   to "Русский",
+    "ui_settings_language_kazakh"    to "Қазақша",
+    "ui_settings_language_english"   to "English",
 
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Reset progress?",
