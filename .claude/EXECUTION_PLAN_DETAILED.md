@@ -860,4 +860,94 @@ If the user only wants one shippable thing right now, start with **Option 5.1 (S
 
 ---
 
+# Codex Review Notes — 2026-05-02
+
+This plan is a useful feature backlog, but parts of it are stale against the current repository. Before handing tasks to sub-agents, update the task scopes below so agents do not duplicate existing work or build endpoints that cannot satisfy their acceptance criteria.
+
+## Corrections Needed
+
+1. **Task 3.1 is mostly already done.**
+   The repo already has shared KMP i18n under `shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/i18n/` with `Strings.kt`, `StringKeys.kt`, and `ru/kk/en` maps. Scenario text is already keyed in many graph files.
+
+   Replace Task 3.1 with: **Reactive language switching**.
+   - Current `Strings.currentLocale` is a mutable singleton and comments say language changes apply on app restart.
+   - Add a `LocalePresenter`/settings-backed `StateFlow`.
+   - Expose locale through Compose state or a `CompositionLocal`.
+   - Keep shared engine string lookup compatible with non-Compose code.
+
+2. **Difficulty already exists as metadata.**
+   `Difficulty { EASY, MEDIUM, HARD, NIGHTMARE }` exists in `shared/model/GameModels.kt` and is used for character/bundle display difficulty. It is not gameplay scaling.
+
+   Do not overload it silently. Prefer:
+   - `GameDifficulty` for player-selected gameplay mode, or
+   - `DifficultyProfile` stored in `PlayerState`.
+
+   If reusing the existing enum, explicitly migrate all UI labels and semantics so “character difficulty” and “engine difficulty” do not diverge.
+
+3. **Achievements should not be surfaced only through chat messages.**
+   `PlayerState.unlockedAchievements` is fine, but chat-only unlock delivery is fragile.
+
+   Add one of:
+   - `GameState.newlyUnlockedAchievements: List<String>`, cleared by presenter acknowledgement, or
+   - presenter-level one-shot UI events derived from engine results.
+
+   Chat messages can remain as a secondary presentation, not the source of truth.
+
+4. **Task 2.2 asks for data the server does not currently store.**
+   `CompletedSessionsTable` stores final session values only. It cannot compute:
+   - capital trajectory percentiles,
+   - top choices that led to endings,
+   - per-month trends.
+
+   Add a prerequisite data decision:
+   - persist monthly snapshots,
+   - persist choice/event history,
+   - or reduce dashboard scope to final-session aggregates only.
+
+5. **Task 2.3 compact saves need an event log or explicit history loss.**
+   Current `GameSessionsTable` stores full `stateJson`. If this is split into compact state + full snapshots, “rebuild messages from event-history” is impossible unless event history is persisted.
+
+   Correct options:
+   - add `GameEventLogTable(sessionId, sequence, eventId, optionId, messageJson, createdAt)`, or
+   - keep periodic full snapshots and explicitly accept truncated chat history after crash restore.
+
+6. **Unlocks are partially implemented locally.**
+   `UnlockCondition`, `isUnlocked`, difficulty badges, and locked UI hints already exist in shared/client models.
+
+   Rewrite Task 1.4 as: **server-backed unlock persistence + rule evaluator + client merge**.
+   Avoid rebuilding local locked-tile UI from scratch.
+
+7. **Roborazzi/Paparazzi scope should be Android/JVM, not `commonTest`.**
+   Roborazzi and Paparazzi are not pure KMP common tests. Put snapshot tests under Android/JVM test source sets and keep golden count small.
+
+8. **Settings should not all use `SecureStorage`.**
+   Keep tokens/secrets in `SecureStorage`. Theme, language, sound, haptics, and tutorial flags should use normal preferences/settings storage unless there is no existing multiplatform settings abstraction.
+
+9. **Analytics default should be opt-in/out per product policy before implementation.**
+   The plan says default enabled. Decide product/legal stance first. At minimum, no PII-shaped payloads, no raw money values, no tokens, no free-form user text.
+
+10. **Build verification prerequisite is missing.**
+    In the current worktree, `./gradlew :shared:test` fails before compilation because Android SDK location is not configured:
+    - missing `ANDROID_HOME`, or
+    - missing `local.properties` with `sdk.dir=...`.
+
+    Fix this before assigning implementation tasks; otherwise agents cannot verify changes.
+
+## Revised Execution Order
+
+Recommended order for lowest rework:
+
+1. **Build health** — configure SDK path and run `./gradlew :shared:test`.
+2. **Reactive i18n/settings foundation** — replace stale 3.1 with runtime language switching.
+3. **Achievements engine minimal** — shared model/evaluator + engine output, no server yet.
+4. **Achievements UI** — consume catalog + unlock state.
+5. **Server achievements/unlocks persistence** — durable cross-device progress.
+6. **Statistics data-model decision** — snapshots/event log/final aggregates only.
+7. **Dashboard endpoint + UI** — only after the data shape is real.
+8. **Gameplay difficulty profile** — separate from character display difficulty.
+9. **Content expansion** — new events/character/era after i18n path is stable.
+10. **Analytics/performance/accessibility** — after feature surface stabilizes.
+
+If only one visible feature is needed now, do **Achievements engine + Achievements hub** first. It has a clear product payoff and does not require solving statistics storage or dashboard charting.
+
 *End of plan. Each task is intentionally self-contained — an agent reading only Section 0 and a single Section X.Y should be able to execute it. Update this file after each task completes (mark done with `✅` next to the task heading).*
