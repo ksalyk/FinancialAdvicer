@@ -34,6 +34,8 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_main_games_played"           to "Ойналған ойындар:",
     "ui_main_best_ending"            to "Үздік соңы:",
     "ui_main_start_story"            to "Өз тарихыңды бастаңыз",
+    "ui_main_settings"               to "Баптаулар",
+    "ui_main_settings_subtitle"      to "Тіл және профиль",
     "ui_main_logout"                 to "Шығу",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
@@ -100,6 +102,15 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_stats_tab_eras"              to "🗺️ Дәуірлер бойынша",
     "ui_stats_games_avg"             to "ойын · Орт. капитал:",
     "ui_stats_games"                 to "ойын",
+
+    // ── SettingsScreen ───────────────────────────────────────────────
+    "ui_settings_title"              to "Баптаулар",
+    "ui_settings_subtitle"           to "Қолданба тілі",
+    "ui_settings_language"           to "Тіл",
+    "ui_settings_language_subtitle"  to "Өзгеріс бірден қолданылады және құрылғыда сақталады.",
+    "ui_settings_language_russian"   to "Русский",
+    "ui_settings_language_kazakh"    to "Қазақша",
+    "ui_settings_language_english"   to "English",
 
     // ── ChatScreen ───────────────────────────────────────────────────
     "ui_chat_reset_title"            to "Прогресті тастау керек пе?",

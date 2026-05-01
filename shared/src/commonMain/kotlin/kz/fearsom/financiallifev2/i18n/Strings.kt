@@ -144,9 +144,18 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_GAMES_PLAYED
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_LOGOUT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_NEW_GAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_NEW_GAME_SUBTITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SETTINGS
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SETTINGS_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_START_STORY
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_STATS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_TAGLINE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_ENGLISH
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_KAZAKH
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_RUSSIAN
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_LANGUAGE_SUBTITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_SUBTITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_SETTINGS_TITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_AVG_CAPITAL
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_BEST_ENDING
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_STATS_COMPLETED
@@ -249,6 +258,8 @@ object Strings {
     val uiMainGamesPlayed          get() = get(UI_MAIN_GAMES_PLAYED)
     val uiMainBestEnding           get() = get(UI_MAIN_BEST_ENDING)
     val uiMainStartStory           get() = get(UI_MAIN_START_STORY)
+    val uiMainSettings             get() = get(UI_MAIN_SETTINGS)
+    val uiMainSettingsSubtitle     get() = get(UI_MAIN_SETTINGS_SUBTITLE)
     val uiMainLogout               get() = get(UI_MAIN_LOGOUT)
 
     // ── EraSelectionScreen ───────────────────────────────────────────
@@ -315,6 +326,15 @@ object Strings {
     val uiStatsTabEras             get() = get(UI_STATS_TAB_ERAS)
     val uiStatsGamesAvg            get() = get(UI_STATS_GAMES_AVG)
     val uiStatsGames               get() = get(UI_STATS_GAMES)
+
+    // ── SettingsScreen ───────────────────────────────────────────────
+    val uiSettingsTitle            get() = get(UI_SETTINGS_TITLE)
+    val uiSettingsSubtitle         get() = get(UI_SETTINGS_SUBTITLE)
+    val uiSettingsLanguage         get() = get(UI_SETTINGS_LANGUAGE)
+    val uiSettingsLanguageSubtitle get() = get(UI_SETTINGS_LANGUAGE_SUBTITLE)
+    val uiSettingsLanguageRussian  get() = get(UI_SETTINGS_LANGUAGE_RUSSIAN)
+    val uiSettingsLanguageKazakh   get() = get(UI_SETTINGS_LANGUAGE_KAZAKH)
+    val uiSettingsLanguageEnglish  get() = get(UI_SETTINGS_LANGUAGE_ENGLISH)
 
     // ── ChatScreen ───────────────────────────────────────────────────
     val uiChatResetTitle           get() = get(UI_CHAT_RESET_TITLE)

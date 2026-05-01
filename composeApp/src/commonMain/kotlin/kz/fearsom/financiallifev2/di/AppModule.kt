@@ -2,6 +2,7 @@ package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.i18n.Strings
@@ -29,8 +30,8 @@ import org.koin.dsl.module
 val commonModule = module {
 
     // ── Locale initialisation — must run first ─────────────────────────────────
-    // Set currentLocale once at startup so all Strings lookups use the device
-    // language. Language changes take effect on next app restart.
+    // Seed currentLocale with device language. LocaleRepository applies the
+    // persisted manual override when AppNavigation creates LocalePresenter.
     Strings.currentLocale = deviceLocale()
 
     // ── Token storage (in-memory; shared between HttpClient and AuthRepository) ─
@@ -67,6 +68,9 @@ val commonModule = module {
 
     // ── Session repository (in-memory; replace with SQLDelight in Sprint 4) ──
     single { GameSessionRepository() }
+
+    // ── Locale repository (manual override persisted in SecureStorage) ───────
+    single { LocaleRepository(secureStorage = get<SecureStorage>()) }
 
     // ── Game API service (statistics persistence) ─────────────────────────────
     single { GameApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl) }

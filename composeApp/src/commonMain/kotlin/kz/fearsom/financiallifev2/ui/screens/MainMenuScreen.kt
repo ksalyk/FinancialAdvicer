@@ -34,6 +34,7 @@ fun MainMenuScreen(
     onNewGame: () -> Unit,
     onCharacters: () -> Unit,
     onStatistics: () -> Unit,
+    onSettings: () -> Unit,
     onLogout: () -> Unit
 ) {
     val colors = LocalAppColors.current
@@ -118,17 +119,16 @@ fun MainMenuScreen(
             // ── Hero tier ──────────────────────────────────────────────────────
             // Two-tier system: hero action first (Continue or New Game), then secondary actions
 
-            if (uiState.canContinue && uiState.activeSession != null) {
+            val activeSession = uiState.activeSession
+            if (uiState.canContinue && activeSession != null) {
                 // Hero: Continue with filled gold button + session context
-                uiState.activeSession?.let { session ->
-                    HeroActionCard(
-                        emoji       = "▶️",
-                        label       = Strings.uiMainContinue,
-                        context     = "${session.characterEmoji} ${session.characterName} · ${session.eraName}",
-                        onClick     = onContinue
-                    )
-                    Spacer(Modifier.height(20.dp))
-                }
+                HeroActionCard(
+                    emoji       = "▶️",
+                    label       = Strings.uiMainContinue,
+                    context     = "${activeSession.characterEmoji} ${activeSession.characterName} · ${activeSession.eraName}",
+                    onClick     = onContinue
+                )
+                Spacer(Modifier.height(20.dp))
             } else {
                 // Hero: New Game when no active session (promote this as primary action)
                 HeroActionCard(
@@ -172,6 +172,15 @@ fun MainMenuScreen(
                 } ?: Strings.uiMainStartStory,
                 accentColor = GreenSuccess,
                 onClick     = onStatistics
+            )
+            Spacer(Modifier.height(10.dp))
+
+            OutlinedMenuButton(
+                emoji       = "⚙️",
+                label       = Strings.uiMainSettings,
+                description = Strings.uiMainSettingsSubtitle,
+                accentColor = BlueAccent,
+                onClick     = onSettings
             )
 
             Spacer(Modifier.weight(1f))
