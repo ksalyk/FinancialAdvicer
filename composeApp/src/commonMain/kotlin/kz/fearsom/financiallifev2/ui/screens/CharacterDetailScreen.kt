@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.data.SeedData
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
@@ -39,7 +40,7 @@ fun CharacterDetailScreen(
 
     if (character == null) {
         Box(Modifier.fillMaxSize().background(colors.backgroundDeep), Alignment.Center) {
-            Text("Персонаж не найден", color = colors.textSecondary)
+            Text(Strings.uiCharDetailNotFound, color = colors.textSecondary)
         }
         return
     }
@@ -116,7 +117,7 @@ fun CharacterDetailScreen(
                     color      = colors.textPrimary
                 )
                 Text(
-                    text     = "${character.age} лет · ${character.profession}",
+                    text     = "${character.age} ${Strings.uiCharDetailAgeEra} ${character.profession}",
                     fontSize = 14.sp,
                     color    = accentColor
                 )
@@ -131,7 +132,7 @@ fun CharacterDetailScreen(
                 Spacer(Modifier.height(24.dp))
 
                 // ── Backstory ─────────────────────────────────────────────────
-                SectionCard(title = "📖 Предыстория", accentColor = accentColor) {
+                SectionCard(title = Strings.uiCharDetailBackstory, accentColor = accentColor) {
                     Text(
                         text       = character.backstory,
                         fontSize   = 14.sp,
@@ -143,14 +144,14 @@ fun CharacterDetailScreen(
                 Spacer(Modifier.height(12.dp))
 
                 // ── Starting Stats ────────────────────────────────────────────
-                SectionCard(title = "💹 Стартовые показатели", accentColor = accentColor) {
+                SectionCard(title = Strings.uiCharDetailStats, accentColor = accentColor) {
                     StartingStatsGrid(stats = character.initialStats)
                 }
 
                 Spacer(Modifier.height(12.dp))
 
                 // ── Compatible Eras ───────────────────────────────────────────
-                SectionCard(title = "🗺️ Доступные эпохи", accentColor = accentColor) {
+                SectionCard(title = Strings.uiCharDetailEras, accentColor = accentColor) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         character.compatibleEraIds.forEach { eraId ->
                             val era = SeedData.eras.find { it.id == eraId }
@@ -166,7 +167,7 @@ fun CharacterDetailScreen(
                                             color      = if (era.isLocked) colors.textHint else colors.textPrimary
                                         )
                                         if (era.isLocked) {
-                                            Text("🔒 Заблокирована", fontSize = 10.sp, color = colors.textHint)
+                                            Text(Strings.uiCharDetailLockedEra, fontSize = 10.sp, color = colors.textHint)
                                         }
                                     }
                                 }
@@ -178,15 +179,10 @@ fun CharacterDetailScreen(
                 Spacer(Modifier.height(12.dp))
 
                 // ── Difficulty Info ───────────────────────────────────────────
-                SectionCard(title = "⚔️ Сложность", accentColor = accentColor) {
+                SectionCard(title = Strings.uiCharDetailDifficulty, accentColor = accentColor) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text     = when (character.difficulty) {
-                                Difficulty.EASY      -> "Лёгкий"
-                                Difficulty.MEDIUM    -> "Средний"
-                                Difficulty.HARD      -> "Сложный"
-                                Difficulty.NIGHTMARE -> "Кошмар"
-                            },
+                            text     = character.difficulty.label(),
                             fontSize   = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color      = accentColor
@@ -194,10 +190,10 @@ fun CharacterDetailScreen(
                         Spacer(Modifier.width(12.dp))
                         Text(
                             text     = when (character.difficulty) {
-                                Difficulty.EASY      -> "Отличный старт для новичков. Больше денег, меньше стресса."
-                                Difficulty.MEDIUM    -> "Баланс между доходом и рисками."
-                                Difficulty.HARD      -> "Высокий долг и давление. Опытным игрокам."
-                                Difficulty.NIGHTMARE -> "Экстремальные условия. Не для слабонервных."
+                                Difficulty.EASY      -> Strings.uiCharDetailDiffEasyDesc
+                                Difficulty.MEDIUM    -> Strings.uiCharDetailDiffMediumDesc
+                                Difficulty.HARD      -> Strings.uiCharDetailDiffHardDesc
+                                Difficulty.NIGHTMARE -> Strings.uiCharDetailDiffNmDesc
                             },
                             fontSize = 12.sp,
                             color    = colors.textSecondary,
@@ -225,7 +221,7 @@ fun CharacterDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text       = "🎮 Играть за ${character.name}",
+                            text       = "${Strings.uiCharDetailPlay} ${character.name}",
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color      = colors.textPrimary
@@ -233,7 +229,7 @@ fun CharacterDetailScreen(
                     }
                 } else {
                     Text(
-                        text     = "🔒 Персонаж заблокирован",
+                        text     = Strings.uiCharDetailLockedChar,
                         fontSize = 14.sp,
                         color    = colors.textHint,
                         modifier = Modifier
@@ -287,13 +283,13 @@ private fun SectionCard(
 @Composable
 private fun StartingStatsGrid(stats: CharacterStats) {
     val items = listOf(
-        Triple("💰 Капитал",      stats.capital.longFormat(),              GoldPrimary),
-        Triple("📈 Доход/мес",    stats.income.longFormat(),               GreenSuccess),
-        Triple("🏠 Расходы/мес",  stats.monthlyExpenses.longFormat(),      RedDanger.copy(0.8f)),
-        Triple("💳 Долг",         if (stats.debt > 0) stats.debt.longFormat() else "0",
+        Triple(Strings.uiCharDetailStatCapital,   stats.capital.longFormat(),              GoldPrimary),
+        Triple(Strings.uiCharDetailStatIncome,    stats.income.longFormat(),               GreenSuccess),
+        Triple(Strings.uiCharDetailStatExpenses,  stats.monthlyExpenses.longFormat(),      RedDanger.copy(0.8f)),
+        Triple(Strings.uiCharDetailStatDebt,      if (stats.debt > 0) stats.debt.longFormat() else "0",
                                                                            if (stats.debt > 0) RedDanger else GreenSuccess),
-        Triple("😰 Стресс",       "${stats.stress}%",                      StatStress),
-        Triple("🎓 Знания",       "${stats.financialKnowledge}/100",        StatKnowledge)
+        Triple(Strings.uiCharDetailStatStress,    "${stats.stress}%",                      StatStress),
+        Triple(Strings.uiCharDetailStatKnowledge, "${stats.financialKnowledge}/100",        StatKnowledge)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

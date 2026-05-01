@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.scenarios
 
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.model.Condition.Stat.Field.*
 import kz.fearsom.financiallifev2.model.Condition.Stat.Op.*
@@ -52,21 +53,14 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_ussr_collapse",
-            message = """
-                Декабрь 1991. СССР распался.
-
-                Банки заморозили вклады. Гиперинфляция — деньги обесцениваются
-                каждую неделю. Половина предприятий встала.
-
-                Всё, что было в сберкассе — сгорело.
-            """.trimIndent(),
+            message = Strings["evt_era_ussr_collapse_msg"],
             flavor = "🏚️",
             tags = setOf("crisis", "era.kz_90s"),
             options = listOf(
-                GameOption("barter_survive", "Перейти на натуральный обмен — еда важнее денег", "🥖",
+                GameOption("barter_survive", Strings["evt_era_ussr_collapse_opt_barter_survive"], "🥖",
                     effects = Effect(capitalDelta = -50_000, stressDelta = 20, knowledgeDelta = 10),
                     next = MONTHLY_TICK),
-                GameOption("hard_currency", "Срочно перевести остатки в доллары", "💵",
+                GameOption("hard_currency", Strings["evt_era_ussr_collapse_opt_hard_currency"], "💵",
                     effects = Effect(capitalDelta = -30_000, stressDelta = 10, knowledgeDelta = 15),
                     next = MONTHLY_TICK)
             )
@@ -74,18 +68,11 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_tenge_introduced",
-            message = """
-                Ноябрь 1993. Казахстан ввёл собственную валюту — тенге.
-
-                Советские рубли обменивают по курсу 500:1.
-                Очереди у обменников, у людей паника и усталость.
-
-                У тебя есть наличные рубли — что делаешь?
-            """.trimIndent(),
+            message = Strings["evt_era_tenge_introduced_msg"],
             flavor = "💴",
             tags = setOf("crisis", "era.kz_90s"),
             options = listOf(
-                GameOption("exchange_all", "Обменять всё немедленно — пока есть лимит", "🏃",
+                GameOption("exchange_all", Strings["evt_era_tenge_introduced_opt_exchange_all"], "🏃",
                     effects = Effect(
                         stressDelta = -5,
                         knowledgeDelta = 8,
@@ -97,7 +84,7 @@ object EraEventLibrary {
                         )
                     ),
                     next = MONTHLY_TICK),
-                GameOption("wait_see", "Подождать — может курс улучшится", "⏳",
+                GameOption("wait_see", Strings["evt_era_tenge_introduced_opt_wait_see"], "⏳",
                     effects = Effect(
                         capitalDelta = -30_000,
                         stressDelta = 15,
@@ -114,26 +101,19 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_mmm_wave_90s",
-            message = """
-                1994. По всему СНГ рекламируют МММ — Сергей Мавроди обещает 1000% в месяц.
-                Телевизор, газеты — везде Лёня Голубков.
-                «Я не халявщик, я партнёр!»
-
-                Сосед вложил всю зарплату и уже «заработал» в 3 раза больше.
-                Тебе предлагают вложить тоже.
-            """.trimIndent(),
+            message = Strings["evt_era_mmm_wave_90s_msg"],
             flavor = "📺",
             tags = setOf("scam", "scam.pyramid", "era.kz_90s"),
             unique = true,
             poolWeight = 25,
             options = listOf(
-                GameOption("invest_mmm", "Вложить — все вокруг зарабатывают", "💸",
+                GameOption("invest_mmm", Strings["evt_era_mmm_wave_90s_opt_invest_mmm"], "💸",
                     effects = Effect(
                         capitalDelta = -100_000, stressDelta = 5, riskDelta = 25,
                         scheduleEvent = ScheduledEvent("era_mmm_collapse", afterMonths = 4)
                     ),
                     next = MONTHLY_TICK),
-                GameOption("skeptical", "Отказаться — слишком хорошо, чтобы быть правдой", "🤔",
+                GameOption("skeptical", Strings["evt_era_mmm_wave_90s_opt_skeptical"], "🤔",
                     effects = Effect(
                         knowledgeDelta = 20, stressDelta = -5,
                         setFlags = setOf("learned.scam.pyramid")
@@ -144,19 +124,11 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_mmm_collapse",
-            message = """
-                МММ рухнула. Мавроди арестован.
-                Акции стоят ноль. Деньги исчезли.
-
-                Десятки миллионов людей потеряли сбережения.
-                Ты один из них.
-
-                Это был главный урок 90-х: «бесплатного сыра не бывает».
-            """.trimIndent(),
+            message = Strings["evt_era_mmm_collapse_msg"],
             flavor = "💀",
             tags = setOf("scam.pyramid", "consequence", "era.kz_90s"),
             options = listOf(
-                GameOption("accept_lesson", "Принять урок. Больше никаких пирамид.", "📚",
+                GameOption("accept_lesson", Strings["evt_era_mmm_collapse_opt_accept_lesson"], "📚",
                     effects = Effect(
                         knowledgeDelta = 30, stressDelta = 15,
                         setFlags = setOf("learned.scam.pyramid", "lost_money_to_scam")
@@ -167,18 +139,11 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_mmm_skeptic_result",
-            message = """
-                МММ рухнула через 4 месяца. Миллионы потеряли всё.
-
-                Твой сосед в шоке — он вложил всё что было.
-                Ты сохранил деньги, потому что не поддался ажиотажу.
-
-                Осторожность стоила тебе упущенной прибыли — но спасла капитал.
-            """.trimIndent(),
+            message = Strings["evt_era_mmm_skeptic_result_msg"],
             flavor = "🛡️",
             tags = setOf("era.kz_90s"),
             options = listOf(
-                GameOption("be_grateful", "Хорошо, что не вложился. Запомню этот урок.", "🙏",
+                GameOption("be_grateful", Strings["evt_era_mmm_skeptic_result_opt_be_grateful"], "🙏",
                     effects = Effect(knowledgeDelta = 10, stressDelta = -5),
                     next = MONTHLY_TICK)
             )
@@ -188,25 +153,18 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_devaluation_2015",
-            message = """
-                20 августа 2015. Нацбанк объявил о переходе на свободный курс тенге.
-
-                За один день доллар вырос с 188 до 256 тенге.
-                Тенге упал на 36%.
-
-                У тебя сбережения в тенге. Они только что потеряли треть реальной стоимости.
-            """.trimIndent(),
+            message = Strings["evt_era_devaluation_2015_msg"],
             flavor = "📉",
             tags = setOf("crisis", "era.kz_2015"),
             unique = true,
             options = listOf(
-                GameOption("convert_to_dollar", "Срочно купить доллары — пока не поздно", "💵",
+                GameOption("convert_to_dollar", Strings["evt_era_devaluation_2015_opt_convert_to_dollar"], "💵",
                     effects = Effect(stressDelta = 10, knowledgeDelta = 15),
                     next = MONTHLY_TICK),
-                GameOption("keep_tenge", "Держать в тенге — может отыграется", "🤞",
+                GameOption("keep_tenge", Strings["evt_era_devaluation_2015_opt_keep_tenge"], "🤞",
                     effects = Effect(capitalDelta = -100_000, stressDelta = 20),
                     next = MONTHLY_TICK),
-                GameOption("buy_property", "Купить что-то реальное — квартиру или технику", "🏠",
+                GameOption("buy_property", Strings["evt_era_devaluation_2015_opt_buy_property"], "🏠",
                     effects = Effect(capitalDelta = -200_000, stressDelta = 5, knowledgeDelta = 10),
                     next = MONTHLY_TICK)
             )
@@ -216,26 +174,18 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_covid_shock_2020",
-            message = """
-                Март 2020. Пандемия. Полный локдаун.
-
-                Компании массово сокращают. Рестораны, магазины — всё закрыто.
-                Тенге снова упал. Биржи рухнули на 30-40%.
-
-                Те, у кого была подушка безопасности — пережили это спокойно.
-                У тебя есть подушка?
-            """.trimIndent(),
+            message = Strings["evt_era_covid_shock_2020_msg"],
             flavor = "🦠",
             tags = setOf("crisis", "era.modern"),
             unique = true,
             options = listOf(
-                GameOption("has_cushion_good", "Есть подушка — переживём спокойно", "🛡️",
+                GameOption("has_cushion_good", Strings["evt_era_covid_shock_2020_opt_has_cushion_good"], "🛡️",
                     effects = Effect(stressDelta = -10, knowledgeDelta = 15),
                     next = MONTHLY_TICK),
-                GameOption("no_cushion_crisis", "Подушки нет — срочно ищу любую работу", "😱",
+                GameOption("no_cushion_crisis", Strings["evt_era_covid_shock_2020_opt_no_cushion_crisis"], "😱",
                     effects = Effect(incomeDelta = -100_000, stressDelta = 30, knowledgeDelta = 20),
                     next = MONTHLY_TICK),
-                GameOption("buy_dip", "Рынок упал — покупаю ETF на просадке", "📈",
+                GameOption("buy_dip", Strings["evt_era_covid_shock_2020_opt_buy_dip"], "📈",
                     effects = Effect(
                         capitalDelta = -100_000, investmentsDelta = 100_000,
                         stressDelta = 5, knowledgeDelta = 20,
@@ -247,18 +197,11 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_covid_recovery_gain",
-            message = """
-                Год прошёл. Рынки отыграли падение и выросли.
-
-                ETF, купленный на дне в марте 2020, сейчас стоит в 1.7 раза дороже.
-                +70% за год — это лучший результат за последнее десятилетие.
-
-                Кризис стал возможностью для тех, кто не запаниковал.
-            """.trimIndent(),
+            message = Strings["evt_era_covid_recovery_gain_msg"],
             flavor = "🚀",
             tags = setOf("investment", "consequence"),
             options = listOf(
-                GameOption("celebrate_wisdom", "Отличный результат. Держу дальше.", "🏆",
+                GameOption("celebrate_wisdom", Strings["evt_era_covid_recovery_gain_opt_celebrate_wisdom"], "🏆",
                     effects = Effect(
                         investmentsDelta = 70_000,
                         knowledgeDelta = 15, stressDelta = -10
@@ -271,26 +214,18 @@ object EraEventLibrary {
 
         GameEvent(
             id = "era_kz_devaluation_2022",
-            message = """
-                Март 2022. Война в Украине. Санкции против России.
-                Тенге упал на 20% за неделю.
-
-                Всё импортное резко подорожало.
-                Доллар теперь 470 тенге.
-
-                Что делаешь с накоплениями?
-            """.trimIndent(),
+            message = Strings["evt_era_kz_devaluation_2022_msg"],
             flavor = "⚡",
             tags = setOf("crisis", "era.modern"),
             unique = true,
             options = listOf(
-                GameOption("diversify_currency", "Разделить: 50% в долларах, 50% в тенге на расходы", "⚖️",
+                GameOption("diversify_currency", Strings["evt_era_kz_devaluation_2022_opt_diversify_currency"], "⚖️",
                     effects = Effect(stressDelta = -5, knowledgeDelta = 20),
                     next = MONTHLY_TICK),
-                GameOption("panic_buy_dollar", "Купить все доллары по любому курсу", "😰",
+                GameOption("panic_buy_dollar", Strings["evt_era_kz_devaluation_2022_opt_panic_buy_dollar"], "😰",
                     effects = Effect(stressDelta = 15, knowledgeDelta = 5),
                     next = MONTHLY_TICK),
-                GameOption("ignore_it", "Ничего не делать — разберётся само", "😶",
+                GameOption("ignore_it", Strings["evt_era_kz_devaluation_2022_opt_ignore_it"], "😶",
                     effects = Effect(capitalDelta = -80_000, stressDelta = 10),
                     next = MONTHLY_TICK)
             )
@@ -308,7 +243,7 @@ object EraRegistry {
 
     val MODERN_KZ_2024 = EraDefinition(
         id = "modern_kz_2024",
-        name = "Современный Казахстан",
+        name = Strings.eraModernKz2024Name,
         startYear = 2020,
         endYear = 2030,
         globalEvents = listOf(
@@ -328,7 +263,7 @@ object EraRegistry {
 
     val KZ_90S = EraDefinition(
         id = "kz_90s",
-        name = "Казахстан 90-х",
+        name = Strings.eraKz90sName,
         startYear = 1991,
         endYear = 2000,
         globalEvents = listOf(
@@ -350,7 +285,7 @@ object EraRegistry {
 
     val KZ_2015_DEVALUATION = EraDefinition(
         id = "kz_2015",
-        name = "Казахстан 2015",
+        name = Strings.eraKz2015Name,
         startYear = 2014,
         endYear = 2019,
         globalEvents = listOf(

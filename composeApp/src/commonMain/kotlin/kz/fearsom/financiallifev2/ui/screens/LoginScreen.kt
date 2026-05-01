@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.ui.theme.*
 import kotlin.math.sin
 
@@ -120,7 +121,7 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Путь к финансовой свободе",
+                Strings.uiLoginSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center
@@ -148,7 +149,7 @@ fun LoginScreen(
                         label = "modeTitle"
                     ) { isReg ->
                         Text(
-                            if (isReg) "Регистрация" else "Вход в аккаунт",
+                            if (isReg) Strings.uiLoginTabRegister else Strings.uiLoginTabLogin,
                             style = MaterialTheme.typography.titleLarge,
                             color = GoldPrimary,
                             fontWeight = FontWeight.Bold
@@ -161,7 +162,7 @@ fun LoginScreen(
                     FinanceTextField(
                         value       = username,
                         onChange    = { username = it },
-                        label       = "Логин",
+                        label       = Strings.uiLoginFieldUsername,
                         leadingIcon = { Text("👤", fontSize = 20.sp) },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -178,7 +179,7 @@ fun LoginScreen(
                     FinanceTextField(
                         value       = password,
                         onChange    = { password = it },
-                        label       = "Пароль",
+                        label       = Strings.uiLoginFieldPassword,
                         leadingIcon = { Text("🔒", fontSize = 20.sp) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -256,7 +257,7 @@ fun LoginScreen(
                             )
                         } else {
                             Text(
-                                if (isRegisterMode) "Создать аккаунт" else "Войти",
+                                if (isRegisterMode) Strings.uiLoginBtnRegister else Strings.uiLoginBtnLogin,
                                 fontWeight = FontWeight.Bold,
                                 fontSize   = 16.sp
                             )
@@ -266,7 +267,7 @@ fun LoginScreen(
                     if (!isRegisterMode) {
                         Spacer(Modifier.height(10.dp))
                         Text(
-                            "Демо: demo / demo123",
+                            Strings.uiLoginDemoHint,
                             style     = MaterialTheme.typography.bodySmall,
                             color     = colors.textHint,
                             textAlign = TextAlign.Center,
@@ -280,8 +281,8 @@ fun LoginScreen(
 
             TextButton(onClick = onToggleMode) {
                 Text(
-                    if (isRegisterMode) "Уже есть аккаунт? Войти"
-                    else "Нет аккаунта? Зарегистрироваться",
+                    if (isRegisterMode) Strings.uiLoginAlreadyHaveAccount
+                    else Strings.uiLoginNoAccount,
                     color = GoldLight,
                     style = MaterialTheme.typography.bodyMedium
                 )

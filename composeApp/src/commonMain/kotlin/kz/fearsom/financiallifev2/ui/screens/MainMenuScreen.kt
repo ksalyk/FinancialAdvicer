@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.MainMenuUiState
 import kz.fearsom.financiallifev2.ui.theme.*
@@ -107,7 +108,7 @@ fun MainMenuScreen(
                 color      = colors.textPrimary
             )
             Text(
-                text     = "Стать богатым — это наука",
+                text     = Strings.uiMainTagline,
                 fontSize = 13.sp,
                 color    = colors.textSecondary
             )
@@ -122,7 +123,7 @@ fun MainMenuScreen(
                 uiState.activeSession?.let { session ->
                     HeroActionCard(
                         emoji       = "▶️",
-                        label       = "Продолжить игру",
+                        label       = Strings.uiMainContinue,
                         context     = "${session.characterEmoji} ${session.characterName} · ${session.eraName}",
                         onClick     = onContinue
                     )
@@ -132,8 +133,8 @@ fun MainMenuScreen(
                 // Hero: New Game when no active session (promote this as primary action)
                 HeroActionCard(
                     emoji       = "🎮",
-                    label       = "Новая игра",
-                    context     = "Выбери эпоху и персонажа",
+                    label       = Strings.uiMainNewGame,
+                    context     = Strings.uiMainNewGameSubtitle,
                     onClick     = onNewGame
                 )
                 Spacer(Modifier.height(20.dp))
@@ -145,8 +146,8 @@ fun MainMenuScreen(
             if (uiState.canContinue) {
                 OutlinedMenuButton(
                     emoji       = "🎮",
-                    label       = "Новая игра",
-                    description = "Выбери эпоху и персонажа",
+                    label       = Strings.uiMainNewGame,
+                    description = Strings.uiMainNewGameSubtitle,
                     accentColor = BlueAccent,
                     onClick     = onNewGame
                 )
@@ -155,8 +156,8 @@ fun MainMenuScreen(
 
             OutlinedMenuButton(
                 emoji       = "👥",
-                label       = "Персонажи",
-                description = "Изучи предысторию и характеристики",
+                label       = Strings.uiMainCharacters,
+                description = Strings.uiMainCharactersSubtitle,
                 accentColor = PurpleAccent,
                 onClick     = onCharacters
             )
@@ -164,11 +165,11 @@ fun MainMenuScreen(
 
             OutlinedMenuButton(
                 emoji       = "📊",
-                label       = "Статистика",
+                label       = Strings.uiMainStats,
                 description = uiState.quickStats?.let {
-                    "Сыграно игр: ${it.totalGames}" +
-                            (it.bestEnding?.let { e -> " · Лучший финал: ${e.emoji()} ${e.label()}" } ?: "")
-                } ?: "Начни свою историю",
+                    "${Strings.uiMainGamesPlayed} ${it.totalGames}" +
+                            (it.bestEnding?.let { e -> " · ${Strings.uiMainBestEnding} ${e.emoji()} ${e.label()}" } ?: "")
+                } ?: Strings.uiMainStartStory,
                 accentColor = GreenSuccess,
                 onClick     = onStatistics
             )
@@ -178,7 +179,7 @@ fun MainMenuScreen(
             // ── Footer ────────────────────────────────────────────────────────
             TextButton(onClick = onLogout) {
                 Text(
-                    text     = "Выйти из аккаунта",
+                    text     = Strings.uiMainLogout,
                     fontSize = 13.sp,
                     color    = colors.textHint
                 )

@@ -1,5 +1,7 @@
 package kz.fearsom.financiallifev2.data
 
+import kz.fearsom.financiallifev2.i18n.Strings
+
 import kz.fearsom.financiallifev2.model.CharacterBundle
 import kz.fearsom.financiallifev2.model.CharacterStats
 import kz.fearsom.financiallifev2.model.Difficulty
@@ -18,57 +20,57 @@ object SeedData {
     val eras: List<Era> = mutableListOf(
         Era(
             id = "kz_90s",
-            name = "Казахстан 90-е",
-            description = "Распад СССР. Гиперинфляция, ваучеры, пирамиды МММ и введение тенге. Выживи в хаосе.",
+            name = Strings["seed_era_kz_90s_name"],
+            description = Strings["seed_era_kz_90s_desc"],
             startYear = 1991,
             endYear = 2000,
             baseInflationRate = 40.0,
             baseSalaryMin = 5_000L,
             baseSalaryMax = 50_000L,
             availableCharacterIds = listOf("aidar_90s"),
-            keyEconomicEvents = listOf("Распад СССР", "Введение тенге 1993", "МММ 1994", "Кризис 1998"),
+            keyEconomicEvents = listOf(Strings["seed_era_kz_90s_event_1"], Strings["seed_era_kz_90s_event_2"], Strings["seed_era_kz_90s_event_3"], Strings["seed_era_kz_90s_event_4"]),
             emoji = "📼",
             isLocked = false
         ),
         Era(
             id = "kz_2005",
-            name = "Казахстан 2005–2010",
-            description = "Нефтяной бум. Экономика растёт, зарплаты увеличиваются, но инфляция высокая.",
+            name = Strings["seed_era_kz_2005_name"],
+            description = Strings["seed_era_kz_2005_desc"],
             startYear = 2005,
             endYear = 2010,
             baseInflationRate = 8.5,
             baseSalaryMin = 80_000L,
             baseSalaryMax = 250_000L,
             availableCharacterIds = listOf("aidar", "dana"),
-            keyEconomicEvents = listOf("Нефтяной бум", "Девальвация 2009"),
+            keyEconomicEvents = listOf(Strings["seed_era_kz_2005_event_1"], Strings["seed_era_kz_2005_event_2"]),
             emoji = "🏗️",
             isLocked = false
         ),
         Era(
             id = "kz_2015",
-            name = "Казахстан 2015–2020",
-            description = "Цифровизация и нестабильность тенге. Курс доллара скачет, начинается онлайн-бизнес.",
+            name = Strings["seed_era_kz_2015_name"],
+            description = Strings["seed_era_kz_2015_desc"],
             startYear = 2015,
             endYear = 2020,
             baseInflationRate = 14.5,
             baseSalaryMin = 150_000L,
             baseSalaryMax = 500_000L,
             availableCharacterIds = listOf("aidar", "dana", "erbolat"),
-            keyEconomicEvents = listOf("Девальвация 2015", "Пандемия 2020", "Цифровизация"),
+            keyEconomicEvents = listOf(Strings["seed_era_kz_2015_event_1"], Strings["seed_era_kz_2015_event_2"], Strings["seed_era_kz_2015_event_3"]),
             emoji = "📱",
             isLocked = false
         ),
         Era(
             id = "kz_2024",
-            name = "Казахстан 2024–2030",
-            description = "Новая реальность. Разблокируйте, пройдя любую эпоху.",
+            name = Strings["seed_era_kz_2024_name"],
+            description = Strings["seed_era_kz_2024_desc"],
             startYear = 2024,
             endYear = 2030,
             baseInflationRate = 9.8,
             baseSalaryMin = 300_000L,
             baseSalaryMax = 1_500_000L,
             availableCharacterIds = listOf("aidar", "asan", "dana", "erbolat"),
-            keyEconomicEvents = listOf("Технологический бум", "Финансовые реформы"),
+            keyEconomicEvents = listOf(Strings["seed_era_kz_2024_event_1"], Strings["seed_era_kz_2024_event_2"]),
             emoji = "🚀",
             isLocked = true
         )
@@ -79,12 +81,12 @@ object SeedData {
     val predefinedCharacters: List<PredefinedCharacter> = listOf(
         PredefinedCharacter(
             id = "aidar",
-            name = "Айдар",
+            name = Strings["seed_char_aidar_name"],
             age = 24,
-            profession = "Junior разработчик",
+            profession = Strings["seed_char_aidar_profession"],
             emoji = "🧑‍💻",
-            backstory = "Закончил университет в Алматы, устроился junior разработчиком. Живёт на съёмной квартире с другом. Мама просит помогать младшему брату. Мечтает о своём стартапе, но пока боится рисковать — на карте всего 200 тысяч.",
-            personality = "Осторожный, амбициозный, немного наивный в финансах",
+            backstory = Strings["seed_char_aidar_backstory"],
+            personality = Strings["seed_char_aidar_personality"],
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
             initialStats = CharacterStats(
                 capital = 200_000L,
@@ -100,12 +102,12 @@ object SeedData {
             isUnlocked = true
         ), PredefinedCharacter(
             id = "asan",
-            name = "Асан",
+            name = Strings["seed_char_asan_name"],
             age = 28,
-            profession = "Android разработчик",
+            profession = Strings["seed_char_asan_profession"],
             emoji = "📱",
-            backstory = "Живёт в Алматы, работает Android-разработчиком и пытается наконец перестать путать хороший доход с финансовой устойчивостью. После нескольких импульсивных ошибок хочет собрать систему: закрыть долги, построить подушку и вырасти в сильного senior-инженера без саморазрушения.",
-            personality = "Умный, ироничный, склонный к импульсивным решениям, но способный быстро учиться на боли",
+            backstory = Strings["seed_char_asan_backstory"],
+            personality = Strings["seed_char_asan_personality"],
             compatibleEraIds = listOf("kz_2024"),
             initialStats = CharacterStats(
                 capital = 200_000L,
@@ -121,12 +123,12 @@ object SeedData {
             isUnlocked = true
         ), PredefinedCharacter(
             id = "dana",
-            name = "Дана",
+            name = Strings["seed_char_dana_name"],
             age = 32,
-            profession = "Учительница",
+            profession = Strings["seed_char_dana_profession"],
             emoji = "👩‍🏫",
-            backstory = "Работает учителем математики в школе. Замужем, один ребёнок 5 лет. Муж работает механиком на заводе. Стабильный, но небольшой доход. Подрабатывает репетитором. Мечтает купить собственную квартиру, пока снимают.",
-            personality = "Стабильная, ответственная, не любит риск",
+            backstory = Strings["seed_char_dana_backstory"],
+            personality = Strings["seed_char_dana_personality"],
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
             initialStats = CharacterStats(
                 capital = 800_000L,
@@ -142,12 +144,12 @@ object SeedData {
             isUnlocked = true
         ), PredefinedCharacter(
             id = "aidar_90s",
-            name = "Айдар (90-е)",
+            name = Strings["seed_char_aidar_90s_name"],
             age = 22,
-            profession = "Студент",
+            profession = Strings["seed_char_aidar_90s_profession"],
             emoji = "🧑‍🎓",
-            backstory = "Осень 1993-го. Страна ещё живёт в рублях, впереди введение тенге. Айдар учится выживать в момент, когда старые деньги доживают последние недели.",
-            personality = "Оптимистичный, настойчивый",
+            backstory = Strings["seed_char_aidar_90s_backstory"],
+            personality = Strings["seed_char_aidar_90s_personality"],
             compatibleEraIds = listOf("kz_90s"),
             initialStats = CharacterStats(
                 capital = 25_000_000L,
@@ -164,12 +166,12 @@ object SeedData {
         ),
         PredefinedCharacter(
             id = "erbolat",
-            name = "Ерболат",
+            name = Strings["seed_char_erbolat_name"],
             age = 38,
-            profession = "Предприниматель",
+            profession = Strings["seed_char_erbolat_profession"],
             emoji = "💼",
-            backstory = "Владеет небольшой сетью из 2 магазинов одежды в Астане. Бизнес на грани — аренда растёт, маржа падает из-за конкуренции. Жена ведёт бухгалтерию. Двое детей в частной школе.",
-            personality = "Рискованный, предприимчивый, под давлением",
+            backstory = Strings["seed_char_erbolat_backstory"],
+            personality = Strings["seed_char_erbolat_personality"],
             compatibleEraIds = listOf("kz_2015", "kz_2024"),
             initialStats = CharacterStats(
                 capital = 3_500_000L,
@@ -192,11 +194,11 @@ object SeedData {
     val characterBundles: List<CharacterBundle> = listOf(
         CharacterBundle(
             id = "bundle_entrepreneur",
-            label = "Рискованный предприниматель",
-            description = "Высокий доход, но огромный долг. Один плохой месяц — банкрот.",
+            label = Strings["seed_bundle_entrepreneur_label"],
+            description = Strings["seed_bundle_entrepreneur_desc"],
             emoji = "🎰",
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
-            profession = "Владелец кафе",
+            profession = Strings["seed_bundle_entrepreneur_profession"],
             stats = CharacterStats(
                 capital = 500_000L,
                 income = 800_000L,
@@ -206,15 +208,15 @@ object SeedData {
                 financialKnowledge = 25,
                 riskLevel = 80
             ),
-            traits = listOf("импульсивный", "харизматичный"),
+            traits = listOf(Strings["seed_bundle_entrepreneur_trait_1"], Strings["seed_bundle_entrepreneur_trait_2"]),
             difficulty = Difficulty.HARD
         ), CharacterBundle(
             id = "bundle_student",
-            label = "Вечный студент",
-            description = "Нестабильный доход — каждый месяц рандом ±50%. Учёба не гарантирует успех.",
+            label = Strings["seed_bundle_student_label"],
+            description = Strings["seed_bundle_student_desc"],
             emoji = "🎓",
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
-            profession = "Фрилансер-дизайнер",
+            profession = Strings["seed_bundle_student_profession"],
             stats = CharacterStats(
                 capital = 50_000L,
                 income = 150_000L,
@@ -224,15 +226,15 @@ object SeedData {
                 financialKnowledge = 30,
                 riskLevel = 20
             ),
-            traits = listOf("тревожный", "tech-savvy"),
+            traits = listOf(Strings["seed_bundle_student_trait_1"], "tech-savvy"),
             difficulty = Difficulty.MEDIUM
         ), CharacterBundle(
             id = "bundle_family",
-            label = "Молодая семья",
-            description = "Ипотека программа 7-20-25. Высокие расходы — ребёнок генерирует случайные события.",
+            label = Strings["seed_bundle_family_label"],
+            description = Strings["seed_bundle_family_desc"],
             emoji = "👨‍👩‍👧",
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
-            profession = "Менеджер",
+            profession = Strings["seed_bundle_family_profession"],
             stats = CharacterStats(
                 capital = 1_200_000L,
                 income = 450_000L,
@@ -242,15 +244,15 @@ object SeedData {
                 financialKnowledge = 15,
                 riskLevel = 10
             ),
-            traits = listOf("семейный", "консервативный"),
+            traits = listOf(Strings["seed_bundle_family_trait_1"], Strings["seed_bundle_family_trait_2"]),
             difficulty = Difficulty.HARD
         ), CharacterBundle(
             id = "bundle_heir",
-            label = "Наследник",
-            description = "15 миллионов, но нулевые знания → главная мишень для мошенников.",
+            label = Strings["seed_bundle_heir_label"],
+            description = Strings["seed_bundle_heir_desc"],
             emoji = "💎",
             compatibleEraIds = listOf("kz_2015", "kz_2024"),
-            profession = "Рантье",
+            profession = Strings["seed_bundle_heir_profession"],
             stats = CharacterStats(
                 capital = 15_000_000L,
                 income = 200_000L,
@@ -260,15 +262,15 @@ object SeedData {
                 financialKnowledge = 5,
                 riskLevel = 5
             ),
-            traits = listOf("расточительный", "харизматичный"),
+            traits = listOf(Strings["seed_bundle_heir_trait_1"], Strings["seed_bundle_entrepreneur_trait_2"]),
             difficulty = Difficulty.NIGHTMARE
         ), CharacterBundle(
             id = "bundle_burnout",
-            label = "Корпоративный беглец",
-            description = "Бывший банкир. Высокие знания, но выгорание и нет дохода. Начни с нуля.",
+            label = Strings["seed_bundle_burnout_label"],
+            description = Strings["seed_bundle_burnout_desc"],
             emoji = "🏃",
             compatibleEraIds = listOf("kz_2015", "kz_2024"),
-            profession = "Бывший банкир",
+            profession = Strings["seed_bundle_burnout_profession"],
             stats = CharacterStats(
                 capital = 3_000_000L,
                 income = 0L,
@@ -278,15 +280,15 @@ object SeedData {
                 financialKnowledge = 65,
                 riskLevel = 40
             ),
-            traits = listOf("тревожный", "консервативный"),
+            traits = listOf(Strings["seed_bundle_student_trait_1"], Strings["seed_bundle_family_trait_2"]),
             difficulty = Difficulty.MEDIUM
         ), CharacterBundle(
             id = "bundle_late_start",
-            label = "Поздний старт",
-            description = "50 лет. Мало времени до пенсии — нужно быстро копить на старость.",
+            label = Strings["seed_bundle_late_start_label"],
+            description = Strings["seed_bundle_late_start_desc"],
             emoji = "👵",
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
-            profession = "Бухгалтер",
+            profession = Strings["seed_bundle_late_start_profession"],
             stats = CharacterStats(
                 capital = 200_000L,
                 income = 300_000L,
@@ -296,15 +298,15 @@ object SeedData {
                 financialKnowledge = 40,
                 riskLevel = 5
             ),
-            traits = listOf("консервативный", "тревожный"),
+            traits = listOf(Strings["seed_bundle_family_trait_2"], Strings["seed_bundle_student_trait_1"]),
             difficulty = Difficulty.HARD
         ), CharacterBundle(
             id = "bundle_gray",
-            label = "Серая схема",
-            description = "Весь доход серый → уникальные события с налоговой и полицией. Риск тюрьмы.",
+            label = Strings["seed_bundle_gray_label"],
+            description = Strings["seed_bundle_gray_desc"],
             emoji = "🤫",
             compatibleEraIds = listOf("kz_2005", "kz_2015", "kz_2024"),
-            profession = "«Консультант»",
+            profession = Strings["seed_bundle_gray_profession"],
             stats = CharacterStats(
                 capital = 2_000_000L,
                 income = 600_000L,
@@ -314,15 +316,15 @@ object SeedData {
                 financialKnowledge = 55,
                 riskLevel = 90
             ),
-            traits = listOf("серый", "харизматичный"),
+            traits = listOf(Strings["seed_bundle_gray_trait_1"], Strings["seed_bundle_entrepreneur_trait_2"]),
             difficulty = Difficulty.NIGHTMARE
         ), CharacterBundle(
             id = "bundle_crypto",
-            label = "Криптобро",
-            description = "5 млн в крипте. Капитал волатильный — каждый квартал ±60%.",
+            label = Strings["seed_bundle_crypto_label"],
+            description = Strings["seed_bundle_crypto_desc"],
             emoji = "🎮",
             compatibleEraIds = listOf("kz_2015", "kz_2024"),
-            profession = "Блогер/трейдер",
+            profession = Strings["seed_bundle_crypto_profession"],
             stats = CharacterStats(
                 capital = 5_000_000L,
                 income = 300_000L,
@@ -332,7 +334,7 @@ object SeedData {
                 financialKnowledge = 20,
                 riskLevel = 95
             ),
-            traits = listOf("импульсивный", "tech-savvy"),
+            traits = listOf(Strings["seed_bundle_entrepreneur_trait_1"], "tech-savvy"),
             difficulty = Difficulty.HARD,
             isLocked = true,
             unlockCondition = UnlockCondition.FinishGameWith(GameEnding.BANKRUPTCY)

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.data.SecureStorage
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.network.TokenStorage
 
 private const val TAG = "AuthRepository"
@@ -134,7 +135,7 @@ class AuthRepository(
 
     suspend fun login(username: String, password: String): Result<AuthState> {
         if (username.isBlank() || password.isBlank()) {
-            return Result.failure(IllegalArgumentException("Заполните все поля"))
+            return Result.failure(IllegalArgumentException(Strings.errAuthFillFields))
         }
 
         return runCatching {
@@ -145,7 +146,7 @@ class AuthRepository(
             }
             if (!response.status.isSuccess()) {
                 val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
-                throw IllegalStateException(msg?.ifBlank { null } ?: "Сервер недоступен (${response.status.value})")
+                throw IllegalStateException(msg?.ifBlank { null } ?: "${Strings.errAuthServerUnavailable} (${response.status.value})")
             }
             val resp = response.body<AuthApiResponse>()
 
@@ -170,13 +171,13 @@ class AuthRepository(
 
     suspend fun register(username: String, password: String): Result<AuthState> {
         if (username.isBlank() || password.isBlank()) {
-            return Result.failure(IllegalArgumentException("Заполните все поля"))
+            return Result.failure(IllegalArgumentException(Strings.errAuthFillFields))
         }
         if (username.length < 3) {
-            return Result.failure(IllegalArgumentException("Логин минимум 3 символа"))
+            return Result.failure(IllegalArgumentException(Strings.errAuthLoginTooShort))
         }
         if (password.length < 6) {
-            return Result.failure(IllegalArgumentException("Пароль минимум 6 символов"))
+            return Result.failure(IllegalArgumentException(Strings.errAuthPasswordTooShort))
         }
 
         return runCatching {
@@ -187,7 +188,7 @@ class AuthRepository(
             }
             if (!response.status.isSuccess()) {
                 val msg = runCatching { response.body<AuthApiResponse>().message }.getOrNull()
-                throw IllegalStateException(msg?.ifBlank { null } ?: "Сервер недоступен (${response.status.value})")
+                throw IllegalStateException(msg?.ifBlank { null } ?: "${Strings.errAuthServerUnavailable} (${response.status.value})")
             }
             val resp = response.body<AuthApiResponse>()
 

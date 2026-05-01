@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.engine
 
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.EraDefinition
@@ -65,7 +66,7 @@ class GameEngine(
             playerState        = ps,
             currentEventId     = intro.id,
             messages           = listOf(
-                systemMsg("🎮 Финансовое приключение началось! Помогай $characterName строить финансовое будущее."),
+                systemMsg(Strings.sysGameStart.replace("%s", characterName)),
                 characterMsg(intro, ps)
             ),
             isWaitingForChoice = true
@@ -89,7 +90,7 @@ class GameEngine(
      * Handles MONTHLY_TICK sentinel, the full 4-tier event priority queue, and endings.
      */
     fun makeChoice(optionId: String): GameState {
-        val current = _state.value ?: return startGame(characterName = "Асан")
+        val current = _state.value ?: return startGame(characterName = Strings.sysDefaultCharacterName)
         val event   = graph.findEvent(current.currentEventId) ?: return current
         val option  = event.options.find { it.id == optionId } ?: return current
 
@@ -391,6 +392,7 @@ class GameEngine(
             .replace("{netFlow}",       ps.netMonthlyFlow.moneyFormat(ps.currency))
             .replace("{income3x}",      (ps.income * 3).moneyFormat(ps.currency))
             .replace("{name}",          currentCharacterName)
+            .replace("{eraLabel}",      EraRegistry.findById(ps.eraId)?.name ?: ps.eraId)
 
     fun playerMsg(option: GameOption) = ChatMessage(
         id     = "player_${option.id}_${ts()}",

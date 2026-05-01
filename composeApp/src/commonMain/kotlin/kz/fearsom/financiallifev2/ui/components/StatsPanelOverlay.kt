@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.ui.theme.GoldDark
 import kz.fearsom.financiallifev2.ui.theme.GoldLight
@@ -101,13 +102,13 @@ fun StatsPanelOverlay(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "Финансы $characterName",
+                        "${Strings.uiStatsPanelTitle} $characterName",
                         style = MaterialTheme.typography.titleLarge,
                         color = colors.textPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "${monthName(playerState.month)} ${playerState.year} · Месяц ${playerState.month}",
+                        "${Strings.uiStatsPanelMonths.getOrElse(playerState.month) { "?" }} ${playerState.year}",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -127,7 +128,7 @@ fun StatsPanelOverlay(
                 label = "freedom"
             )
             Text(
-                "🎯 Финансовая свобода",
+                Strings.uiStatsPanelFreedom,
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary,
                 fontWeight = FontWeight.Bold
@@ -152,14 +153,14 @@ fun StatsPanelOverlay(
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Начало", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
+                Text(Strings.uiStatsPanelStart, style = MaterialTheme.typography.bodySmall, color = colors.textHint)
                 Text(
                     "${(animPct * 100).toInt()}%",
                     style = MaterialTheme.typography.titleSmall,
                     color = GoldPrimary,
                     fontWeight = FontWeight.Bold
                 )
-                Text("Свобода", style = MaterialTheme.typography.bodySmall, color = colors.textHint)
+                Text(Strings.uiStatsPanelFreedomLabel, style = MaterialTheme.typography.bodySmall, color = colors.textHint)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -168,7 +169,7 @@ fun StatsPanelOverlay(
             val netCashFlow =
                 playerState.income - playerState.expenses - playerState.debtPaymentMonthly
             Text(
-                "💸 Денежный поток",
+                Strings.uiStatsPanelFlow,
                 style = MaterialTheme.typography.titleSmall,
                 color = colors.textSecondary,
                 fontWeight = FontWeight.SemiBold,
@@ -191,7 +192,7 @@ fun StatsPanelOverlay(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        if (netCashFlow >= 0) "Прибыль" else "Дефицит",
+                        if (netCashFlow >= 0) Strings.uiStatsPanelProfit else Strings.uiStatsPanelDeficit,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -209,13 +210,13 @@ fun StatsPanelOverlay(
             // ── SECONDARY: Financial Position (balance sheet row) ───────────────
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MoneyCard(
-                    label = "💰 Капитал",
+                    label = Strings.uiStatsPanelCapital,
                     value = formatMoney(playerState.capital),
                     color = StatCapital,
                     modifier = Modifier.weight(1f)
                 )
                 MoneyCard(
-                    label = "💳 Долг",
+                    label = Strings.uiStatsPanelDebt,
                     value = formatMoney(playerState.debt),
                     color = StatDebt,
                     modifier = Modifier.weight(1f)
@@ -226,19 +227,19 @@ fun StatsPanelOverlay(
             // ── DETAIL: Income, Expenses, Investments ──────────────────────────
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MoneyCard(
-                    label = "📈 Доход",
-                    value = formatMoney(playerState.income) + "/мес",
+                    label = Strings.uiStatsPanelIncome,
+                    value = formatMoney(playerState.income) + Strings.uiStatsPanelPerMonth,
                     color = GreenSuccess,
                     modifier = Modifier.weight(1f)
                 )
                 MoneyCard(
-                    label = "🛒 Расходы",
-                    value = formatMoney(playerState.expenses) + "/мес",
+                    label = Strings.uiStatsPanelExpenses,
+                    value = formatMoney(playerState.expenses) + Strings.uiStatsPanelPerMonth,
                     color = StatStress,
                     modifier = Modifier.weight(1f)
                 )
                 MoneyCard(
-                    label = "📊 Инвесты",
+                    label = Strings.uiStatsPanelInvestments,
                     value = formatMoney(playerState.investments),
                     color = StatKnowledge,
                     modifier = Modifier.weight(1f)
@@ -249,16 +250,16 @@ fun StatsPanelOverlay(
 
             // ── Soft metrics ──────────────────────────────────────────────────
             Text(
-                "Показатели",
+                Strings.uiStatsPanelIndicators,
                 style = MaterialTheme.typography.titleSmall,
                 color = colors.textSecondary,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
-            StatBar("😰 Стресс", playerState.stress, StatStress)
+            StatBar(Strings.uiStatsPanelStress, playerState.stress, StatStress)
             Spacer(Modifier.height(10.dp))
-            StatBar("📚 Фин. грамотность", playerState.financialKnowledge, StatKnowledge)
+            StatBar(Strings.uiStatsPanelKnowledge, playerState.financialKnowledge, StatKnowledge)
             Spacer(Modifier.height(10.dp))
-            StatBar("🎲 Риск-уровень", playerState.riskLevel, StatRisk)
+            StatBar(Strings.uiStatsPanelRisk, playerState.riskLevel, StatRisk)
 
             Spacer(Modifier.height(8.dp))
         }
@@ -354,9 +355,4 @@ private fun calculateFreedom(ps: PlayerState): Float {
     return (capitalScore + debtScore + knowledgeScore + stressScore).coerceIn(0f, 1f)
 }
 
-private fun monthName(month: Int): String = when (month) {
-    1  -> "Январь";  2  -> "Февраль"; 3  -> "Март";    4  -> "Апрель"
-    5  -> "Май";     6  -> "Июнь";    7  -> "Июль";    8  -> "Август"
-    9  -> "Сентябрь"; 10 -> "Октябрь"; 11 -> "Ноябрь"; 12 -> "Декабрь"
-    else -> "?"
-}
+// monthName() removed — replaced inline with Strings.uiStatsPanelMonths.getOrElse()

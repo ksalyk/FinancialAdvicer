@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import financiallifev2.composeapp.generated.resources.*
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.ChatMessage
 import kz.fearsom.financiallifev2.model.EndingType
 import kz.fearsom.financiallifev2.model.GameOption
@@ -151,8 +152,8 @@ private fun DiaryTopBar(
     if (showConfirmRestart) {
         AlertDialog(
             onDismissRequest = { showConfirmRestart = false },
-            title = { Text("Сбросить прогресс?") },
-            text = { Text("Это удалит всю историю текущей игры. Это действие нельзя отменить.") },
+            title = { Text(Strings.uiChatResetTitle) },
+            text = { Text(Strings.uiChatResetMessage) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -164,12 +165,12 @@ private fun DiaryTopBar(
                         containerColor = RedDanger
                     )
                 ) {
-                    Text("Сбросить")
+                    Text(Strings.uiChatResetConfirm)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmRestart = false }) {
-                    Text("Отменить")
+                    Text(Strings.uiChatCancel)
                 }
             }
         )
@@ -189,7 +190,7 @@ private fun DiaryTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Home,
-                    contentDescription = "Домашнее меню",
+                    contentDescription = Strings.uiChatCdHome,
                     tint = colors.textPrimary
                 )
             }
@@ -198,7 +199,7 @@ private fun DiaryTopBar(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Дневник · $characterName",
+                    "${Strings.uiChatDiary} · $characterName",
                     style      = MaterialTheme.typography.titleMedium,
                     color      = colors.textPrimary,
                     fontWeight = FontWeight.Bold
@@ -221,7 +222,7 @@ private fun DiaryTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Filled.BarChart,
-                    contentDescription = "Финансовая статистика",
+                    contentDescription = Strings.uiChatCdStats,
                     tint = colors.textPrimary
                 )
             }
@@ -234,7 +235,7 @@ private fun DiaryTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "Дополнительные опции",
+                        contentDescription = Strings.uiChatCdOptions,
                         tint = colors.textPrimary
                     )
                 }
@@ -244,7 +245,7 @@ private fun DiaryTopBar(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Перезагрузить игру") },
+                        text = { Text(Strings.uiChatRestartGame) },
                         onClick = {
                             showMenu = false
                             showConfirmRestart = true
@@ -329,14 +330,14 @@ private fun DiaryEntryCard(message: ChatMessage, playerState: PlayerState?) {
                 )
                 // Scene tag label (top-left corner pill)
                 val tagLabel = when (message.sceneTag) {
-                    "scam"       -> "⚠️ Осторожно"
-                    "crisis"     -> "📉 Кризис"
-                    "career"     -> "💼 Карьера"
-                    "family"     -> "🏠 Семья"
-                    "investment" -> "📈 Инвестиции"
-                    "mortgage"   -> "🔑 Ипотека"
-                    "windfall"   -> "🎉 Удача"
-                    "world"      -> "🌙 Размышление"
+                    "scam"       -> Strings.uiChatSceneScam
+                    "crisis"     -> Strings.uiChatSceneCrisis
+                    "career"     -> Strings.uiChatSceneCareer
+                    "family"     -> Strings.uiChatSceneFamily
+                    "investment" -> Strings.uiChatSceneInvestment
+                    "mortgage"   -> Strings.uiChatSceneMortgage
+                    "windfall"   -> Strings.uiChatSceneWindfall
+                    "world"      -> Strings.uiChatSceneWorld
                     else         -> null
                 }
                 if (tagLabel != null) {
@@ -463,7 +464,7 @@ private fun DiaryChoiceNote(message: ChatMessage) {
         ) {
             Column {
                 Text(
-                    "✍️  Я решил:",
+                    "✍️  ${Strings.uiChatPlayerPrefix}",
                     style      = DiaryHeaderStyle.copy(fontSize = 13.sp, color = colors.diaryInkSecondary),
                     color      = colors.diaryInkSecondary,
                     fontWeight = FontWeight.SemiBold
@@ -528,7 +529,7 @@ private fun DiaryFinancialEntry(message: ChatMessage) {
             Text("📒", fontSize = 14.sp)
             Spacer(Modifier.width(6.dp))
             Text(
-                "Итоги месяца",
+                Strings.uiChatMonthlyReport,
                 style      = MaterialTheme.typography.labelSmall,
                 color      = GreenSuccess.copy(alpha = 0.85f),
                 fontWeight = FontWeight.Bold,
@@ -582,7 +583,7 @@ private fun DiaryWritingIndicator() {
     ) {
         Text("✍️", fontSize = 16.sp, modifier = Modifier.padding(end = 8.dp))
         Text(
-            "пишет в дневник...",
+            Strings.uiChatWriting,
             style    = DiaryTextStyle.copy(fontSize = 14.sp, color = colors.diaryInkSecondary.copy(alpha = alpha)),
             color    = colors.diaryInkSecondary.copy(alpha = alpha),
             fontStyle = FontStyle.Italic
@@ -606,7 +607,7 @@ private fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("✍️", fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
                 Text(
-                    "Что я сделаю:",
+                    Strings.uiChatActionLabel,
                     style    = DiaryHeaderStyle.copy(fontSize = 14.sp, color = colors.textSecondary),
                     color    = colors.textSecondary,
                     fontWeight = FontWeight.SemiBold
@@ -711,12 +712,12 @@ private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
             ) {
                 Text(
                     when (endingType) {
-                        EndingType.BANKRUPTCY            -> "💔 Банкротство"
-                        EndingType.PAYCHECK_TO_PAYCHECK  -> "😰 Без накоплений"
-                        EndingType.FINANCIAL_STABILITY   -> "😊 Стабильность достигнута"
-                        EndingType.FINANCIAL_FREEDOM     -> "🎯 Финансовая свобода!"
-                        EndingType.WEALTH                -> "🤑 Богатство!"
-                        null                             -> "🏁 Конец"
+                        EndingType.BANKRUPTCY            -> Strings.endingBankruptcy
+                        EndingType.PAYCHECK_TO_PAYCHECK  -> Strings.endingPaycheck
+                        EndingType.FINANCIAL_STABILITY   -> Strings.endingStability
+                        EndingType.FINANCIAL_FREEDOM     -> Strings.endingFreedom
+                        EndingType.WEALTH                -> Strings.endingWealth
+                        null                             -> Strings.endingGameOver
                     },
                     style      = MaterialTheme.typography.titleMedium,
                     color      = endingColor,
@@ -732,7 +733,7 @@ private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
                         contentColor   = colors.backgroundDeep
                     )
                 ) {
-                    Text("🔄 Начать заново", fontWeight = FontWeight.Bold)
+                    Text(Strings.uiChatRestart, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -849,16 +850,8 @@ private fun GameOverInkBleed(accentColor: Color, modifier: Modifier = Modifier) 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-private fun monthName(month: Int): String = when (month) {
-    1  -> "Янв"; 2  -> "Фев"; 3  -> "Мар"; 4  -> "Апр"
-    5  -> "Май"; 6  -> "Июн"; 7  -> "Июл"; 8  -> "Авг"
-    9  -> "Сен"; 10 -> "Окт"; 11 -> "Ноя"; 12 -> "Дек"
-    else -> "?"
-}
+private fun monthName(month: Int): String =
+    Strings.uiChatShortMonths.getOrNull(month) ?: "?"
 
-private fun monthNameFull(month: Int): String = when (month) {
-    1  -> "января"; 2  -> "февраля"; 3  -> "марта";   4  -> "апреля"
-    5  -> "мая";    6  -> "июня";    7  -> "июля";     8  -> "августа"
-    9  -> "сентября"; 10 -> "октября"; 11 -> "ноября"; 12 -> "декабря"
-    else -> ""
-}
+private fun monthNameFull(month: Int): String =
+    Strings.uiChatMonthsGenitive.getOrNull(month) ?: ""

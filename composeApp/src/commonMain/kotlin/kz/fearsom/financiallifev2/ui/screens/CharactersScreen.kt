@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.CharactersUiState
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
@@ -52,8 +53,8 @@ fun CharactersScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
             AppTopBar(
-                title = "Персонажи",
-                subtitle = "Нажми на персонажа, чтобы узнать его историю",
+                title = Strings.uiCharsTitle,
+                subtitle = Strings.uiCharsSubtitle,
                 onBack = onBack
             )
 
@@ -136,7 +137,7 @@ private fun CharacterRosterCard(character: PredefinedCharacter, onClick: () -> U
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text     = "${character.age} лет",
+                    text     = "${character.age} ${Strings.uiCharsAge}",
                     fontSize = 11.sp,
                     color    = colors.textHint,
                     modifier = Modifier
@@ -162,12 +163,7 @@ private fun CharacterRosterCard(character: PredefinedCharacter, onClick: () -> U
             Text("›", fontSize = 20.sp, color = accentColor)
             Spacer(Modifier.height(4.dp))
             Text(
-                text     = when (character.difficulty) {
-                    Difficulty.EASY      -> "Лёгкий"
-                    Difficulty.MEDIUM    -> "Средний"
-                    Difficulty.HARD      -> "Сложный"
-                    Difficulty.NIGHTMARE -> "Кошмар"
-                },
+                text     = character.difficulty.label(),
                 fontSize = 9.sp,
                 color    = accentColor,
                 modifier = Modifier

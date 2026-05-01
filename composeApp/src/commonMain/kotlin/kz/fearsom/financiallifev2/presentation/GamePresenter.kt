@@ -2,6 +2,7 @@ package kz.fearsom.financiallifev2.presentation
 
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
@@ -18,9 +19,9 @@ data class GameUiState(
     val isTyping: Boolean = false,
     val showStats: Boolean = false,
     // Dynamic character display info
-    val characterName: String  = "Асан",
+    val characterName: String  = Strings.sysDefaultCharacterName,
     val characterEmoji: String = "👨‍💻",
-    val characterTitle: String = "Инженер-программист"
+    val characterTitle: String = ""
 )
 
 /**
@@ -151,12 +152,12 @@ class GamePresenter(
         scope.launch {
             _uiState.value = _uiState.value.copy(
                 isTyping       = true,
-                characterName  = "Айдар",
+                characterName  = Strings.sysDefaultCharacterName,
                 characterEmoji = "🧑‍💻",
-                characterTitle = "Junior разработчик"
+                characterTitle = ""
             )
             delay(800)
-            engine.startGame(characterName = "Айдар")
+            engine.startGame(characterName = Strings.sysDefaultCharacterName)
             delay(300)
             _uiState.value = _uiState.value.copy(isTyping = false)
         }
@@ -200,11 +201,11 @@ class GamePresenter(
     }
 
     fun getEndingTitle(type: EndingType?): String = when (type) {
-        EndingType.BANKRUPTCY            -> "💔 Банкротство"
-        EndingType.PAYCHECK_TO_PAYCHECK  -> "😰 От зарплаты до зарплаты"
-        EndingType.FINANCIAL_STABILITY   -> "😊 Финансовая стабильность"
-        EndingType.FINANCIAL_FREEDOM     -> "🎯 Финансовая свобода!"
-        EndingType.WEALTH                -> "🤑 Богатство"
-        null                             -> "🏁 Игра окончена"
+        EndingType.BANKRUPTCY            -> Strings.endingBankruptcy
+        EndingType.PAYCHECK_TO_PAYCHECK  -> Strings.endingPaycheck
+        EndingType.FINANCIAL_STABILITY   -> Strings.endingStability
+        EndingType.FINANCIAL_FREEDOM     -> Strings.endingFreedom
+        EndingType.WEALTH                -> Strings.endingWealth
+        null                             -> Strings.endingGameOver
     }
 }
