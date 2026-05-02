@@ -27,6 +27,9 @@ object StringKeys {
     const val UI_LOGIN_BTN_REGISTER           = "ui_login_btn_register"
     const val UI_LOGIN_BTN_LOGIN              = "ui_login_btn_login"
     const val UI_LOGIN_DEMO_HINT              = "ui_login_demo_hint"
+    const val UI_LOGIN_TRY_DEMO               = "ui_login_try_demo"
+    const val UI_LOGIN_TRY_DEMO_SUB           = "ui_login_try_demo_sub"
+    const val UI_LOGIN_OR                     = "ui_login_or"
     const val UI_LOGIN_ALREADY_HAVE_ACCOUNT   = "ui_login_already_have_account"
     const val UI_LOGIN_NO_ACCOUNT             = "ui_login_no_account"
 
@@ -67,6 +70,8 @@ object StringKeys {
     const val UI_CHAR_SEL_UNLOCK_ERA          = "ui_char_sel_unlock_era"
     const val UI_CHAR_SEL_UNLOCK_COMPLETE_N   = "ui_char_sel_unlock_complete_n"
     const val UI_CHAR_SEL_PER_MONTH           = "ui_char_sel_per_month"
+    const val UI_CHAR_SEL_STAT_CAPITAL        = "ui_char_sel_stat_capital"
+    const val UI_CHAR_SEL_STAT_INCOME         = "ui_char_sel_stat_income"
 
     // ── CharactersScreen ─────────────────────────────────────────────
     const val UI_CHARS_TITLE                  = "ui_chars_title"

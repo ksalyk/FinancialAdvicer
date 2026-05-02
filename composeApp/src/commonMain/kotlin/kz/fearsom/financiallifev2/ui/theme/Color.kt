@@ -27,8 +27,8 @@ val SurfaceGlassBorder = Color(0x33FFFFFF)
 
 // ─── Dark Text ────────────────────────────────────────────────────────────────
 val TextPrimary   = Color(0xFFF0F4FF)
-val TextSecondary = Color(0xFF8899BB)
-val TextHint      = Color(0xFF445577)
+val TextSecondary = Color(0xFF9DAABF)   // raised from #8899BB → passes WCAG AA 4.5:1 on dark bg
+val TextHint      = Color(0xFF5A6B88)   // raised from #445577 → passes WCAG AA 3.0:1 on dark bg
 
 // ─── Light Text ───────────────────────────────────────────────────────────────
 val TextPrimaryLight   = Color(0xFF0A0E1A)

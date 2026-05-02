@@ -73,6 +73,8 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_DIFF_MEDIUM
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_DIFF_NIGHTMARE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_LOCKED
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_PER_MONTH
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_STAT_CAPITAL
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_STAT_INCOME
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_TAB_BUNDLES
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_TAB_CHARACTERS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAR_SEL_TITLE
@@ -136,6 +138,9 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_ALREADY_HAVE_ACCOUNT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_BTN_LOGIN
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_BTN_REGISTER
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_DEMO_HINT
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_TRY_DEMO
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_TRY_DEMO_SUB
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_OR
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_FIELD_PASSWORD
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_FIELD_USERNAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_NO_ACCOUNT
@@ -257,6 +262,9 @@ object Strings {
     val uiLoginBtnRegister         get() = get(UI_LOGIN_BTN_REGISTER)
     val uiLoginBtnLogin            get() = get(UI_LOGIN_BTN_LOGIN)
     val uiLoginDemoHint            get() = get(UI_LOGIN_DEMO_HINT)
+    val uiLoginTryDemo             get() = get(UI_LOGIN_TRY_DEMO)
+    val uiLoginTryDemoSub          get() = get(UI_LOGIN_TRY_DEMO_SUB)
+    val uiLoginOr                  get() = get(UI_LOGIN_OR)
     val uiLoginAlreadyHaveAccount  get() = get(UI_LOGIN_ALREADY_HAVE_ACCOUNT)
     val uiLoginNoAccount           get() = get(UI_LOGIN_NO_ACCOUNT)
 
@@ -297,6 +305,8 @@ object Strings {
     val uiCharSelUnlockEra         get() = get(UI_CHAR_SEL_UNLOCK_ERA)
     val uiCharSelUnlockCompleteN   get() = get(UI_CHAR_SEL_UNLOCK_COMPLETE_N)
     val uiCharSelPerMonth          get() = get(UI_CHAR_SEL_PER_MONTH)
+    val uiCharSelStatCapital       get() = get(UI_CHAR_SEL_STAT_CAPITAL)
+    val uiCharSelStatIncome        get() = get(UI_CHAR_SEL_STAT_INCOME)
 
     // ── CharactersScreen ─────────────────────────────────────────────
     val uiCharsTitle               get() = get(UI_CHARS_TITLE)

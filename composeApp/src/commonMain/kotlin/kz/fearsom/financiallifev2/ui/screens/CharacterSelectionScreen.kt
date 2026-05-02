@@ -366,33 +366,53 @@ private fun BundleCard(bundle: CharacterBundle, onClick: () -> Unit) {
 }
 
 // ── Compact Stats Row ─────────────────────────────────────────────────────────
+//
+// Design change (Wireframe-Redesigns.html): show only Capital + Income at larger
+// sizes so users can compare characters at a glance without cognitive overload.
+// Stress / Knowledge are secondary — available in the character detail screen.
 
 @Composable
 private fun CompactStatsRow(stats: CharacterStats) {
-    val colors = LocalAppColors.current
     Row(
-        modifier            = Modifier.fillMaxWidth(),
+        modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        MiniStat("💰", stats.capital.shortFormat(),     GoldPrimary,    Modifier.weight(1f))
-        MiniStat("📈", "${stats.income / 1000}k${Strings.uiCharSelPerMonth}",  GreenSuccess,   Modifier.weight(1f))
-        MiniStat("😰", "${stats.stress}%",              StatStress,     Modifier.weight(1f))
-        MiniStat("🎓", "${stats.financialKnowledge}",   StatKnowledge,  Modifier.weight(1f))
+        PrimaryStatPill(
+            emoji    = "💰",
+            value    = stats.capital.shortFormat(),
+            label    = Strings.uiCharSelStatCapital,
+            color    = GoldPrimary,
+            modifier = Modifier.weight(1f)
+        )
+        PrimaryStatPill(
+            emoji    = "📈",
+            value    = "${stats.income / 1000}k${Strings.uiCharSelPerMonth}",
+            label    = Strings.uiCharSelStatIncome,
+            color    = GreenSuccess,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
 @Composable
-private fun MiniStat(emoji: String, value: String, color: Color, modifier: Modifier) {
-    val colors = LocalAppColors.current
+private fun PrimaryStatPill(
+    emoji: String,
+    value: String,
+    label: String,
+    color: Color,
+    modifier: Modifier
+) {
     Column(
-        modifier           = modifier
-            .background(color.copy(0.07f), RoundedCornerShape(8.dp))
-            .padding(vertical = 4.dp, horizontal = 2.dp),
+        modifier            = modifier
+            .background(color.copy(alpha = 0.09f), RoundedCornerShape(10.dp))
+            .padding(vertical = 8.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(emoji, fontSize = 13.sp)
-        // Raised from 10sp to 12sp for accessibility (WCAG AA normal text minimum)
-        Text(value, fontSize = 12.sp, color = color, fontWeight = FontWeight.SemiBold)
+        Text(emoji, fontSize = 16.sp)
+        Spacer(Modifier.height(2.dp))
+        // Larger value (16sp was 12sp) — much easier to scan and compare
+        Text(value, fontSize = 16.sp, color = color, fontWeight = FontWeight.Bold)
+        Text(label, fontSize = 11.sp, color = color.copy(alpha = 0.70f), fontWeight = FontWeight.Normal)
     }
 }
 

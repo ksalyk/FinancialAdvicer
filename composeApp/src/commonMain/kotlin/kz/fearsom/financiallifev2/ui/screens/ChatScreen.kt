@@ -818,38 +818,84 @@ private fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) ->
     }
 }
 
+/**
+ * Risk level for a player choice, derived from its [Effect].
+ * Drives the left-border accent color in [DiaryActionItem].
+ */
+private enum class OptionRisk { SAFE, NEUTRAL, RISKY }
+
+private fun effectRisk(option: GameOption): OptionRisk {
+    val e = option.effects
+    val risky = e.debtDelta > 0 ||
+                e.stressDelta > 15 ||
+                e.riskDelta > 25 ||
+                (e.capitalDelta < -50_000L)
+    val safe = !risky && (
+                e.stressDelta < -5 ||
+                e.knowledgeDelta > 0 ||
+                (e.capitalDelta > 0 && e.debtDelta <= 0)
+               )
+    return when {
+        risky -> OptionRisk.RISKY
+        safe  -> OptionRisk.SAFE
+        else  -> OptionRisk.NEUTRAL
+    }
+}
+
 @Composable
 private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
-    val colors = LocalAppColors.current
-    val shape  = RoundedCornerShape(8.dp)
+    val colors    = LocalAppColors.current
+    val shape     = RoundedCornerShape(8.dp)
+    val risk      = effectRisk(option)
+    val riskColor = when (risk) {
+        OptionRisk.SAFE    -> GreenSuccess
+        OptionRisk.RISKY   -> RedDanger
+        OptionRisk.NEUTRAL -> GoldPrimary
+    }
+
     Surface(
         onClick  = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp),   // WCAG touch target minimum
         shape    = shape,
         color    = colors.backgroundElevated,
-        border   = BorderStroke(1.dp, DiaryChoiceBorder.copy(alpha = 0.20f))
+        border   = BorderStroke(1.dp, riskColor.copy(alpha = 0.25f))
     ) {
         Row(
-            modifier          = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier          = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                "☐",
-                fontSize  = 16.sp,
-                color     = DiaryChoiceBorder.copy(alpha = 0.70f),
-                modifier  = Modifier.padding(end = 10.dp)
+            // ── Colored left accent bar ──────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .heightIn(min = 48.dp)
+                    .fillMaxHeight()
+                    .background(
+                        color = riskColor.copy(alpha = 0.85f),
+                        shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
+                    )
             )
-            if (option.emoji.isNotEmpty()) {
-                Text(option.emoji, fontSize = 18.sp, modifier = Modifier.padding(end = 8.dp))
+
+            Row(
+                modifier          = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (option.emoji.isNotEmpty()) {
+                    Text(option.emoji, fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
+                }
+                Text(
+                    option.text,
+                    style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.textPrimary),
+                    color      = colors.textPrimary,
+                    modifier   = Modifier.weight(1f),
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 20.sp
+                )
             }
-            Text(
-                option.text,
-                style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.textPrimary),
-                color      = colors.textPrimary,
-                modifier   = Modifier.weight(1f),
-                fontWeight = FontWeight.Medium,
-                lineHeight = 20.sp
-            )
         }
     }
 }

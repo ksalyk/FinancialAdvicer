@@ -129,6 +129,54 @@ fun LoginScreen(
 
             Spacer(Modifier.height(44.dp))
 
+            // ── Try Demo — prominent CTA for new users ────────────────────
+            if (!isRegisterMode) {
+                Button(
+                    onClick  = { onLogin("demo", "demo") },
+                    enabled  = !isLoading,
+                    modifier = Modifier.fillMaxWidth().height(58.dp),
+                    shape    = RoundedCornerShape(18.dp),
+                    colors   = ButtonDefaults.buttonColors(
+                        containerColor = GreenMedium,
+                        contentColor   = Color(0xFF002010)
+                    )
+                ) {
+                    Text(
+                        "🎮  ${Strings.uiLoginTryDemo}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 16.sp
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        Strings.uiLoginTryDemoSub,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color(0xFF002010).copy(alpha = 0.70f)
+                    )
+                }
+
+                Row(
+                    modifier          = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(
+                        modifier  = Modifier.weight(1f),
+                        thickness = 1.dp,
+                        color     = colors.textHint.copy(alpha = 0.40f)
+                    )
+                    Text(
+                        "  ${Strings.uiLoginOr}  ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textHint
+                    )
+                    HorizontalDivider(
+                        modifier  = Modifier.weight(1f),
+                        thickness = 1.dp,
+                        color     = colors.textHint.copy(alpha = 0.40f)
+                    )
+                }
+            }
+
             // ── Glass card ────────────────────────────────────────────────
             Box(
                 modifier = Modifier
@@ -264,16 +312,7 @@ fun LoginScreen(
                         }
                     }
 
-                    if (!isRegisterMode) {
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            Strings.uiLoginDemoHint,
-                            style     = MaterialTheme.typography.bodySmall,
-                            color     = colors.textHint,
-                            textAlign = TextAlign.Center,
-                            modifier  = Modifier.fillMaxWidth()
-                        )
-                    }
+                    // Demo hint removed — replaced by prominent "Try Demo" button above the card
                 }
             }
 

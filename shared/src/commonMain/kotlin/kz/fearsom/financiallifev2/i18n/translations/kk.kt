@@ -18,6 +18,9 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_login_btn_register"          to "Тіркелу",
     "ui_login_btn_login"             to "Кіру",
     "ui_login_demo_hint"             to "Демо: demo / demo123",
+    "ui_login_try_demo"              to "Демо режимін көру",
+    "ui_login_try_demo_sub"          to "Тіркелу қажет емес",
+    "ui_login_or"                    to "немесе",
     "ui_login_already_have_account"  to "Аккаунт бар ма? Кіру",
     "ui_login_no_account"            to "Аккаунт жоқ па? Тіркелу",
 
@@ -58,6 +61,8 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_char_sel_unlock_era"         to "Дәуірде ойнаңыз",
     "ui_char_sel_unlock_complete_n"  to "%d ойын(дар)ын аяқтаңыз",
     "ui_char_sel_per_month"          to "/ай",
+    "ui_char_sel_stat_capital"       to "Капитал",
+    "ui_char_sel_stat_income"        to "Табыс/ай",
 
     // ── CharactersScreen ─────────────────────────────────────────────
     "ui_chars_title"                 to "Кейіпкерлер",

@@ -1,0 +1,281 @@
+package kz.fearsom.financiallifev2.scenarios.arcs
+
+import kz.fearsom.financiallifev2.model.MONTHLY_TICK
+import kz.fearsom.financiallifev2.model.PlayerState
+
+/**
+ * All era-varying numeric and structural parameters for Aidar's main story arc.
+ * Extracted so the arc function can be written once and parameterized per era.
+ */
+data class AidarEraAmounts(
+    // ── intro ────────────────────────────────────────────────────────────────
+    val introHelpBrotherExpenses: Long,
+    val introHelpBrotherStress: Int,
+    val introSaveFirstStress: Int,
+    val introSaveFirstFlags: Set<String>,
+
+    // ── startup_pitch ────────────────────────────────────────────────────────
+    val startupJoinCapital: Long,
+    val startupJoinStress: Int,
+    val startupJoinKnowledge: Int,
+    val startupJoinRisk: Int,
+    val startupJoinAfterMonths: Int,
+    val startupPartialStress: Int,
+    val startupPartialKnowledge: Int,
+    val startupSkipKnowledge: Int,
+    val startupSkipStress: Int,
+    val startupSkipFlags: Set<String>,
+
+    // ── startup_3months ──────────────────────────────────────────────────────
+    val startup3ExitCapital: Long,
+    val startup3PitchStress: Int,
+    val startup3PitchKnowledge: Int,
+    val startup3PitchRisk: Int,
+    val startup3ExitStress: Int,
+    val startup3ExitKnowledge: Int,
+
+    // ── startup_result ───────────────────────────────────────────────────────
+    val startupResultStrongNext: String,
+    val startupResultStrongIncome: Long,
+    val startupResultStrongStress: Int,
+    val startupResultStrongKnowledge: Int,
+    val startupResultStrongFlags: Set<String>,
+    val startupResultSafeStress: Int,
+    val startupResultSafeKnowledge: Int,
+    val startupResultSafeFlags: Set<String>,
+
+    // ── startup_success (2015+ only) ─────────────────────────────────────────
+    val hasStartupSuccess: Boolean,
+    val startupSuccessCapital: Long,
+    val startupSuccessQuitIncomeDelta: Long,
+    val startupSuccessQuitStress: Int,
+    val startupSuccessQuitKnowledge: Int,
+    val startupSuccessKeepStress: Int,
+    val startupSuccessKeepKnowledge: Int,
+
+    // ── senior_promotion ────────────────────────────────────────────────────
+    val seniorMiddleIncome: Long,
+    val seniorMiddleStress: Int,
+    val seniorAstanaNext: String,
+    val seniorAstanaIncome: Long,
+    val seniorAstanaExpenses: Long,
+    val seniorAstanaStress: Int,
+    val seniorAstanaKnowledge: Int,
+    val seniorAstanaRisk: Int,
+    val seniorAstanaFlags: Set<String>,
+    val seniorStaySameStress: Int,
+    val seniorStaySameKnowledge: Int,
+)
+
+val aidarEraAmounts: Map<String, AidarEraAmounts> = mapOf(
+    "kz_2005" to AidarEraAmounts(
+        introHelpBrotherExpenses = 8_000L,
+        introHelpBrotherStress = -3,
+        introSaveFirstStress = 2,
+        introSaveFirstFlags = setOf("aidar.self.first"),
+
+        startupJoinCapital = -80_000L,
+        startupJoinStress = 14,
+        startupJoinKnowledge = 0,
+        startupJoinRisk = 12,
+        startupJoinAfterMonths = 3,
+        startupPartialStress = 8,
+        startupPartialKnowledge = 7,
+        startupSkipKnowledge = 4,
+        startupSkipStress = -2,
+        startupSkipFlags = emptySet(),
+
+        startup3ExitCapital = 45_000L,
+        startup3PitchStress = 18,
+        startup3PitchKnowledge = 6,
+        startup3PitchRisk = 10,
+        startup3ExitStress = -10,
+        startup3ExitKnowledge = 5,
+
+        startupResultStrongNext = MONTHLY_TICK,
+        startupResultStrongIncome = 60_000L,
+        startupResultStrongStress = 20,
+        startupResultStrongKnowledge = 12,
+        startupResultStrongFlags = setOf("aidar.2005_trade_risk"),
+        startupResultSafeStress = -12,
+        startupResultSafeKnowledge = 8,
+        startupResultSafeFlags = setOf("aidar.learned_hype"),
+
+        hasStartupSuccess = false,
+        startupSuccessCapital = 0L,
+        startupSuccessQuitIncomeDelta = 0L,
+        startupSuccessQuitStress = 0,
+        startupSuccessQuitKnowledge = 0,
+        startupSuccessKeepStress = 0,
+        startupSuccessKeepKnowledge = 0,
+
+        seniorMiddleIncome = 45_000L,
+        seniorMiddleStress = 6,
+        seniorAstanaNext = "freelance_order",
+        seniorAstanaIncome = 0L,
+        seniorAstanaExpenses = 0L,
+        seniorAstanaStress = 12,
+        seniorAstanaKnowledge = 10,
+        seniorAstanaRisk = 6,
+        seniorAstanaFlags = emptySet(),
+        seniorStaySameStress = -2,
+        seniorStaySameKnowledge = 3,
+    ),
+    "kz_2015" to AidarEraAmounts(
+        introHelpBrotherExpenses = 12_000L,
+        introHelpBrotherStress = -4,
+        introSaveFirstStress = 0,
+        introSaveFirstFlags = setOf("aidar.buffer.first"),
+
+        startupJoinCapital = -150_000L,
+        startupJoinStress = 16,
+        startupJoinKnowledge = 6,
+        startupJoinRisk = 0,
+        startupJoinAfterMonths = 4,
+        startupPartialStress = 8,
+        startupPartialKnowledge = 8,
+        startupSkipKnowledge = 4,
+        startupSkipStress = 0,
+        startupSkipFlags = setOf("aidar.learned_boundaries"),
+
+        startup3ExitCapital = 80_000L,
+        startup3PitchStress = 20,
+        startup3PitchKnowledge = 10,
+        startup3PitchRisk = 0,
+        startup3ExitStress = -10,
+        startup3ExitKnowledge = 4,
+
+        startupResultStrongNext = "startup_success",
+        startupResultStrongIncome = 0L,
+        startupResultStrongStress = 0,
+        startupResultStrongKnowledge = 5,
+        startupResultStrongFlags = emptySet(),
+        startupResultSafeStress = -12,
+        startupResultSafeKnowledge = 6,
+        startupResultSafeFlags = emptySet(),
+
+        hasStartupSuccess = true,
+        startupSuccessCapital = 500_000L,
+        startupSuccessQuitIncomeDelta = -310_000L,
+        startupSuccessQuitStress = 22,
+        startupSuccessQuitKnowledge = 14,
+        startupSuccessKeepStress = 28,
+        startupSuccessKeepKnowledge = 9,
+
+        seniorMiddleIncome = 80_000L,
+        seniorMiddleStress = 5,
+        seniorAstanaNext = MONTHLY_TICK,
+        seniorAstanaIncome = 150_000L,
+        seniorAstanaExpenses = 40_000L,
+        seniorAstanaStress = 16,
+        seniorAstanaKnowledge = 12,
+        seniorAstanaRisk = 0,
+        seniorAstanaFlags = setOf("aidar.relocated"),
+        seniorStaySameStress = -2,
+        seniorStaySameKnowledge = 4,
+    ),
+    "kz_2024" to AidarEraAmounts(
+        introHelpBrotherExpenses = 20_000L,
+        introHelpBrotherStress = -4,
+        introSaveFirstStress = 0,
+        introSaveFirstFlags = setOf("aidar.buffer.first"),
+
+        startupJoinCapital = -220_000L,
+        startupJoinStress = 18,
+        startupJoinKnowledge = 8,
+        startupJoinRisk = 0,
+        startupJoinAfterMonths = 3,
+        startupPartialStress = 10,
+        startupPartialKnowledge = 10,
+        startupSkipKnowledge = 5,
+        startupSkipStress = 0,
+        startupSkipFlags = setOf("aidar.learned_boundaries"),
+
+        startup3ExitCapital = 120_000L,
+        startup3PitchStress = 22,
+        startup3PitchKnowledge = 10,
+        startup3PitchRisk = 0,
+        startup3ExitStress = -12,
+        startup3ExitKnowledge = 5,
+
+        startupResultStrongNext = "startup_success",
+        startupResultStrongIncome = 0L,
+        startupResultStrongStress = 0,
+        startupResultStrongKnowledge = 6,
+        startupResultStrongFlags = emptySet(),
+        startupResultSafeStress = -10,
+        startupResultSafeKnowledge = 8,
+        startupResultSafeFlags = emptySet(),
+
+        hasStartupSuccess = true,
+        startupSuccessCapital = 900_000L,
+        startupSuccessQuitIncomeDelta = -520_000L,
+        startupSuccessQuitStress = 24,
+        startupSuccessQuitKnowledge = 16,
+        startupSuccessKeepStress = 30,
+        startupSuccessKeepKnowledge = 10,
+
+        seniorMiddleIncome = 120_000L,
+        seniorMiddleStress = 4,
+        seniorAstanaNext = MONTHLY_TICK,
+        seniorAstanaIncome = 220_000L,
+        seniorAstanaExpenses = 60_000L,
+        seniorAstanaStress = 15,
+        seniorAstanaKnowledge = 12,
+        seniorAstanaRisk = 0,
+        seniorAstanaFlags = setOf("aidar.relocated"),
+        seniorStaySameStress = -3,
+        seniorStaySameKnowledge = 4,
+    ),
+)
+
+fun aidarInitialState(eraId: String): PlayerState = when (eraId) {
+    "kz_2005" -> PlayerState(
+        capital = 120_000L,
+        income = 95_000L,
+        expenses = 68_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.07,
+        stress = 28,
+        financialKnowledge = 12,
+        riskLevel = 22,
+        month = 1,
+        year = 2005,
+        characterId = "aidar",
+        eraId = eraId
+    )
+    "kz_2015" -> PlayerState(
+        capital = 260_000L,
+        income = 310_000L,
+        expenses = 215_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.08,
+        stress = 30,
+        financialKnowledge = 18,
+        riskLevel = 24,
+        month = 1,
+        year = 2015,
+        characterId = "aidar",
+        eraId = eraId
+    )
+    else -> PlayerState(
+        capital = 420_000L,
+        income = 520_000L,
+        expenses = 325_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.08,
+        stress = 32,
+        financialKnowledge = 24,
+        riskLevel = 28,
+        month = 1,
+        year = 2024,
+        characterId = "aidar",
+        eraId = eraId
+    )
+}

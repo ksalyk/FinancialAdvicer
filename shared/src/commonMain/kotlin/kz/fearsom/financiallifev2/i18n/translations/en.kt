@@ -18,6 +18,9 @@ val enStrings: Map<String, String> = mapOf(
     "ui_login_btn_register"          to "Create Account",
     "ui_login_btn_login"             to "Sign In",
     "ui_login_demo_hint"             to "Demo: demo / demo123",
+    "ui_login_try_demo"              to "Try Demo Mode",
+    "ui_login_try_demo_sub"          to "No account needed",
+    "ui_login_or"                    to "or",
     "ui_login_already_have_account"  to "Already have an account? Sign In",
     "ui_login_no_account"            to "No account? Register",
 
@@ -58,6 +61,8 @@ val enStrings: Map<String, String> = mapOf(
     "ui_char_sel_unlock_era"         to "Play the era",
     "ui_char_sel_unlock_complete_n"  to "Complete %d game(s)",
     "ui_char_sel_per_month"          to "/mo",
+    "ui_char_sel_stat_capital"       to "Capital",
+    "ui_char_sel_stat_income"        to "Income/mo",
 
     // ── CharactersScreen ─────────────────────────────────────────────
     "ui_chars_title"                 to "Characters",

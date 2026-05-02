@@ -30,6 +30,9 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_login_btn_register"          to "Создать аккаунт",
     "ui_login_btn_login"             to "Войти",
     "ui_login_demo_hint"             to "Демо: demo / demo123",
+    "ui_login_try_demo"              to "Попробовать демо",
+    "ui_login_try_demo_sub"          to "Без регистрации",
+    "ui_login_or"                    to "или",
     "ui_login_already_have_account"  to "Уже есть аккаунт? Войти",
     "ui_login_no_account"            to "Нет аккаунта? Зарегистрироваться",
 
@@ -70,6 +73,8 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_char_sel_unlock_era"         to "Сыграй в эпоху",
     "ui_char_sel_unlock_complete_n"  to "Заверши %d игр(ы)",
     "ui_char_sel_per_month"          to "/мес",
+    "ui_char_sel_stat_capital"       to "Капитал",
+    "ui_char_sel_stat_income"        to "Доход/мес",
 
     // ── CharactersScreen ─────────────────────────────────────────────
     "ui_chars_title"                 to "Персонажи",
