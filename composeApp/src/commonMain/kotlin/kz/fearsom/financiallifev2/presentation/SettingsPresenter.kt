@@ -4,6 +4,7 @@ import kz.fearsom.financiallifev2.data.FeatureFlag
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.TypingPace
+import kz.fearsom.financiallifev2.i18n.Strings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,8 +20,7 @@ data class SettingsUiState(
  * Presenter for the Settings screen.
  *
  * Owns both locale and feature-flag state so SettingsScreen only needs one
- * state object. Previously locale was driven directly from LocalePresenter —
- * migrating here consolidates the settings surface.
+ * state object.
  */
 class SettingsPresenter(
     private val localeRepo: LocaleRepository,
@@ -29,7 +29,7 @@ class SettingsPresenter(
 ) {
     private val _uiState = MutableStateFlow(
         SettingsUiState(
-            currentLocale           = localeRepo.restoreLocale(),
+            currentLocale           = Strings.currentLocale,
             typingAnimationEnabled  = featureFlags.get(FeatureFlag.TypingAnimationEnabled),
             typingAnimationPace     = featureFlags.get(FeatureFlag.TypingAnimationPace)
         )

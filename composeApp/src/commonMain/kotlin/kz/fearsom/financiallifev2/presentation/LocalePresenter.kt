@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.presentation
 
 import kz.fearsom.financiallifev2.data.LocaleRepository
+import kz.fearsom.financiallifev2.i18n.Strings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,7 @@ class LocalePresenter(
     private val scope: CoroutineScope
 ) {
     private val _uiState = MutableStateFlow(
-        LocaleUiState(currentLocale = localeRepository.restoreLocale())
+        LocaleUiState(currentLocale = Strings.currentLocale)
     )
     val uiState: StateFlow<LocaleUiState> = _uiState.asStateFlow()
 

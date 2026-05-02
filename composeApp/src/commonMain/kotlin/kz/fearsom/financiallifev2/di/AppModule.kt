@@ -7,8 +7,7 @@ import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
-import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.i18n.deviceLocale
+import kz.fearsom.financiallifev2.i18n.initDeviceLocaleCache
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.network.NetworkConfig
 import kz.fearsom.financiallifev2.network.TokenStorage
@@ -28,13 +27,23 @@ import org.koin.dsl.module
  * Platform modules can override [NetworkConfig.baseUrl] before Koin starts:
  *   NetworkConfig.baseUrl = "http://10.0.2.2:8080/api/v1"  // Android emulator
  *   NetworkConfig.baseUrl = "http://localhost:8080/api/v1"  // iOS simulator
+ *
+ * Locale initialization:
+ *   1. initDeviceLocaleCache() caches deviceLocale() once.
+ *   2. LocaleRepository.restoreLocale() reads persisted locale or falls back
+ *      to cached device locale when the singleton is created.
+ *   3. Presenters read Strings.currentLocale instead of re-reading storage.
  */
 val commonModule = module {
 
-    // ── Locale initialisation — must run first ─────────────────────────────────
-    // Seed currentLocale with device language. LocaleRepository applies the
-    // persisted manual override when AppNavigation creates SettingsPresenter.
-    Strings.currentLocale = deviceLocale()
+    // ── Locale initialization ────────────────────────────────────────────────
+    initDeviceLocaleCache()
+
+    single(createdAtStart = true) {
+        LocaleRepository(secureStorage = get<SecureStorage>()).apply {
+            restoreLocale()
+        }
+    }
 
     // ── Token storage (in-memory; shared between HttpClient and AuthRepository) ─
     single { TokenStorage() }
@@ -70,9 +79,6 @@ val commonModule = module {
 
     // ── Session repository (in-memory; replace with SQLDelight in Sprint 4) ──
     single { GameSessionRepository() }
-
-    // ── Locale repository (manual override persisted in SecureStorage) ───────
-    single { LocaleRepository(secureStorage = get<SecureStorage>()) }
 
     // ── Feature flags (local; swap impl here when remote config is added) ────
     // Bound as the interface so all callers are agnostic of the storage backend.
