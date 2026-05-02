@@ -32,7 +32,7 @@ fun MainViewController() = ComposeUIViewController(
     configure = {
         // iOS simulator reaches host machine directly via localhost,
         // unlike Android emulator which requires the 10.0.2.2 alias.
-        NetworkConfig.baseUrl = "http://localhost:8080/api/v1"
+        NetworkConfig.baseUrl = "http://localhost:8082/api/v1"
         // Init Koin once per app launch
         startKoin { modules(commonModule, iosModule) }
     }
