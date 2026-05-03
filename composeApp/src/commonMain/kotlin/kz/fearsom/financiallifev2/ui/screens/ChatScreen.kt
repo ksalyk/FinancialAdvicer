@@ -1,36 +1,105 @@
 package kz.fearsom.financiallifev2.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import financiallifev2.composeapp.generated.resources.*
+import financiallifev2.composeapp.generated.resources.Res
+import financiallifev2.composeapp.generated.resources.scene_career
+import financiallifev2.composeapp.generated.resources.scene_crisis
+import financiallifev2.composeapp.generated.resources.scene_family
+import financiallifev2.composeapp.generated.resources.scene_investment
+import financiallifev2.composeapp.generated.resources.scene_mortgage
+import financiallifev2.composeapp.generated.resources.scene_scam
+import financiallifev2.composeapp.generated.resources.scene_windfall
+import financiallifev2.composeapp.generated.resources.scene_world
+import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.ChatMessage
@@ -40,8 +109,13 @@ import kz.fearsom.financiallifev2.model.MessageSender
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.presentation.GameUiState
 import kz.fearsom.financiallifev2.ui.components.StatsPanelOverlay
-import kz.fearsom.financiallifev2.ui.theme.*
-import kotlinx.coroutines.delay
+import kz.fearsom.financiallifev2.ui.theme.DiaryChoiceBorder
+import kz.fearsom.financiallifev2.ui.theme.DiaryHeaderStyle
+import kz.fearsom.financiallifev2.ui.theme.DiaryTextStyle
+import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
+import kz.fearsom.financiallifev2.ui.theme.GreenSuccess
+import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
+import kz.fearsom.financiallifev2.ui.theme.RedDanger
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
@@ -57,9 +131,9 @@ fun ChatScreen(
     onRestart: () -> Unit,
     onNavigateToMenu: () -> Unit = {}
 ) {
-    val colors      = LocalAppColors.current
-    val listState   = rememberLazyListState()
-    val messages    = uiState.gameState?.messages ?: emptyList()
+    val colors = LocalAppColors.current
+    val listState = rememberLazyListState()
+    val messages = uiState.gameState?.messages ?: emptyList()
     val playerState = uiState.gameState?.playerState
 
     // ID of the latest CHARACTER message — the only one that gets animated.
@@ -68,19 +142,112 @@ fun ChatScreen(
         messages.lastOrNull { it.sender == MessageSender.CHARACTER }?.id
     }
 
-    // Skip flag: flipped to true by the skip button, reset when a new message arrives.
-    // We use an Int (generation counter) so the LaunchedEffect key changes even if the
-    // latestCharacterMessageId hasn't changed yet (e.g. same message re-composed).
-    var skipGeneration by remember { mutableIntStateOf(0) }
-    LaunchedEffect(latestCharacterMessageId) { skipGeneration = 0 }
+    // ── Per-message revealed-length states ────────────────────────────────────
+    // Stored at screen scope so they survive LazyColumn item recycling.
+    // Each entry is an independent MutableState so only the specific item
+    // recomposes on each character reveal (SnapshotStateMap would invalidate ALL readers).
+    val displayedLengths = remember { HashMap<String, MutableState<Int>>() }
+
+    // Return (or lazily create) the state for a given message.
+    // The latest CHARACTER message is initialised to 0 so the item renders empty
+    // from the very first composition frame — no full-text flash before animation.
+    // All other messages default to full length so they appear instantly.
+    fun lengthStateFor(msg: ChatMessage): MutableState<Int> =
+        displayedLengths.getOrPut(msg.id) {
+            val initial =
+                if (typingAnimationEnabled && msg.id == latestCharacterMessageId) 0
+                else msg.text.length
+            mutableStateOf(initial)
+        }
 
     // Whether any animation is currently running — drives skip button visibility.
     var isAnimating by remember { mutableStateOf(false) }
+    var scrollBlocked by remember { mutableStateOf(false) }
 
-    LaunchedEffect(messages.size) {
+    // ── Screen-level typing animation ─────────────────────────────────────────
+    // Owned here, NOT inside the item composable, so LazyColumn recycling,
+    // recomposition, and lambda re-capture can never interrupt it.
+    // Keyed on latestCharacterMessageId + skipRequestedForMessageId so:
+    //   • it restarts (new message) when a new message arrives
+    //   • it restarts (skip path) only for the message the user actually skipped
+    var skipRequestedForMessageId by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(latestCharacterMessageId, typingAnimationEnabled, skipRequestedForMessageId) {
+        if (!typingAnimationEnabled || latestCharacterMessageId == null) {
+            isAnimating = false
+            scrollBlocked = false
+            return@LaunchedEffect
+        }
+        val msg = messages.lastOrNull { it.id == latestCharacterMessageId }
+            ?: return@LaunchedEffect
+        val target = msg.text.length
+
+        // Skip pressed → jump to end immediately and stop.
+        if (skipRequestedForMessageId == msg.id) {
+            displayedLengths.getOrPut(msg.id) { mutableStateOf(target) }.value = target
+            isAnimating = false
+            scrollBlocked = false
+            return@LaunchedEffect
+        }
+
+        // Normal animation: reveal character by character.
+        // getOrPut preserves the existing state object so the item's `by` delegate
+        // keeps its subscription — replacing the object (= would break recomposition.
+        val state = displayedLengths.getOrPut(msg.id) { mutableStateOf(0) }
+        state.value = 0  // reset in-place, never replace the object
+        isAnimating = true
+        for (i in 0 until target) {
+            delay(typingAnimationPace.charDelayMs)
+            state.value = i + 1
+        }
+        isAnimating = false
+        scrollBlocked = false
+    }
+
+    LaunchedEffect(uiState.isTyping, isAnimating) {
+        if (!uiState.isTyping && !isAnimating) {
+            scrollBlocked = false
+        }
+    }
+
+    // Tracks message IDs that have entered the viewport at least once.
+    // Used only for the slide-in entry animation suppression on scroll-back.
+    val seenMessageIds = remember { HashSet<String>() }
+
+    // Scroll to new message when user selects an option or messages arrive
+    LaunchedEffect(messages.size, scrollBlocked) {
         if (messages.isNotEmpty()) {
-            delay(80)
+            delay(50)
             listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Ensure we're at the latest CHARACTER message when animation starts
+    LaunchedEffect(latestCharacterMessageId) {
+        if (latestCharacterMessageId != null && messages.isNotEmpty()) {
+            delay(16) // Wait one frame for layout
+            val index = messages.indexOfFirst { it.id == latestCharacterMessageId }
+            if (index >= 0) {
+                listState.scrollToItem(index)
+            }
+        }
+    }
+
+    // If typing animation is disabled, scroll to end of message after it renders
+    // (since message appears instantly without character-by-character animation)
+    if (!typingAnimationEnabled) {
+        LaunchedEffect(latestCharacterMessageId, messages.size) {
+            if (latestCharacterMessageId != null && messages.isNotEmpty()) {
+                delay(50) // Wait for layout to measure the full message height
+                listState.animateScrollToItem(messages.size - 1, Int.MAX_VALUE)
+            }
+        }
+    }
+
+    // When action panel appears, ensure message is visible above it
+    LaunchedEffect(uiState.currentOptions.isNotEmpty()) {
+        if (uiState.currentOptions.isNotEmpty() && messages.isNotEmpty()) {
+            delay(300) // Wait for AnimatedVisibility to complete (slideInVertically + fadeIn)
+            listState.animateScrollToItem(messages.size - 1, Int.MAX_VALUE)
         }
     }
 
@@ -108,41 +275,66 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
-                .background(Brush.verticalGradient(listOf(colors.backgroundDeep, Color.Transparent)))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            colors.backgroundDeep,
+                            Color.Transparent
+                        )
+                    )
+                )
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
             DiaryTopBar(
-                playerState      = playerState,
-                characterName    = uiState.characterName,
-                characterEmoji   = uiState.characterEmoji,
-                characterTitle   = uiState.characterTitle,
-                onStatsClick     = onToggleStats,
-                onRestartClick   = onRestart,
-                onMenuClick      = onNavigateToMenu
+                playerState = playerState,
+                characterName = uiState.characterName,
+                characterEmoji = uiState.characterEmoji,
+                characterTitle = uiState.characterTitle,
+                onStatsClick = onToggleStats,
+                onRestartClick = onRestart,
+                onMenuClick = onNavigateToMenu
             )
 
             Box(modifier = Modifier.weight(1f)) {
+                // Block user gesture scrolls while typing animation is running
+                // But allow programmatic scrolls (auto-scroll during animation)
+                val scrollConnection = remember {
+                    object : NestedScrollConnection {
+                        override fun onPreScroll(
+                            available: Offset,
+                            source: NestedScrollSource
+                        ): Offset {
+                            // Block only user gestures (Drag, Wheel), allow SideChannel (programmatic)
+                            if (!isAnimating && !scrollBlocked) return Offset.Zero
+                            return if (source == NestedScrollSource.SideEffect) Offset.Zero else available
+                        }
+                    }
+                }
+
                 LazyColumn(
-                    state               = listState,
-                    modifier            = Modifier.fillMaxSize(),
-                    contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(scrollConnection),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(messages, key = { it.id }) { message ->
-                        // AnimatedMessageEntry is a separate composable to break the
-                        // ColumnScope implicit receiver chain — calling AnimatedVisibility
-                        // directly here would cause the compiler to select the
-                        // ColumnScope overload from the outer Column, then fail.
-                        AnimatedMessageEntry {
+                        val isFirstTime = message.id !in seenMessageIds
+                        val isLatestChar = typingAnimationEnabled &&
+                                message.id == latestCharacterMessageId
+                        // Read this message's revealed length from the screen-scoped
+                        // map.  lengthStateFor creates an entry with full length if not
+                        // present, so old messages always render instantly.
+                        val displayedLength by lengthStateFor(message)
+                        SideEffect { seenMessageIds.add(message.id) }
+                        AnimatedMessageEntry(animate = isFirstTime) {
                             DiaryMessageItem(
-                                message        = message,
-                                playerState    = playerState,
-                                isLatestChar   = typingAnimationEnabled &&
-                                        message.id == latestCharacterMessageId,
-                                pace           = typingAnimationPace,
-                                skipGeneration = skipGeneration,
-                                onAnimating    = { isAnimating = it }
+                                message = message,
+                                playerState = playerState,
+                                isLatestChar = isLatestChar,
+                                displayedLength = displayedLength
                             )
                         }
                     }
@@ -156,16 +348,33 @@ fun ChatScreen(
                 // ── Skip pill — extracted to break ColumnScope implicit receiver ─
                 SkipButtonOverlay(
                     visible = isAnimating,
-                    onSkip  = { skipGeneration++ }
+                    onSkip = {
+                        skipRequestedForMessageId = latestCharacterMessageId
+                        scrollBlocked = false
+                    }
                 )
             }
 
+            val isVisible = uiState.currentOptions.isNotEmpty() && !uiState.isTyping
             AnimatedVisibility(
-                visible = uiState.currentOptions.isNotEmpty() && !uiState.isTyping && !isAnimating,
-                enter   = slideInVertically { it } + fadeIn(),
-                exit    = slideOutVertically { it } + fadeOut()
+                visible = isVisible,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut()
             ) {
-                DiaryActionsPanel(uiState.currentOptions, onChoiceSelected)
+                if (isVisible && !isAnimating) {
+                    DiaryActionsPanel(options = uiState.currentOptions, onSelected = {
+                        scrollBlocked = true
+                        onChoiceSelected(it)
+                    })
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(32.dp),
+                        color = GoldPrimary
+                    )
+                }
+
             }
 
             if (uiState.gameState?.gameOver == true) {
@@ -175,10 +384,10 @@ fun ChatScreen(
 
         if (uiState.showStats && playerState != null) {
             StatsPanelOverlay(
-                playerState    = playerState,
-                characterName  = uiState.characterName,
+                playerState = playerState,
+                characterName = uiState.characterName,
                 characterEmoji = uiState.characterEmoji,
-                onDismiss      = onToggleStats
+                onDismiss = onToggleStats
             )
         }
     }
@@ -252,8 +461,8 @@ private fun DiaryTopBar(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "${Strings.uiChatDiary} · $characterName",
-                    style      = MaterialTheme.typography.titleMedium,
-                    color      = colors.textPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 val subtitle = if (playerState != null) {
@@ -319,21 +528,18 @@ private fun DiaryMessageItem(
     message: ChatMessage,
     playerState: PlayerState?,
     isLatestChar: Boolean = false,
-    pace: TypingPace = TypingPace.NORMAL,
-    skipGeneration: Int = 0,
-    onAnimating: (Boolean) -> Unit = {}
+    displayedLength: Int = message.text.length
 ) {
     when (message.sender) {
-        MessageSender.CHARACTER      -> DiaryEntryCard(
-            message        = message,
-            playerState    = playerState,
-            isLatestChar   = isLatestChar,
-            pace           = pace,
-            skipGeneration = skipGeneration,
-            onAnimating    = onAnimating
+        MessageSender.CHARACTER -> DiaryEntryCard(
+            message = message,
+            playerState = playerState,
+            isLatestChar = isLatestChar,
+            displayedLength = displayedLength
         )
-        MessageSender.PLAYER         -> DiaryChoiceNote(message)
-        MessageSender.SYSTEM         -> DiarySectionLabel(message)
+
+        MessageSender.PLAYER -> DiaryChoiceNote(message)
+        MessageSender.SYSTEM -> DiarySectionLabel(message)
         MessageSender.MONTHLY_REPORT -> DiaryFinancialEntry(message)
     }
 }
@@ -347,15 +553,15 @@ private fun DiaryMessageItem(
  */
 @Composable
 private fun sceneDrawableFor(tag: String?): DrawableResource? = when (tag) {
-    "scam"       -> Res.drawable.scene_scam
-    "crisis"     -> Res.drawable.scene_crisis
-    "career"     -> Res.drawable.scene_career
-    "family"     -> Res.drawable.scene_family
+    "scam" -> Res.drawable.scene_scam
+    "crisis" -> Res.drawable.scene_crisis
+    "career" -> Res.drawable.scene_career
+    "family" -> Res.drawable.scene_family
     "investment" -> Res.drawable.scene_investment
-    "mortgage"   -> Res.drawable.scene_mortgage
-    "windfall"   -> Res.drawable.scene_windfall
-    "world"      -> Res.drawable.scene_world
-    else         -> null
+    "mortgage" -> Res.drawable.scene_mortgage
+    "windfall" -> Res.drawable.scene_windfall
+    "world" -> Res.drawable.scene_world
+    else -> null
 }
 
 // ─── Diary Entry Card (CHARACTER messages) ────────────────────────────────────
@@ -365,58 +571,26 @@ private fun DiaryEntryCard(
     message: ChatMessage,
     playerState: PlayerState?,
     isLatestChar: Boolean = false,
-    pace: TypingPace = TypingPace.NORMAL,
-    skipGeneration: Int = 0,
-    onAnimating: (Boolean) -> Unit = {}
+    displayedLength: Int = message.text.length
 ) {
-    val colors   = LocalAppColors.current
-    val shape    = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
+    val colors = LocalAppColors.current
+    val shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
     val lineColor = colors.diaryLine
     val sceneRes = sceneDrawableFor(message.sceneTag)
 
-    // ── Typing animation state ────────────────────────────────────────────────
-    // `displayedLength` grows from 0 → message.text.length while animating.
-    // Keyed on message.id so the state resets for each new message; all
-    // previous messages start fully revealed (isLatestChar == false).
-    var displayedLength by remember(message.id) {
-        mutableIntStateOf(if (isLatestChar) 0 else message.text.length)
-    }
-
-    LaunchedEffect(message.id, skipGeneration) {
-        if (!isLatestChar || displayedLength >= message.text.length) {
-            // Not the animated card, or already complete — nothing to do.
-            if (isLatestChar && displayedLength >= message.text.length) {
-                onAnimating(false)
-            }
-            return@LaunchedEffect
-        }
-        // skipGeneration changed → jump to end immediately
-        if (skipGeneration > 0) {
-            displayedLength = message.text.length
-            onAnimating(false)
-            return@LaunchedEffect
-        }
-        onAnimating(true)
-        for (i in displayedLength until message.text.length) {
-            delay(pace.charDelayMs)
-            displayedLength = i + 1
-            // Re-check skip on every char (user can tap skip mid-animation)
-            if (skipGeneration > 0) break
-        }
-        displayedLength = message.text.length
-        onAnimating(false)
-    }
-
+    // Pure render — no animation logic lives here.
+    // displayedLength is driven by the screen-scoped coroutine in ChatScreen and
+    // survives LazyColumn item recycling because it is stored in displayedLengths map.
     val displayedText = message.text.take(displayedLength)
 
-    // Blinking cursor — only visible while animation is still running
+    // Blinking cursor — visible while animation is in progress for this message
     val cursorVisible = isLatestChar && displayedLength < message.text.length
     val cursorAlpha by rememberInfiniteTransition(label = "cursor")
         .animateFloat(
-            initialValue  = 1f,
-            targetValue   = 0f,
+            initialValue = 1f,
+            targetValue = 0f,
             animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
-            label         = "cursorAlpha"
+            label = "cursorAlpha"
         )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -429,10 +603,10 @@ private fun DiaryEntryCard(
                     .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 12.dp))
             ) {
                 Image(
-                    painter             = painterResource(sceneRes),
-                    contentDescription  = null,
-                    contentScale        = ContentScale.Crop,
-                    modifier            = Modifier.fillMaxSize()
+                    painter = painterResource(sceneRes),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
                 // Bottom fade-out so scene bleeds into the diary card below
                 Box(
@@ -448,15 +622,15 @@ private fun DiaryEntryCard(
                 )
                 // Scene tag label (top-left corner pill)
                 val tagLabel = when (message.sceneTag) {
-                    "scam"       -> Strings.uiChatSceneScam
-                    "crisis"     -> Strings.uiChatSceneCrisis
-                    "career"     -> Strings.uiChatSceneCareer
-                    "family"     -> Strings.uiChatSceneFamily
+                    "scam" -> Strings.uiChatSceneScam
+                    "crisis" -> Strings.uiChatSceneCrisis
+                    "career" -> Strings.uiChatSceneCareer
+                    "family" -> Strings.uiChatSceneFamily
                     "investment" -> Strings.uiChatSceneInvestment
-                    "mortgage"   -> Strings.uiChatSceneMortgage
-                    "windfall"   -> Strings.uiChatSceneWindfall
-                    "world"      -> Strings.uiChatSceneWorld
-                    else         -> null
+                    "mortgage" -> Strings.uiChatSceneMortgage
+                    "windfall" -> Strings.uiChatSceneWindfall
+                    "world" -> Strings.uiChatSceneWorld
+                    else -> null
                 }
                 if (tagLabel != null) {
                     Box(
@@ -469,9 +643,9 @@ private fun DiaryEntryCard(
                     ) {
                         Text(
                             tagLabel,
-                            style     = MaterialTheme.typography.labelSmall,
-                            color     = Color.White,
-                            fontSize  = 10.sp,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -506,9 +680,9 @@ private fun DiaryEntryCard(
                     var y = startY
                     while (y < size.height - 12.dp.toPx()) {
                         drawLine(
-                            color       = lineColor,
-                            start       = Offset(16.dp.toPx(), y),
-                            end         = Offset(size.width - 16.dp.toPx(), y),
+                            color = lineColor,
+                            start = Offset(16.dp.toPx(), y),
+                            end = Offset(size.width - 16.dp.toPx(), y),
                             strokeWidth = 1f
                         )
                         y += lineSpacing
@@ -518,9 +692,9 @@ private fun DiaryEntryCard(
             Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
                 // Date header row
                 Row(
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     val dateText = if (playerState != null) {
                         "${playerState.month} ${monthNameFull(playerState.month)} ${playerState.year}"
@@ -529,10 +703,10 @@ private fun DiaryEntryCard(
                     }
                     Text(
                         dateText,
-                        style      = MaterialTheme.typography.labelSmall,
-                        color      = colors.diaryInkSecondary,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.diaryInkSecondary,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize   = 11.sp
+                        fontSize = 11.sp
                     )
                     if (message.emoji.isNotEmpty() && playerState != null) {
                         Text(message.emoji, fontSize = 16.sp)
@@ -540,9 +714,9 @@ private fun DiaryEntryCard(
                 }
 
                 HorizontalDivider(
-                    modifier  = Modifier.padding(top = 8.dp, bottom = 12.dp),
+                    modifier = Modifier.padding(top = 8.dp, bottom = 12.dp),
                     thickness = 1.dp,
-                    color     = colors.diaryLine
+                    color = colors.diaryLine
                 )
 
                 // Main diary text — uses animated displayedText when this is the
@@ -559,8 +733,8 @@ private fun DiaryEntryCard(
                     }
                 }
                 Text(
-                    text      = annotatedText,
-                    style     = DiaryTextStyle.copy(color = colors.diaryInk),
+                    text = annotatedText,
+                    style = DiaryTextStyle.copy(color = colors.diaryInk),
                     fontStyle = FontStyle.Normal
                 )
             }
@@ -577,7 +751,7 @@ private fun DiaryEntryCard(
 @Composable
 private fun DiaryChoiceNote(message: ChatMessage) {
     val colors = LocalAppColors.current
-    val shape  = RoundedCornerShape(2.dp, 10.dp, 10.dp, 10.dp)
+    val shape = RoundedCornerShape(2.dp, 10.dp, 10.dp, 10.dp)
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -594,15 +768,21 @@ private fun DiaryChoiceNote(message: ChatMessage) {
             Column {
                 Text(
                     "✍️  ${Strings.uiChatPlayerPrefix}",
-                    style      = DiaryHeaderStyle.copy(fontSize = 13.sp, color = colors.diaryInkSecondary),
-                    color      = colors.diaryInkSecondary,
+                    style = DiaryHeaderStyle.copy(
+                        fontSize = 13.sp,
+                        color = colors.diaryInkSecondary
+                    ),
+                    color = colors.diaryInkSecondary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text       = message.text,
-                    style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.diaryInk),
-                    color      = colors.diaryInk,
+                    text = message.text,
+                    style = DiaryTextStyle.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = colors.diaryInk
+                    ),
+                    color = colors.diaryInk,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -620,25 +800,25 @@ private fun DiaryChoiceNote(message: ChatMessage) {
 private fun DiarySectionLabel(message: ChatMessage) {
     val colors = LocalAppColors.current
     Row(
-        modifier          = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         HorizontalDivider(
-            modifier  = Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             thickness = 1.dp,
-            color     = colors.diaryLine
+            color = colors.diaryLine
         )
         Text(
-            text     = "  ${message.text}  ",
-            style    = DiaryHeaderStyle.copy(fontSize = 12.sp, color = colors.diaryInkSecondary),
-            color    = colors.diaryInkSecondary,
+            text = "  ${message.text}  ",
+            style = DiaryHeaderStyle.copy(fontSize = 12.sp, color = colors.diaryInkSecondary),
+            color = colors.diaryInkSecondary,
             fontWeight = FontWeight.SemiBold
         )
         HorizontalDivider(
-            modifier  = Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             thickness = 1.dp,
-            color     = colors.diaryLine
+            color = colors.diaryLine
         )
     }
 }
@@ -648,21 +828,21 @@ private fun DiarySectionLabel(message: ChatMessage) {
 @Composable
 private fun DiaryFinancialEntry(message: ChatMessage) {
     val colors = LocalAppColors.current
-    val shape  = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
+    val shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier          = Modifier.padding(start = 4.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("📒", fontSize = 14.sp)
             Spacer(Modifier.width(6.dp))
             Text(
                 Strings.uiChatMonthlyReport,
-                style      = MaterialTheme.typography.labelSmall,
-                color      = GreenSuccess.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.labelSmall,
+                color = GreenSuccess.copy(alpha = 0.85f),
                 fontWeight = FontWeight.Bold,
-                fontSize   = 12.sp
+                fontSize = 12.sp
             )
         }
         Box(
@@ -673,16 +853,19 @@ private fun DiaryFinancialEntry(message: ChatMessage) {
                 .border(
                     width = 1.dp,
                     brush = Brush.horizontalGradient(
-                        listOf(GreenSuccess.copy(alpha = 0.4f), DiaryChoiceBorder.copy(alpha = 0.2f))
+                        listOf(
+                            GreenSuccess.copy(alpha = 0.4f),
+                            DiaryChoiceBorder.copy(alpha = 0.2f)
+                        )
                     ),
                     shape = shape
                 )
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Text(
-                text       = message.text,
-                style      = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                color      = colors.diaryInk,
+                text = message.text,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                color = colors.diaryInk,
                 lineHeight = 20.sp
             )
         }
@@ -701,20 +884,23 @@ private fun DiaryWritingIndicator() {
     val infiniteTransition = rememberInfiniteTransition(label = "writing")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
-        targetValue  = 1f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse),
         label = "writingAlpha"
     )
 
     Row(
-        modifier          = Modifier.padding(start = 4.dp, top = 4.dp),
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("✍️", fontSize = 16.sp, modifier = Modifier.padding(end = 8.dp))
         Text(
             Strings.uiChatWriting,
-            style    = DiaryTextStyle.copy(fontSize = 14.sp, color = colors.diaryInkSecondary.copy(alpha = alpha)),
-            color    = colors.diaryInkSecondary.copy(alpha = alpha),
+            style = DiaryTextStyle.copy(
+                fontSize = 14.sp,
+                color = colors.diaryInkSecondary.copy(alpha = alpha)
+            ),
+            color = colors.diaryInkSecondary.copy(alpha = alpha),
             fontStyle = FontStyle.Italic
         )
     }
@@ -731,13 +917,22 @@ private fun DiaryWritingIndicator() {
 // The new function has a clean implicit-receiver chain — no ColumnScope — so
 // the call resolves to the standard top-level AnimatedVisibility overload.
 
-/** Entry animation for each chat message row. */
+/**
+ * Entry animation for each chat message row.
+ * [animate] is only true for messages appearing for the first time. Messages
+ * re-entering the viewport after being scrolled off skip the animation so they
+ * don't visually "replay" on scroll-back.
+ */
 @Composable
-private fun AnimatedMessageEntry(content: @Composable () -> Unit) {
-    AnimatedVisibility(
-        visible = true,
-        enter   = fadeIn(tween(400)) + slideInVertically(tween(350)) { it / 3 }
-    ) {
+private fun AnimatedMessageEntry(animate: Boolean = true, content: @Composable () -> Unit) {
+    if (animate) {
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(400)) + slideInVertically(tween(350)) { it / 3 }
+        ) {
+            content()
+        }
+    } else {
         content()
     }
 }
@@ -749,29 +944,31 @@ private fun SkipButtonOverlay(visible: Boolean, onSkip: () -> Unit) {
     val colors = LocalAppColors.current
     // Box fills the parent (the weight(1f) Box) and pins content to bottom-end
     Box(
-        modifier         = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomEnd
     ) {
         // AnimatedVisibility here has no ColumnScope in its receiver chain →
         // resolves to the standard top-level overload with no ambiguity.
         AnimatedVisibility(
             visible = visible,
-            enter   = fadeIn(tween(200)) + scaleIn(tween(200)),
-            exit    = fadeOut(tween(150)) + scaleOut(tween(150))
+            enter = fadeIn(tween(200)) + scaleIn(tween(200)),
+            exit = fadeOut(tween(150)) + scaleOut(tween(150))
         ) {
             FilledTonalButton(
-                onClick        = onSkip,
-                modifier       = Modifier.padding(end = 16.dp, bottom = 8.dp),
-                shape          = RoundedCornerShape(50),
-                colors         = ButtonDefaults.filledTonalButtonColors(
+                onClick = onSkip,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(end = 16.dp, bottom = 8.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = colors.backgroundElevated.copy(alpha = 0.92f)
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     "⏭  ${Strings.uiChatSkip}",
-                    style      = MaterialTheme.typography.labelMedium,
-                    color      = colors.textPrimary,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.textPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -784,34 +981,47 @@ private fun SkipButtonOverlay(visible: Boolean, onSkip: () -> Unit) {
 @Composable
 private fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) -> Unit) {
     val colors = LocalAppColors.current
+    val scrollState = rememberScrollState()
     Surface(color = colors.backgroundDeep, shadowElevation = 16.dp) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
                 Text("✍️", fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
                 Text(
                     Strings.uiChatActionLabel,
-                    style    = DiaryHeaderStyle.copy(fontSize = 14.sp, color = colors.textSecondary),
-                    color    = colors.textSecondary,
+                    style = DiaryHeaderStyle.copy(fontSize = 14.sp, color = colors.textSecondary),
+                    color = colors.textSecondary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            options.forEachIndexed { index, option ->
-                var visible by remember { mutableStateOf(false) }
-                LaunchedEffect(option.id) {
-                    delay(index * 80L)
-                    visible = true
-                }
-                AnimatedVisibility(
-                    visible = visible,
-                    enter   = slideInHorizontally { it / 2 } + fadeIn(tween(250))
-                ) {
-                    DiaryActionItem(option, onClick = { onSelected(option.id) })
+            // Height cap prevents the panel from swallowing the screen when there are
+            // 3–4 options. Options become vertically scrollable if they overflow.
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 220.dp)
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                options.forEachIndexed { index, option ->
+                    var visible by remember { mutableStateOf(false) }
+                    LaunchedEffect(option.id) {
+                        delay(index * 80L)
+                        visible = true
+                    }
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter = slideInHorizontally { it / 2 } + fadeIn(tween(250))
+                    ) {
+                        DiaryActionItem(option, onClick = { onSelected(option.id) })
+                    }
                 }
             }
         }
@@ -827,43 +1037,43 @@ private enum class OptionRisk { SAFE, NEUTRAL, RISKY }
 private fun effectRisk(option: GameOption): OptionRisk {
     val e = option.effects
     val risky = e.debtDelta > 0 ||
-                e.stressDelta > 15 ||
-                e.riskDelta > 25 ||
-                (e.capitalDelta < -50_000L)
+            e.stressDelta > 15 ||
+            e.riskDelta > 25 ||
+            (e.capitalDelta < -50_000L)
     val safe = !risky && (
-                e.stressDelta < -5 ||
-                e.knowledgeDelta > 0 ||
-                (e.capitalDelta > 0 && e.debtDelta <= 0)
-               )
+            e.stressDelta < -5 ||
+                    e.knowledgeDelta > 0 ||
+                    (e.capitalDelta > 0 && e.debtDelta <= 0)
+            )
     return when {
         risky -> OptionRisk.RISKY
-        safe  -> OptionRisk.SAFE
-        else  -> OptionRisk.NEUTRAL
+        safe -> OptionRisk.SAFE
+        else -> OptionRisk.NEUTRAL
     }
 }
 
 @Composable
 private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
-    val colors    = LocalAppColors.current
-    val shape     = RoundedCornerShape(8.dp)
-    val risk      = effectRisk(option)
+    val colors = LocalAppColors.current
+    val shape = RoundedCornerShape(8.dp)
+    val risk = effectRisk(option)
     val riskColor = when (risk) {
-        OptionRisk.SAFE    -> GreenSuccess
-        OptionRisk.RISKY   -> RedDanger
+        OptionRisk.SAFE -> GreenSuccess
+        OptionRisk.RISKY -> RedDanger
         OptionRisk.NEUTRAL -> GoldPrimary
     }
 
     Surface(
-        onClick  = onClick,
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp),   // WCAG touch target minimum
-        shape    = shape,
-        color    = colors.backgroundElevated,
-        border   = BorderStroke(1.dp, riskColor.copy(alpha = 0.25f))
+        shape = shape,
+        color = colors.backgroundElevated,
+        border = BorderStroke(1.dp, riskColor.copy(alpha = 0.25f))
     ) {
         Row(
-            modifier          = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // ── Colored left accent bar ──────────────────────────────────
@@ -879,9 +1089,9 @@ private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
             )
 
             Row(
-                modifier          = Modifier
+                modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (option.emoji.isNotEmpty()) {
@@ -889,9 +1099,12 @@ private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
                 }
                 Text(
                     option.text,
-                    style      = DiaryTextStyle.copy(fontWeight = FontWeight.Medium, color = colors.textPrimary),
-                    color      = colors.textPrimary,
-                    modifier   = Modifier.weight(1f),
+                    style = DiaryTextStyle.copy(
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textPrimary
+                    ),
+                    color = colors.textPrimary,
+                    modifier = Modifier.weight(1f),
                     fontWeight = FontWeight.Medium,
                     lineHeight = 20.sp
                 )
@@ -907,12 +1120,12 @@ private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
     val colors = LocalAppColors.current
     val endingColor = Color(
         when (endingType) {
-            EndingType.BANKRUPTCY            -> 0xFFFF5252
-            EndingType.PAYCHECK_TO_PAYCHECK  -> 0xFFFF6E40
-            EndingType.FINANCIAL_STABILITY   -> 0xFF40C4FF
-            EndingType.FINANCIAL_FREEDOM     -> 0xFFFFD700
-            EndingType.WEALTH                -> 0xFF00E676
-            null                             -> 0xFF8899BB
+            EndingType.BANKRUPTCY -> 0xFFFF5252
+            EndingType.PAYCHECK_TO_PAYCHECK -> 0xFFFF6E40
+            EndingType.FINANCIAL_STABILITY -> 0xFF40C4FF
+            EndingType.FINANCIAL_FREEDOM -> 0xFFFFD700
+            EndingType.WEALTH -> 0xFF00E676
+            null -> 0xFF8899BB
         }
     )
 
@@ -946,25 +1159,25 @@ private fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
             ) {
                 Text(
                     when (endingType) {
-                        EndingType.BANKRUPTCY            -> Strings.endingBankruptcy
-                        EndingType.PAYCHECK_TO_PAYCHECK  -> Strings.endingPaycheck
-                        EndingType.FINANCIAL_STABILITY   -> Strings.endingStability
-                        EndingType.FINANCIAL_FREEDOM     -> Strings.endingFreedom
-                        EndingType.WEALTH                -> Strings.endingWealth
-                        null                             -> Strings.endingGameOver
+                        EndingType.BANKRUPTCY -> Strings.endingBankruptcy
+                        EndingType.PAYCHECK_TO_PAYCHECK -> Strings.endingPaycheck
+                        EndingType.FINANCIAL_STABILITY -> Strings.endingStability
+                        EndingType.FINANCIAL_FREEDOM -> Strings.endingFreedom
+                        EndingType.WEALTH -> Strings.endingWealth
+                        null -> Strings.endingGameOver
                     },
-                    style      = MaterialTheme.typography.titleMedium,
-                    color      = endingColor,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = endingColor,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(12.dp))
                 Button(
-                    onClick  = onRestart,
+                    onClick = onRestart,
                     modifier = Modifier.fillMaxWidth(),
-                    shape    = RoundedCornerShape(14.dp),
-                    colors   = ButtonDefaults.buttonColors(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = GoldPrimary,
-                        contentColor   = colors.backgroundDeep
+                        contentColor = colors.backgroundDeep
                     )
                 ) {
                     Text(Strings.uiChatRestart, fontWeight = FontWeight.Bold)
@@ -996,7 +1209,11 @@ private fun GameOverConfetti(accentColor: Color, modifier: Modifier = Modifier) 
                 initialValue = -0.2f,
                 targetValue = 1.2f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(2500, delayMillis = animDelay.toInt(), easing = FastOutSlowInEasing),
+                    animation = tween(
+                        2500,
+                        delayMillis = animDelay.toInt(),
+                        easing = FastOutSlowInEasing
+                    ),
                     repeatMode = RepeatMode.Restart
                 ),
                 label = "confetti_$index"

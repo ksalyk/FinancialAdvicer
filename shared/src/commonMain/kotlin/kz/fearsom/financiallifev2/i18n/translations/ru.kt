@@ -291,6 +291,11 @@ val ruStrings: Map<String, String> = mapOf(
     "evt_era_tenge_introduced_msg" to "Ноябрь 1993. Казахстан ввёл собственную валюту — тенге.\n\nСоветские рубли обменивают по курсу 500:1.\nОчереди у обменников, у людей паника и усталость.\n\nУ тебя есть наличные рубли — что делаешь?",
     "evt_era_tenge_introduced_opt_exchange_all" to "Обменять всё немедленно — пока есть лимит",
     "evt_era_tenge_introduced_opt_wait_see" to "Подождать — может курс улучшится",
+    "evt_aidar90s_era_tenge_introduced_opt_buy_usd_tenge" to "Конвертировать в доллары",
+    "evt_aidar90s_era_tenge_introduced_opt_hold_tenge" to "Остаться в тенге",
+    "evt_aidar90s_tenge_introduction_opt_buy_usd_tenge" to "Конвертировать в доллары — защита от девальвации",
+    "evt_aidar90s_tenge_introduction_opt_hold_tenge" to "Держать в тенге — верить в новую валюту",
+    "evt_aidar90s_tenge_introduction_opt_buy_gold" to "Купить золото — надёжнее любой валюты",
 
     // era_mmm_wave_90s
     "evt_era_mmm_wave_90s_msg" to "1994. По всему СНГ рекламируют МММ — Сергей Мавроди обещает 1000% в месяц.\nТелевизор, газеты — везде Лёня Голубков.\n«Я не халявщик, я партнёр!»\n\nСосед вложил всю зарплату и уже «заработал» в 3 раза больше.\nТебе предлагают вложить тоже.",
@@ -703,6 +708,7 @@ val ruStrings: Map<String, String> = mapOf(
     "evt_aidar90s_business_opportunity_opt_negotiate_better" to "Торговаться за лучшую долю",
     "evt_aidar90s_kiosk_opened_opt_pay_taxes" to "Платить налоги честно",
     "evt_aidar90s_kiosk_opened_opt_bribe_inspector" to "Дать взятку (5000 ₸)",
+    "evt_aidar90s_kiosk_negotiation_opt_accept_deal" to "Принять условия — открыть киоск",
     "evt_aidar90s_kiosk_negotiation_opt_walk_away" to "Уйти из сделки",
     "evt_aidar90s_constitution_1995_opt_buy_land" to "Купить участок земли (долгосрок)",
     "evt_aidar90s_constitution_1995_opt_skip_land" to "Не сейчас — нет опыта",
@@ -769,6 +775,7 @@ val ruStrings: Map<String, String> = mapOf(
     "evt_aidar90s_business_partner_betray_opt_write_off" to "Списать как урок",
     "evt_aidar90s_government_subsidy_opt_apply_subsidy" to "Подать заявку",
     "evt_aidar90s_government_subsidy_opt_skip_subsidy" to "Слишком сложно",
+    "evt_aidar90s_medical_emergency_opt_pay_medical" to "Оплатить полностью (100к)",
     "evt_aidar90s_medical_emergency_opt_partial_help" to "Дать половину (50к)",
     "evt_aidar90s_new_year_bonus_opt_save_bonus" to "Отложить в резерв",
     "evt_aidar90s_new_year_bonus_opt_celebrate" to "Отметить с семьей",
@@ -824,6 +831,7 @@ val ruStrings: Map<String, String> = mapOf(
     "evt_aidar90s_parents_scam_again_opt_let_them_try" to "Пусть сами учатся (Опасно)",
     "evt_aidar90s_parents_scam_again_opt_educate_parents" to "Объяснить спокойно (требует время)",
     "evt_aidar90s_parents_lost_money_2_opt_pay_parents_debt" to "Выплатить их долг (спаси квартиру)",
+    "evt_aidar90s_parents_lost_money_2_opt_let_them_suffer" to "Это их выбор — пусть несут последствия",
     // ── Aidar90s conditional event keys ──────────────────────────────
     "evt_aidar90s_bankruptcy_trigger_msg" to "Деньги кончились. Инфляция добила.",
     "evt_aidar90s_parents_scam_again_conditional_opt_stop_parents_hard" to "Заблокировать их счета (Жестко)",
