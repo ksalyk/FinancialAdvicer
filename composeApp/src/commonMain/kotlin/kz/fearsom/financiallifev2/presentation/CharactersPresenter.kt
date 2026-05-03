@@ -23,6 +23,10 @@ class CharactersPresenter(
     val uiState: StateFlow<CharactersUiState> = _uiState.asStateFlow()
 
     init {
+        refreshLocalizedData()
+    }
+
+    fun refreshLocalizedData() {
         _uiState.update { it.copy(characters = SeedData.predefinedCharacters) }
     }
 

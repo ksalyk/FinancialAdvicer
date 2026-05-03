@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.engine
 
+import kz.fearsom.financiallifev2.i18n.StringKeys
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
@@ -65,8 +66,9 @@ class GameEngine(
         return GameState(
             playerState        = ps,
             currentEventId     = intro.id,
+            characterName      = characterName,
             messages           = listOf(
-                systemMsg(Strings.sysGameStart.replace("%s", characterName)),
+                systemMsg(Strings.sysGameStart.replace("%s", characterName), StringKeys.SYS_GAME_START, listOf(characterName)),
                 characterMsg(intro, ps)
             ),
             isWaitingForChoice = true
@@ -102,7 +104,7 @@ class GameEngine(
             ps = addScheduledEvent(ps, scheduled)
         }
 
-        val newMessages = mutableListOf(playerMsg(option))
+        val newMessages = mutableListOf(playerMsg(current.currentEventId, option))
         val nextEventId: String
 
         if (option.next == MONTHLY_TICK) {
@@ -183,19 +185,33 @@ class GameEngine(
 
     /** Rehydrate engine from a previously serialized [GameState] (e.g., loaded from DB). */
     fun loadState(state: GameState, characterName: String = "") {
-        if (characterName.isNotEmpty()) currentCharacterName = characterName
+        val resolvedCharacterName = characterName.ifEmpty { state.characterName }
+        if (resolvedCharacterName.isNotEmpty()) currentCharacterName = resolvedCharacterName
         graph         = ScenarioGraphFactory.forCharacter(state.playerState.characterId, state.playerState.eraId)
         eraDefinition = EraRegistry.findById(state.playerState.eraId)
+        val localizedState = if (currentCharacterName.isNotEmpty()) {
+            state.copy(
+                characterName = currentCharacterName,
+                messages = state.messages.map { localizeMessage(it, state.playerState) }
+            )
+        } else {
+            state
+        }
         // Advance the sequence counter past the already-stored messages so that
         // IDs generated after restore never collide with IDs in the loaded history.
         // Compose uses ChatMessage.id as LazyList keys; duplicates cause diff glitches.
-        msgSeq = state.messages.size
-        _state.value = state
+        msgSeq = localizedState.messages.size
+        _state.value = localizedState
     }
 
     fun currentOptions(): List<GameOption> {
         val id = _state.value?.currentEventId ?: return emptyList()
         return graph.findEvent(id)?.options ?: emptyList()
+    }
+
+    fun relocalizeCurrentState(characterName: String = currentCharacterName) {
+        val current = _state.value ?: return
+        loadState(current, characterName)
     }
 
     fun reset() { _state.value = null }
@@ -343,6 +359,8 @@ class GameEngine(
         sender   = MessageSender.CHARACTER,
         text     = substituteTemplate(event.message, ps),
         emoji    = event.flavor,
+        sourceEventId = event.id,
+        sourcePlayerState = ps,
         sceneTag = primarySceneTag(event.tags)
     )
 
@@ -394,25 +412,71 @@ class GameEngine(
             .replace("{name}",          currentCharacterName)
             .replace("{eraLabel}",      EraRegistry.findById(ps.eraId)?.name ?: ps.eraId)
 
-    fun playerMsg(option: GameOption) = ChatMessage(
+    fun playerMsg(eventId: String, option: GameOption) = ChatMessage(
         id     = "player_${option.id}_${ts()}",
         sender = MessageSender.PLAYER,
         text   = "${option.emoji} ${option.text}",
-        emoji  = option.emoji
+        emoji  = option.emoji,
+        sourceEventId = eventId,
+        sourceOptionId = option.id
     )
 
-    fun systemMsg(text: String) = ChatMessage(
+    fun systemMsg(text: String, textKey: String? = null, textArgs: List<String> = emptyList()) = ChatMessage(
         id     = "sys_${ts()}",
         sender = MessageSender.SYSTEM,
-        text   = text
+        text   = text,
+        textKey = textKey,
+        textArgs = textArgs
     )
 
     fun monthlyReportMsg(report: MonthlyReport) = ChatMessage(
         id     = "report_${report.year}_${report.month}_${ts()}",
         sender = MessageSender.MONTHLY_REPORT,
         text   = report.toMessage(),
-        emoji  = "📊"
+        emoji  = "📊",
+        monthlyReport = report
     )
+
+    private fun localizeMessage(message: ChatMessage, ps: PlayerState): ChatMessage = when (message.sender) {
+        MessageSender.CHARACTER -> {
+            val event = message.sourceEventId?.let { graph.findEvent(it) }
+            if (event != null) {
+                val sourceState = message.sourcePlayerState ?: ps
+                message.copy(
+                    text = substituteTemplate(event.message, sourceState),
+                    emoji = event.flavor,
+                    sceneTag = primarySceneTag(event.tags)
+                )
+            } else {
+                message
+            }
+        }
+        MessageSender.PLAYER -> {
+            val option = message.sourceEventId
+                ?.let { graph.findEvent(it) }
+                ?.options
+                ?.find { it.id == message.sourceOptionId }
+            if (option != null) {
+                message.copy(
+                    text = "${option.emoji} ${option.text}",
+                    emoji = option.emoji
+                )
+            } else {
+                message
+            }
+        }
+        MessageSender.MONTHLY_REPORT ->
+            message.monthlyReport?.let { message.copy(text = it.toMessage(), emoji = "📊") } ?: message
+        MessageSender.SYSTEM ->
+            message.textKey?.let { key ->
+                val args = if (key == StringKeys.SYS_GAME_START) {
+                    listOf(currentCharacterName)
+                } else {
+                    message.textArgs
+                }
+                message.copy(text = args.fold(Strings[key]) { acc, arg -> acc.replaceFirst("%s", arg) })
+            } ?: message
+    }
 
     private var msgSeq = 0
     private fun ts() = (++msgSeq).toString()

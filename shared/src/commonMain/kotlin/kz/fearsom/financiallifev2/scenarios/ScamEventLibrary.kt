@@ -57,7 +57,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_90s — сосед приходит домой с предложением */
-    private val pyramidNeighbor90s = event(
+    private fun pyramidNeighbor90s() = event(
         id = "scam_pyramid_neighbor_90s",
         message = Strings["scam_pyramid_neighbor_90s_msg"],
         flavor = "🏚️",
@@ -95,7 +95,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2005 — звонок по стационарному телефону + письмо по email */
-    private val pyramidEmail2005 = event(
+    private fun pyramidEmail2005() = event(
         id = "scam_pyramid_email_2005",
         message = Strings["scam_pyramid_email_2005_msg"],
         flavor = "📧",
@@ -133,7 +133,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 — звонок в WhatsApp + пост в VKontakte */
-    private val pyramidVk2015 = event(
+    private fun pyramidVk2015() = event(
         id = "scam_pyramid_vk_2015",
         message = Strings["scam_pyramid_vk_2015_msg"],
         flavor = "📱",
@@ -171,7 +171,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram/WhatsApp */
-    private val pyramidFriendCall = event(
+    private fun pyramidFriendCall() = event(
         id = "scam_pyramid_friend",
         message = Strings["scam_pyramid_friend_msg"],
         flavor = "😰",
@@ -210,7 +210,7 @@ object ScamEventLibrary {
 
     // ── Pyramid shared follow-ups ─────────────────────────────────────────────
 
-    private val pyramidAvoided = event(
+    private fun pyramidAvoided() = event(
         id = "scam_pyramid_avoided",
         message = Strings["scam_pyramid_avoided_msg"],
         flavor = "📚",
@@ -225,7 +225,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val pyramidCollapse = event(
+    private fun pyramidCollapse() = event(
         id = "scam_pyramid_collapse",
         message = Strings["scam_pyramid_collapse_msg"],
         flavor = "💀",
@@ -240,7 +240,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val pyramidSmallLoss = event(
+    private fun pyramidSmallLoss() = event(
         id = "scam_pyramid_small_loss",
         message = Strings["scam_pyramid_small_loss_msg"],
         flavor = "😕",
@@ -260,7 +260,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_90s — дверь в дверь, Гербалайф/Амвэй */
-    private val mlmDoor90s = event(
+    private fun mlmDoor90s() = event(
         id = "scam_mlm_door_90s",
         message = Strings["scam_mlm_door_90s_msg"],
         flavor = "🚪",
@@ -292,7 +292,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2005 — звонок + физическая встреча, ранний интернет-маркетинг */
-    private val mlmPhone2005 = event(
+    private fun mlmPhone2005() = event(
         id = "scam_mlm_phone_2005",
         message = Strings["scam_mlm_phone_2005_msg"],
         flavor = "📞",
@@ -324,7 +324,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 — Instagram + WhatsApp группа */
-    private val mlmInstagram2015 = event(
+    private fun mlmInstagram2015() = event(
         id = "scam_mlm_instagram_2015",
         message = Strings["scam_mlm_instagram_2015_msg"],
         flavor = "✨",
@@ -352,7 +352,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram/Instagram */
-    private val mlmColleague = event(
+    private fun mlmColleague() = event(
         id = "scam_mlm_colleague",
         message = Strings["scam_mlm_colleague_msg"],
         flavor = "✨",
@@ -381,7 +381,7 @@ object ScamEventLibrary {
 
     // ── MLM shared follow-ups ─────────────────────────────────────────────────
 
-    private val mlmPresentation = event(
+    private fun mlmPresentation() = event(
         id = "scam_mlm_presentation",
         message = Strings["scam_mlm_presentation_msg"],
         flavor = "📊",
@@ -400,7 +400,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val mlmConfronted = event(
+    private fun mlmConfronted() = event(
         id = "scam_mlm_confronted",
         message = Strings["scam_mlm_confronted_msg"],
         flavor = "📖",
@@ -415,7 +415,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val mlmMonthLater = event(
+    private fun mlmMonthLater() = event(
         id = "scam_mlm_month_later",
         message = Strings["scam_mlm_month_later_msg"],
         flavor = "📦",
@@ -442,7 +442,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_2005 — SMS-типстер, ранние букмекеры */
-    private val capperSms2005 = event(
+    private fun capperSms2005() = event(
         id = "scam_capper_sms_2005",
         message = Strings["scam_capper_sms_2005_msg"],
         flavor = "📟",
@@ -474,7 +474,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 — VKontakte канал + личное сообщение */
-    private val capperVk2015 = event(
+    private fun capperVk2015() = event(
         id = "scam_capper_vk_2015",
         message = Strings["scam_capper_vk_2015_msg"],
         flavor = "⚽",
@@ -506,7 +506,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram канал */
-    private val capperTelegram = event(
+    private fun capperTelegram() = event(
         id = "scam_capper_telegram",
         message = Strings["scam_capper_telegram_msg"],
         flavor = "⚽",
@@ -539,7 +539,7 @@ object ScamEventLibrary {
 
     // ── Capper shared follow-ups ──────────────────────────────────────────────
 
-    private val capperExplained = event(
+    private fun capperExplained() = event(
         id = "scam_capper_explained",
         message = Strings["scam_capper_explained_msg"],
         flavor = "🔢",
@@ -554,7 +554,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val capperLoses = event(
+    private fun capperLoses() = event(
         id = "scam_capper_loses",
         message = Strings["scam_capper_loses_msg"],
         flavor = "😤",
@@ -575,7 +575,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val bettingDeepLoss = event(
+    private fun bettingDeepLoss() = event(
         id = "scam_betting_deep_loss",
         message = Strings["scam_betting_deep_loss_msg"],
         flavor = "💀",
@@ -597,7 +597,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_2015 — VKontakte / Mamba / ранний dating */
-    private val romanceMamba2015 = event(
+    private fun romanceMamba2015() = event(
         id = "scam_romance_mamba_2015",
         message = Strings["scam_romance_mamba_2015_msg"],
         flavor = "💌",
@@ -626,7 +626,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — WhatsApp "ошиблась номером" */
-    private val romanceFirstContact = event(
+    private fun romanceFirstContact() = event(
         id = "scam_romance_contact",
         message = Strings["scam_romance_contact_msg"],
         flavor = "💌",
@@ -656,7 +656,7 @@ object ScamEventLibrary {
 
     // ── Romance shared follow-ups ─────────────────────────────────────────────
 
-    private val romanceBuildup = event(
+    private fun romanceBuildup() = event(
         id = "scam_romance_buildup",
         message = Strings["scam_romance_buildup_msg"],
         flavor = "💕",
@@ -671,7 +671,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val romanceCryptoIntro = event(
+    private fun romanceCryptoIntro() = event(
         id = "scam_romance_crypto_intro",
         message = Strings["scam_romance_crypto_intro_msg"],
         flavor = "📈",
@@ -689,7 +689,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val romanceWithdrawalBlocked = event(
+    private fun romanceWithdrawalBlocked() = event(
         id = "scam_romance_withdrawal_blocked",
         message = Strings["scam_romance_withdrawal_blocked_msg"],
         flavor = "🚨",
@@ -707,7 +707,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val romanceFreeze = event(
+    private fun romanceFreeze() = event(
         id = "scam_romance_freeze",
         message = Strings["scam_romance_freeze_msg"],
         flavor = "🔒",
@@ -725,7 +725,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val romanceFinal = event(
+    private fun romanceFinal() = event(
         id = "scam_romance_final",
         message = Strings["scam_romance_final_msg"],
         flavor = "💔",
@@ -740,7 +740,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val romanceCaught = event(
+    private fun romanceCaught() = event(
         id = "scam_romance_caught",
         message = Strings["scam_romance_caught_msg"],
         flavor = "🔍",
@@ -762,7 +762,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_2015 — ранний Bitcoin / Forex-лохотрон */
-    private val cryptoForex2015 = event(
+    private fun cryptoForex2015() = event(
         id = "scam_crypto_forex_2015",
         message = Strings["scam_crypto_forex_2015_msg"],
         flavor = "📊",
@@ -794,7 +794,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram канал с 52k подписчиков */
-    private val cryptoFakeExchange = event(
+    private fun cryptoFakeExchange() = event(
         id = "scam_crypto_exchange",
         message = Strings["scam_crypto_exchange_msg"],
         flavor = "📊",
@@ -827,7 +827,7 @@ object ScamEventLibrary {
 
     // ── Crypto shared follow-ups ──────────────────────────────────────────────
 
-    private val cryptoNoLicense = event(
+    private fun cryptoNoLicense() = event(
         id = "scam_crypto_no_license",
         message = Strings["scam_crypto_no_license_msg"],
         flavor = "🔍",
@@ -842,7 +842,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val cryptoWithdrawalTrap = event(
+    private fun cryptoWithdrawalTrap() = event(
         id = "scam_crypto_withdrawal_trap",
         message = Strings["scam_crypto_withdrawal_trap_msg"],
         flavor = "🚨",
@@ -863,7 +863,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val cryptoFinalDisappear = event(
+    private fun cryptoFinalDisappear() = event(
         id = "scam_crypto_final_disappear",
         message = Strings["scam_crypto_final_disappear_msg"],
         flavor = "💀",
@@ -883,7 +883,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_90s / kz_2005 — неформальный «ростовщик», сосед или знакомый */
-    private val mfoNeighborLender90s = event(
+    private fun mfoNeighborLender90s() = event(
         id = "scam_mfo_neighbor_90s",
         message = Strings["scam_mfo_neighbor_90s_msg"],
         flavor = "🏚️",
@@ -913,7 +913,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2005 — первые МФО с физическими офисами */
-    private val mfoOffice2005 = event(
+    private fun mfoOffice2005() = event(
         id = "scam_mfo_office_2005",
         message = Strings["scam_mfo_office_2005_msg"],
         flavor = "🏦",
@@ -943,7 +943,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 / kz_2024 — онлайн МФО */
-    private val mfoUrgentOnline = event(
+    private fun mfoUrgentOnline() = event(
         id = "scam_mfo_urgent",
         message = Strings["scam_mfo_urgent_msg"],
         flavor = "🏦",
@@ -972,7 +972,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val mfoUrgent2024 = event(
+    private fun mfoUrgent2024() = event(
         id = "scam_mfo_urgent_2024",
         message = Strings["scam_mfo_urgent_2024_msg"],
         flavor = "🏦",
@@ -1003,7 +1003,7 @@ object ScamEventLibrary {
 
     // ── MFO shared follow-ups ─────────────────────────────────────────────────
 
-    private val mfoContractRevealed = event(
+    private fun mfoContractRevealed() = event(
         id = "scam_mfo_contract_revealed",
         message = Strings["scam_mfo_contract_revealed_msg"],
         flavor = "⚠️",
@@ -1018,7 +1018,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val mfoSigned = event(
+    private fun mfoSigned() = event(
         id = "scam_mfo_signed",
         message = Strings["scam_mfo_signed_msg"],
         flavor = "😰",
@@ -1045,7 +1045,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_90s — «челнок» из Турции */
-    private val middlemanTurkey90s = event(
+    private fun middlemanTurkey90s() = event(
         id = "scam_middleman_turkey_90s",
         message = Strings["scam_middleman_turkey_90s_msg"],
         flavor = "✈️",
@@ -1077,7 +1077,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2005 — ранний Alibaba + физический посредник */
-    private val middlemanAlibaba2005 = event(
+    private fun middlemanAlibaba2005() = event(
         id = "scam_middleman_alibaba_2005",
         message = Strings["scam_middleman_alibaba_2005_msg"],
         flavor = "📦",
@@ -1109,7 +1109,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 — AliExpress / популярный e-commerce */
-    private val middlemanAli2015 = event(
+    private fun middlemanAli2015() = event(
         id = "scam_middleman_ali_2015",
         message = Strings["scam_middleman_ali_2015_msg"],
         flavor = "📦",
@@ -1141,7 +1141,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram/Instagram перекуп */
-    private val middlemanChina2024 = event(
+    private fun middlemanChina2024() = event(
         id = "scam_middleman_china",
         message = Strings["scam_middleman_china_msg"],
         flavor = "📦",
@@ -1174,7 +1174,7 @@ object ScamEventLibrary {
 
     // ── Middleman shared follow-ups ───────────────────────────────────────────
 
-    private val middlemanContractRefused = event(
+    private fun middlemanContractRefused() = event(
         id = "scam_middleman_contract_refused",
         message = Strings["scam_middleman_contract_refused_msg"],
         flavor = "🚩",
@@ -1189,7 +1189,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val middlemanResult = event(
+    private fun middlemanResult() = event(
         id = "scam_middleman_result",
         message = Strings["scam_middleman_result_msg"],
         flavor = "💀",
@@ -1209,7 +1209,7 @@ object ScamEventLibrary {
     // ════════════════════════════════════════════════════════════════════
 
     /** kz_90s — семинар по книге Кийосаки / начало тренинговой культуры */
-    private val trainingKiyosaki90s = event(
+    private fun trainingKiyosaki90s() = event(
         id = "scam_training_kiyosaki_90s",
         message = Strings["scam_training_kiyosaki_90s_msg"],
         flavor = "📚",
@@ -1238,7 +1238,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2005 — «Бизнес Молодость» прообраз, корпоративные тренинги */
-    private val trainingBusiness2005 = event(
+    private fun trainingBusiness2005() = event(
         id = "scam_training_business_2005",
         message = Strings["scam_training_business_2005_msg"],
         flavor = "🧘",
@@ -1267,7 +1267,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2015 — «Бизнес Молодость», Instagram-коучи */
-    private val trainingBm2015 = event(
+    private fun trainingBm2015() = event(
         id = "scam_training_bm_2015",
         message = Strings["scam_training_bm_2015_msg"],
         flavor = "🔥",
@@ -1296,7 +1296,7 @@ object ScamEventLibrary {
     )
 
     /** kz_2024 — Telegram/TikTok коучи */
-    private val trainingCult2024 = event(
+    private fun trainingCult2024() = event(
         id = "scam_training_cult",
         message = Strings["scam_training_cult_msg"],
         flavor = "🧘",
@@ -1326,7 +1326,7 @@ object ScamEventLibrary {
 
     // ── Training shared follow-ups ────────────────────────────────────────────
 
-    private val trainingReviews = event(
+    private fun trainingReviews() = event(
         id = "scam_training_reviews",
         message = Strings["scam_training_reviews_msg"],
         flavor = "🔍",
@@ -1341,7 +1341,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val trainingFirstLevel = event(
+    private fun trainingFirstLevel() = event(
         id = "scam_training_first_level",
         message = Strings["scam_training_first_level_msg"],
         flavor = "🔥",
@@ -1362,7 +1362,7 @@ object ScamEventLibrary {
         )
     )
 
-    private val trainingDeeper = event(
+    private fun trainingDeeper() = event(
         id = "scam_training_deeper",
         message = Strings["scam_training_deeper_msg"],
         flavor = "💡",
@@ -1381,32 +1381,32 @@ object ScamEventLibrary {
     //  EXPORT
     // ════════════════════════════════════════════════════════════════════
 
-    val all: List<GameEvent> = listOf(
+    val all: List<GameEvent> get() = listOf(
         // Pyramid — 4 era variants + shared follow-ups
-        pyramidNeighbor90s, pyramidEmail2005, pyramidVk2015, pyramidFriendCall,
-        pyramidAvoided, pyramidCollapse, pyramidSmallLoss,
+        pyramidNeighbor90s(), pyramidEmail2005(), pyramidVk2015(), pyramidFriendCall(),
+        pyramidAvoided(), pyramidCollapse(), pyramidSmallLoss(),
         // MLM — 4 era variants + shared follow-ups
-        mlmDoor90s, mlmPhone2005, mlmInstagram2015, mlmColleague,
-        mlmPresentation, mlmConfronted, mlmMonthLater,
+        mlmDoor90s(), mlmPhone2005(), mlmInstagram2015(), mlmColleague(),
+        mlmPresentation(), mlmConfronted(), mlmMonthLater(),
         // Capper — 3 era variants (no 90s) + shared follow-ups
-        capperSms2005, capperVk2015, capperTelegram,
-        capperExplained, capperLoses, bettingDeepLoss,
+        capperSms2005(), capperVk2015(), capperTelegram(),
+        capperExplained(), capperLoses(), bettingDeepLoss(),
         // Romance — 2 era variants (2015+) + shared follow-ups
-        romanceMamba2015, romanceFirstContact,
-        romanceBuildup, romanceCryptoIntro, romanceWithdrawalBlocked,
-        romanceFreeze, romanceFinal, romanceCaught,
+        romanceMamba2015(), romanceFirstContact(),
+        romanceBuildup(), romanceCryptoIntro(), romanceWithdrawalBlocked(),
+        romanceFreeze(), romanceFinal(), romanceCaught(),
         // Crypto — 2 era variants (2015+) + shared follow-ups
-        cryptoForex2015, cryptoFakeExchange,
-        cryptoNoLicense, cryptoWithdrawalTrap, cryptoFinalDisappear,
+        cryptoForex2015(), cryptoFakeExchange(),
+        cryptoNoLicense(), cryptoWithdrawalTrap(), cryptoFinalDisappear(),
         // MFO — 4 era variants + shared follow-ups
-        mfoNeighborLender90s, mfoOffice2005, mfoUrgentOnline, mfoUrgent2024,
-        mfoContractRevealed, mfoSigned,
+        mfoNeighborLender90s(), mfoOffice2005(), mfoUrgentOnline(), mfoUrgent2024(),
+        mfoContractRevealed(), mfoSigned(),
         // Middleman — 4 era variants + shared follow-ups
-        middlemanTurkey90s, middlemanAlibaba2005, middlemanAli2015, middlemanChina2024,
-        middlemanContractRefused, middlemanResult,
+        middlemanTurkey90s(), middlemanAlibaba2005(), middlemanAli2015(), middlemanChina2024(),
+        middlemanContractRefused(), middlemanResult(),
         // Training — 4 era variants + shared follow-ups
-        trainingKiyosaki90s, trainingBusiness2005, trainingBm2015, trainingCult2024,
-        trainingReviews, trainingFirstLevel, trainingDeeper
+        trainingKiyosaki90s(), trainingBusiness2005(), trainingBm2015(), trainingCult2024(),
+        trainingReviews(), trainingFirstLevel(), trainingDeeper()
     )
 
     /**
@@ -1414,7 +1414,7 @@ object ScamEventLibrary {
      * Era conditions on each event act as the gate;
      * EraDefinition.poolWeightModifiers provide further suppression (e.g. crypto=0 in 90s).
      */
-    val poolEntries: List<PoolEntry> = listOf(
+    val poolEntries: List<PoolEntry> get() = listOf(
         // Pyramid
         PoolEntry("scam_pyramid_neighbor_90s", baseWeight = 18),
         PoolEntry("scam_pyramid_email_2005",   baseWeight = 18),

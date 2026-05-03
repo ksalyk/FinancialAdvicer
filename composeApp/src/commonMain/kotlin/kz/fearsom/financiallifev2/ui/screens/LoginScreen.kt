@@ -132,7 +132,7 @@ fun LoginScreen(
             // ── Try Demo — prominent CTA for new users ────────────────────
             if (!isRegisterMode) {
                 Button(
-                    onClick  = { onLogin("demo", "demo") },
+                    onClick  = { onLogin("demo", "demo123") },
                     enabled  = !isLoading,
                     modifier = Modifier.fillMaxWidth().height(58.dp),
                     shape    = RoundedCornerShape(18.dp),

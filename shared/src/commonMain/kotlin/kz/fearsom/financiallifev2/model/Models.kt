@@ -293,6 +293,12 @@ data class ChatMessage(
     val text: String = "",
     val emoji: String = "",
     val timestampMs: Long = 0L,
+    val sourceEventId: String? = null,
+    val sourceOptionId: String? = null,
+    val sourcePlayerState: PlayerState? = null,
+    val monthlyReport: MonthlyReport? = null,
+    val textKey: String? = null,
+    val textArgs: List<String> = emptyList(),
     /**
      * Semantic scene category resolved from [GameEvent.tags].
      * Values: "scam" | "crisis" | "career" | "family" | "investment" |
@@ -310,6 +316,7 @@ data class ChatMessage(
 data class GameState(
     val playerState: PlayerState = PlayerState(),
     val currentEventId: String = "",
+    val characterName: String = "",
     val messages: List<ChatMessage> = emptyList(),
     val isWaitingForChoice: Boolean = false,
     val gameOver: Boolean = false,

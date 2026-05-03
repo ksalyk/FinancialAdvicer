@@ -41,6 +41,7 @@ class GamePresenter(
 
     // Tracks which session is currently being played (for save-on-back)
     private var activeSessionId: String? = null
+    private var suppressNextStateSideEffects = false
 
     init {
         scope.launch {
@@ -54,6 +55,10 @@ class GamePresenter(
                 )
                 // Auto-save progress to repository whenever game state changes
                 gameState?.let { state ->
+                    if (suppressNextStateSideEffects) {
+                        suppressNextStateSideEffects = false
+                        return@let
+                    }
                     activeSessionId?.let { id ->
                         sessionRepo.saveGameState(id, state)
                         // Complete the session if it reached a game-over ending
@@ -175,6 +180,23 @@ class GamePresenter(
 
     fun toggleStats() {
         _uiState.value = _uiState.value.copy(showStats = !_uiState.value.showStats)
+    }
+
+    fun refreshLocalizedData() {
+        val session = activeSessionId?.let { sessionRepo.getSession(it) }
+        if (session != null) {
+            _uiState.value = _uiState.value.copy(
+                characterName = session.characterName,
+                characterEmoji = session.characterEmoji,
+                characterTitle = session.characterTitle
+            )
+            suppressNextStateSideEffects = _uiState.value.gameState != null
+            engine.relocalizeCurrentState(session.characterName)
+        } else {
+            _uiState.value = _uiState.value.copy(characterName = Strings.sysDefaultCharacterName)
+            suppressNextStateSideEffects = _uiState.value.gameState != null
+            engine.relocalizeCurrentState(Strings.sysDefaultCharacterName)
+        }
     }
 
     /** Restart from the beginning of the same session (same character + era). */

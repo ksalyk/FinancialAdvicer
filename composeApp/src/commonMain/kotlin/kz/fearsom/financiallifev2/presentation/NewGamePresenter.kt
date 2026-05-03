@@ -33,7 +33,22 @@ class NewGamePresenter(
     val uiState: StateFlow<NewGameUiState> = _uiState.asStateFlow()
 
     init {
-        _uiState.update { it.copy(eras = SeedData.eras) }
+        refreshLocalizedData()
+    }
+
+    fun refreshLocalizedData() {
+        val selectedEraId = _uiState.value.selectedEraId
+        _uiState.update {
+            it.copy(
+                eras = SeedData.eras,
+                availableCharacters = selectedEraId
+                    ?.let { eraId -> SeedData.predefinedCharacters.filter { character -> eraId in character.compatibleEraIds } }
+                    ?: it.availableCharacters,
+                availableBundles = selectedEraId
+                    ?.let { eraId -> SeedData.characterBundles.filter { bundle -> eraId in bundle.compatibleEraIds } }
+                    ?: it.availableBundles
+            )
+        }
     }
 
     /** Called from EraSelectionScreen. Loads characters/bundles for that era. */

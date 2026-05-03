@@ -75,12 +75,12 @@ class GameSessionRepository {
     // ── Query ─────────────────────────────────────────────────────────────────
 
     fun getActiveSession(): GameSession? =
-        _sessions.value.lastOrNull { it.status == SessionStatus.ACTIVE }
+        _sessions.value.lastOrNull { it.status == SessionStatus.ACTIVE }?.localized()
 
     fun getSession(sessionId: String): GameSession? =
-        _sessions.value.find { it.id == sessionId }
+        _sessions.value.find { it.id == sessionId }?.localized()
 
-    fun getAllSessions(): List<GameSession> = _sessions.value
+    fun getAllSessions(): List<GameSession> = _sessions.value.map { it.localized() }
 
     // ── Saved Engine State ────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ class GameSessionRepository {
         return QuickStats(
             totalGames           = all.size,
             bestEnding           = bestEnding,
-            lastPlayedCharacter  = all.lastOrNull()?.characterName
+            lastPlayedCharacter  = all.lastOrNull()?.localized()?.characterName
         )
     }
 
@@ -154,7 +154,7 @@ class GameSessionRepository {
         val perCharacter = all.groupBy { it.characterId }.map { (charId, sessions) ->
             CharacterStatistics(
                 characterId    = charId,
-                characterName  = sessions.first().characterName,
+                characterName  = sessions.first().localized().characterName,
                 characterEmoji = sessions.first().characterEmoji,
                 timesPlayed    = sessions.size,
                 bestEnding     = sessions.mapNotNull { it.ending }.maxByOrNull { it.ordinal },
@@ -166,7 +166,7 @@ class GameSessionRepository {
         val perEra = all.groupBy { it.eraId }.map { (eraId, sessions) ->
             EraStatistics(
                 eraId      = eraId,
-                eraName    = sessions.first().eraName,
+                eraName    = sessions.first().localized().eraName,
                 timesPlayed = sessions.size,
                 bestEnding = sessions.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
             )
@@ -180,6 +180,17 @@ class GameSessionRepository {
             endingDistribution  = endingDist,
             perCharacter        = perCharacter,
             perEra              = perEra
+        )
+    }
+
+    private fun GameSession.localized(): GameSession {
+        val era = SeedData.eras.find { it.id == eraId }
+        val predefined = SeedData.predefinedCharacters.find { it.id == characterId }
+        val bundle = SeedData.characterBundles.find { it.id == characterId }
+        return copy(
+            eraName = era?.name ?: eraName,
+            characterName = predefined?.name ?: bundle?.label ?: characterName,
+            characterTitle = predefined?.profession ?: bundle?.profession ?: characterTitle
         )
     }
 }

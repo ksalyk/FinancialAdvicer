@@ -47,7 +47,7 @@ data class EraGlobalEvent(
 
 object EraEventLibrary {
 
-    val all: List<GameEvent> = listOf(
+    val all: List<GameEvent> get() = listOf(
 
         // ── KZ 90s ────────────────────────────────────────────────────
 
@@ -241,7 +241,7 @@ object EraEventLibrary {
 
 object EraRegistry {
 
-    val MODERN_KZ_2024 = EraDefinition(
+    val MODERN_KZ_2024 get() = EraDefinition(
         id = "modern_kz_2024",
         name = Strings.eraModernKz2024Name,
         startYear = 2020,
@@ -261,7 +261,7 @@ object EraRegistry {
         )
     )
 
-    val KZ_90S = EraDefinition(
+    val KZ_90S get() = EraDefinition(
         id = "kz_90s",
         name = Strings.eraKz90sName,
         startYear = 1991,
@@ -283,7 +283,7 @@ object EraRegistry {
         )
     )
 
-    val KZ_2015_DEVALUATION = EraDefinition(
+    val KZ_2015_DEVALUATION get() = EraDefinition(
         id = "kz_2015",
         name = Strings.eraKz2015Name,
         startYear = 2014,
@@ -299,7 +299,7 @@ object EraRegistry {
         )
     )
 
-    private val all = listOf(MODERN_KZ_2024, KZ_90S, KZ_2015_DEVALUATION)
+    private val all get() = listOf(MODERN_KZ_2024, KZ_90S, KZ_2015_DEVALUATION)
 
     fun findById(eraId: String): EraDefinition? = all.find { it.id == eraId }
 }

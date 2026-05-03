@@ -7,6 +7,7 @@ import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.GameOption
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
@@ -117,7 +118,7 @@ object ScenarioGraphFactory {
      * correct historical narrative and event pool are used.
      */
     fun forCharacter(characterId: String, eraId: String): ScenarioGraph {
-        val key = "$characterId:$eraId"
+        val key = "${Strings.currentLocale}:$characterId:$eraId"
         return cache[key] ?: buildGraph(characterId, eraId).also { graph ->
             cache = cache + (key to graph)
         }
@@ -141,4 +142,3 @@ object ScenarioGraphFactory {
         else      -> error("No scenario graph for eraId=$eraId")
     }
 }
-

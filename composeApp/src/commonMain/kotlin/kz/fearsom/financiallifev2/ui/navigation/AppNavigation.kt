@@ -104,6 +104,14 @@ fun AppNavigation() {
         }
     }
 
+    LaunchedEffect(settingsUiState.currentLocale) {
+        mainMenuPresenter.refresh()
+        newGamePresenter.refreshLocalizedData()
+        charsPresenter.refreshLocalizedData()
+        statsPresenter.refreshLocal()
+        gamePresenter.refreshLocalizedData()
+    }
+
     // ── Auth state — handles login / logout after splash ──────────────────────
     LaunchedEffect(authUiState.authState.isLoggedIn) {
         if (authUiState.authState.isLoggedIn) {

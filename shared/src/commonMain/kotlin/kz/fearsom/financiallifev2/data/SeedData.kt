@@ -17,7 +17,7 @@ import kz.fearsom.financiallifev2.model.UnlockCondition
 object SeedData {
 
     // ── Eras ──────────────────────────────────────────────────────────────────
-    val eras: List<Era> = mutableListOf(
+    val eras: List<Era> get() = listOf(
         Era(
             id = "kz_90s",
             name = Strings["seed_era_kz_90s_name"],
@@ -78,7 +78,7 @@ object SeedData {
 
     // ── Predefined Characters ─────────────────────────────────────────────────
 
-    val predefinedCharacters: List<PredefinedCharacter> = listOf(
+    val predefinedCharacters: List<PredefinedCharacter> get() = listOf(
         PredefinedCharacter(
             id = "aidar",
             name = Strings["seed_char_aidar_name"],
@@ -191,7 +191,7 @@ object SeedData {
 
     // ── Character Bundles ─────────────────────────────────────────────────────
 
-    val characterBundles: List<CharacterBundle> = listOf(
+    val characterBundles: List<CharacterBundle> get() = listOf(
         CharacterBundle(
             id = "bundle_entrepreneur",
             label = Strings["seed_bundle_entrepreneur_label"],

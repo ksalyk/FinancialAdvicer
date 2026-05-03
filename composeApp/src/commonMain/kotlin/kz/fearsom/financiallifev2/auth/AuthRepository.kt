@@ -25,6 +25,9 @@ private const val TAG = "AuthRepository"
 private data class AuthRequest(val username: String, val password: String)
 
 @Serializable
+private data class RefreshRequest(val refreshToken: String)
+
+@Serializable
 data class AuthApiResponse(
     val success: Boolean      = false,
     val accessToken: String   = "",
@@ -74,18 +77,17 @@ class AuthRepository(
     // ── Session restore ───────────────────────────────────────────────────────
 
     /**
-     * Called once on app cold start. Reads tokens from [SecureStorage] and
-     * validates them via /auth/me. Silently stays logged-out on any failure.
+     * Called once on app cold start. Reads the refresh token from [SecureStorage]
+     * and rotates it. Silently stays logged-out on any failure.
      */
     suspend fun restoreSessionFromStorage() {
-        val access  = withContext(Dispatchers.Default) { secureStorage.get(KEY_ACCESS_TOKEN) }
         val refresh = withContext(Dispatchers.Default) { secureStorage.get(KEY_REFRESH_TOKEN) }
-        Napier.d("Restoring session: access=${access?.take(10)}..., refresh=${refresh?.take(10)}...", tag = TAG)
-        if (access.isNullOrBlank() || refresh.isNullOrBlank()) {
-            Napier.d("No stored tokens found", tag = TAG)
+        Napier.d("Restoring session: refresh=${refresh?.take(10)}...", tag = TAG)
+        if (refresh.isNullOrBlank()) {
+            Napier.d("No stored refresh token found", tag = TAG)
             return
         }
-        restoreSession(access, refresh)
+        refreshSession(refresh)
     }
 
     /** Persist a rotated token pair (called by HttpClientFactory after silent refresh). */
@@ -127,6 +129,39 @@ class AuthRepository(
             }
         }.onFailure { e ->
             Napier.w("Session restore failed: ${e.message}", tag = TAG)
+            tokenStorage.clear()
+        }
+    }
+
+    private suspend fun refreshSession(refreshToken: String) {
+        runCatching {
+            val response = httpClient.post("$baseUrl/auth/refresh") {
+                expectSuccess = false
+                contentType(ContentType.Application.Json)
+                setBody(RefreshRequest(refreshToken))
+            }
+            if (!response.status.isSuccess()) {
+                throw IllegalStateException("Refresh rejected with ${response.status.value}")
+            }
+
+            val resp = response.body<AuthApiResponse>()
+            if (!resp.success || resp.accessToken.isBlank() || resp.refreshToken.isBlank()) {
+                throw IllegalStateException("Refresh response missing tokens")
+            }
+
+            tokenStorage.update(resp.accessToken, resp.refreshToken)
+            persistTokens(resp.accessToken, resp.refreshToken)
+
+            _authState.value = AuthState(
+                isLoggedIn   = true,
+                userId       = resp.userId,
+                username     = resp.username,
+                accessToken  = resp.accessToken,
+                refreshToken = resp.refreshToken
+            )
+            Napier.d("Session restored by refresh userId=${resp.userId}", tag = TAG)
+        }.onFailure { e ->
+            Napier.w("Session refresh failed: ${e.message}", tag = TAG)
             tokenStorage.clear()
         }
     }
