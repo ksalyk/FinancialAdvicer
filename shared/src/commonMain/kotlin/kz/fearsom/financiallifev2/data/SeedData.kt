@@ -20,57 +20,72 @@ object SeedData {
     val eras: List<Era> get() = listOf(
         Era(
             id = "kz_90s",
-            name = "Казахстан 90-х",
-            description = "Тенге только появляется, рынки растут быстрее правил, а любая надежда может оказаться пирамидой.",
+            name = Strings["seed_era_kz_90s_name"],
+            description = Strings["seed_era_kz_90s_desc"],
             startYear = 1991,
             endYear = 2000,
             baseInflationRate = 40.0,
             baseSalaryMin = 5_000L,
             baseSalaryMax = 50_000L,
             availableCharacterIds = listOf("aidar_90s"),
-            keyEconomicEvents = listOf("Введение тенге", "МММ и кооперативы", "Бартер и наличный доллар", "Рынки и челноки"),
+            keyEconomicEvents = listOf(
+                Strings["seed_era_kz_90s_event_1"],
+                Strings["seed_era_kz_90s_event_2"],
+                Strings["seed_era_kz_90s_event_3"],
+                Strings["seed_era_kz_90s_event_4"]
+            ),
             emoji = "📼",
             isLocked = false
         ),
         Era(
             id = "kz_2005",
-            name = "Кредитный бум 2005",
-            description = "Банки раздают кредиты, стройки обещают новый класс жизни, а риск часто спрятан в договоре.",
+            name = Strings["seed_era_kz_2005_name"],
+            description = Strings["seed_era_kz_2005_desc"],
             startYear = 2005,
             endYear = 2010,
             baseInflationRate = 8.5,
             baseSalaryMin = 80_000L,
             baseSalaryMax = 250_000L,
             availableCharacterIds = listOf("aidar"),
-            keyEconomicEvents = listOf("Ипотечный бум", "Долевое строительство", "Потребкредиты", "Кризис 2008"),
+            keyEconomicEvents = listOf(
+                Strings["seed_era_kz_2005_event_1"],
+                Strings["seed_era_kz_2005_event_2"]
+            ),
             emoji = "🏗️",
             isLocked = false
         ),
         Era(
             id = "kz_2015",
-            name = "Девальвация 2015",
-            description = "WhatsApp, онлайн-курсы, валютная тревога и первые массовые цифровые финансовые ловушки.",
+            name = Strings["seed_era_kz_2015_name"],
+            description = Strings["seed_era_kz_2015_desc"],
             startYear = 2015,
             endYear = 2020,
             baseInflationRate = 14.5,
             baseSalaryMin = 150_000L,
             baseSalaryMax = 500_000L,
             availableCharacterIds = listOf("dana"),
-            keyEconomicEvents = listOf("Девальвация 2015", "WhatsApp/VK-схемы", "Онлайн-курсы", "Первые форекс/крипто-воронки"),
+            keyEconomicEvents = listOf(
+                Strings["seed_era_kz_2015_event_1"],
+                Strings["seed_era_kz_2015_event_2"],
+                Strings["seed_era_kz_2015_event_3"]
+            ),
             emoji = "📱",
             isLocked = false
         ),
         Era(
             id = "kz_2024",
-            name = "Казахстан 2024",
-            description = "Маркетплейсы, приложения, Telegram-инвестиции, dating scam и быстрые онлайн-долги.",
+            name = Strings["seed_era_kz_2024_name"],
+            description = Strings["seed_era_kz_2024_desc"],
             startYear = 2024,
             endYear = 2030,
             baseInflationRate = 9.8,
             baseSalaryMin = 300_000L,
             baseSalaryMax = 1_500_000L,
             availableCharacterIds = listOf("asan"),
-            keyEconomicEvents = listOf("Маркетплейсы", "Telegram/crypto scam", "Онлайн МФО", "Dating и fake escrow"),
+            keyEconomicEvents = listOf(
+                Strings["seed_era_kz_2024_event_1"],
+                Strings["seed_era_kz_2024_event_2"]
+            ),
             emoji = "🚀",
             isLocked = false
         )

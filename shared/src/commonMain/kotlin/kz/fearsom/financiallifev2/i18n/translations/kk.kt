@@ -255,6 +255,27 @@ val kkStrings: Map<String, String> = mapOf(
     "era_kz_90s_name"                to "Қазақстан 90-шы жж.",
     "era_kz_2015_name"               to "Қазақстан 2015",
 
+    // ── Seed era display strings ─────────────────────────────────────
+    "seed_era_kz_90s_name"           to "Қазақстан 90-шы жж.",
+    "seed_era_kz_90s_desc"           to "КСРО ыдырауы. Гиперинфляция, ваучерлер, МММ пирамидалары және теңгенің енгізілуі. Хаостан аман қалыңыз.",
+    "seed_era_kz_2005_name"          to "Қазақстан 2005–2010",
+    "seed_era_kz_2005_desc"          to "Мұнай бумы. Экономика өсіп, жалақы артып жатыр, бірақ инфляция жоғары.",
+    "seed_era_kz_2015_name"          to "Қазақстан 2015–2020",
+    "seed_era_kz_2015_desc"          to "Цифрландыру және теңгенің тұрақсыздығы. Доллар бағамы секіреді, онлайн-бизнес басталады.",
+    "seed_era_kz_2024_name"          to "Қазақстан 2024–2030",
+    "seed_era_kz_2024_desc"          to "Жаңа шындық. Кез келген дәуірді өту арқылы ашыңыз.",
+    "seed_era_kz_90s_event_1"        to "КСРО ыдырауы",
+    "seed_era_kz_90s_event_2"        to "Теңгенің енгізілуі 1993",
+    "seed_era_kz_90s_event_3"        to "МММ 1994",
+    "seed_era_kz_90s_event_4"        to "Дағдарыс 1998",
+    "seed_era_kz_2005_event_1"       to "Мұнай бумы",
+    "seed_era_kz_2005_event_2"       to "Девальвация 2009",
+    "seed_era_kz_2015_event_1"       to "Девальвация 2015",
+    "seed_era_kz_2015_event_2"       to "Пандемия 2020",
+    "seed_era_kz_2015_event_3"       to "Цифрландыру",
+    "seed_era_kz_2024_event_1"       to "Технологиялық бум",
+    "seed_era_kz_2024_event_2"       to "Қаржылық реформалар",
+
     // ── Auth errors ──────────────────────────────────────────────────
     "err_auth_fill_fields"           to "Барлық өрістерді толтырыңыз",
     "err_auth_server_unavailable"    to "Сервер қолжетімсіз (%d)",

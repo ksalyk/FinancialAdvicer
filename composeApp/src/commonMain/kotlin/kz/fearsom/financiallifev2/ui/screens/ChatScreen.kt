@@ -217,7 +217,7 @@ fun ChatScreen(
     // Scroll to new message when user selects an option or messages arrive
     LaunchedEffect(messages.size, scrollBlocked) {
         if (messages.isNotEmpty()) {
-            delay(50)
+            delay(100)
             listState.animateScrollToItem(messages.size - 1)
         }
     }
@@ -225,7 +225,7 @@ fun ChatScreen(
     // Ensure we're at the latest CHARACTER message when animation starts
     LaunchedEffect(latestCharacterMessageId) {
         if (latestCharacterMessageId != null && messages.isNotEmpty()) {
-            delay(16) // Wait one frame for layout
+            delay(32) // Wait one frame for layout
             val index = messages.indexOfFirst { it.id == latestCharacterMessageId }
             if (index >= 0) {
                 listState.scrollToItem(index)
@@ -238,7 +238,7 @@ fun ChatScreen(
     if (!typingAnimationEnabled) {
         LaunchedEffect(latestCharacterMessageId, messages.size) {
             if (latestCharacterMessageId != null && messages.isNotEmpty()) {
-                delay(50) // Wait for layout to measure the full message height
+                delay(100) // Wait for layout to measure the full message height
                 listState.animateScrollToItem(messages.size - 1, Int.MAX_VALUE)
             }
         }
@@ -358,6 +358,9 @@ fun ChatScreen(
                             )
                         }
                     }
+                    stickyHeader {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     if (uiState.isTyping) {
                         item(key = "typing") {
                             DiaryWritingIndicator()
@@ -394,7 +397,6 @@ fun ChatScreen(
                         color = GoldPrimary
                     )
                 }
-
             }
 
             if (uiState.gameState?.gameOver == true) {
@@ -795,7 +797,11 @@ private fun DiaryEntryCard(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(colors.backgroundElevated.copy(alpha = 0.82f))
-                                .border(1.dp, GoldPrimary.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
+                                .border(
+                                    1.dp,
+                                    GoldPrimary.copy(alpha = 0.28f),
+                                    RoundedCornerShape(8.dp)
+                                )
                                 .padding(12.dp)
                         ) {
                             Text(

@@ -255,6 +255,27 @@ val enStrings: Map<String, String> = mapOf(
     "era_kz_90s_name"                to "Kazakhstan 1990s",
     "era_kz_2015_name"               to "Kazakhstan 2015",
 
+    // ── Seed era display strings ─────────────────────────────────────
+    "seed_era_kz_90s_name"           to "Kazakhstan 90s",
+    "seed_era_kz_90s_desc"           to "Collapse of the USSR. Hyperinflation, vouchers, MMM pyramids and the introduction of the tenge. Survive the chaos.",
+    "seed_era_kz_2005_name"          to "Kazakhstan 2005–2010",
+    "seed_era_kz_2005_desc"          to "Oil boom. The economy is growing, wages are increasing, but inflation is high.",
+    "seed_era_kz_2015_name"          to "Kazakhstan 2015–2020",
+    "seed_era_kz_2015_desc"          to "Digitalization and instability of the tenge. The dollar exchange rate jumps, online business begins.",
+    "seed_era_kz_2024_name"          to "Kazakhstan 2024–2030",
+    "seed_era_kz_2024_desc"          to "New reality. Unlock by completing any era.",
+    "seed_era_kz_90s_event_1"        to "Collapse of the USSR",
+    "seed_era_kz_90s_event_2"        to "Introduction of the tenge 1993",
+    "seed_era_kz_90s_event_3"        to "MMM 1994",
+    "seed_era_kz_90s_event_4"        to "Crisis 1998",
+    "seed_era_kz_2005_event_1"       to "Oil boom",
+    "seed_era_kz_2005_event_2"       to "Devaluation 2009",
+    "seed_era_kz_2015_event_1"       to "Devaluation 2015",
+    "seed_era_kz_2015_event_2"       to "Pandemic 2020",
+    "seed_era_kz_2015_event_3"       to "Digitalization",
+    "seed_era_kz_2024_event_1"       to "Tech boom",
+    "seed_era_kz_2024_event_2"       to "Financial reforms",
+
     // ── Auth errors ──────────────────────────────────────────────────
     "err_auth_fill_fields"           to "Please fill in all fields",
     "err_auth_server_unavailable"    to "Server unavailable (%d)",
