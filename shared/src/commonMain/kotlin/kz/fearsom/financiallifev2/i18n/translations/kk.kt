@@ -223,7 +223,7 @@ val kkStrings: Map<String, String> = mapOf(
 
     // ── System / GameEngine ──────────────────────────────────────────
     "sys_game_start"                 to "🎮 Қаржылық шытырман оқиға басталды! %s-ға қаржылық болашақ құруға көмектесіңіз.",
-    "sys_default_character_name"     to "Асан",
+    "sys_default_character_name"     to "Әмір Нұрланов",
 
     // ── MonthlyReport ────────────────────────────────────────────────
     "sys_monthly_title"              to "📊 %s %d — Ай нәтижелері",

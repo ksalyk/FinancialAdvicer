@@ -3,7 +3,7 @@ package kz.fearsom.financiallifev2.engine
 import kz.fearsom.financiallifev2.i18n.StringKeys
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.EraDefinition
 import kz.fearsom.financiallifev2.scenarios.EraRegistry
 import kz.fearsom.financiallifev2.scenarios.EventPoolSelector
@@ -35,7 +35,7 @@ import kotlin.random.Random
  *     → emit new GameState via StateFlow
  */
 class GameEngine(
-    private var graph: ScenarioGraph = AidarScenarioGraph(),
+    private var graph: ScenarioGraph = AsanScenarioGraph(),
     private var eraDefinition: EraDefinition? = null
 ) {
 
@@ -361,6 +361,7 @@ class GameEngine(
         emoji    = event.flavor,
         sourceEventId = event.id,
         sourcePlayerState = ps,
+        schemeExplanation = event.schemeExplanation?.let { substituteTemplate(it, ps) },
         sceneTag = primarySceneTag(event.tags)
     )
 
@@ -396,6 +397,8 @@ class GameEngine(
      *   {passiveIncome}— monthly investment return
      *   {netFlow}      — net monthly cash flow
      *   {income3x}     — 3× income (emergency fund target)
+     *   {knowledge}    — financial knowledge score
+     *   {stress}       — stress score
      *   {name}         — character name
      */
     private fun substituteTemplate(text: String, ps: PlayerState): String =
@@ -409,6 +412,8 @@ class GameEngine(
             .replace("{passiveIncome}", ps.monthlyInvestmentReturn.moneyFormat(ps.currency))
             .replace("{netFlow}",       ps.netMonthlyFlow.moneyFormat(ps.currency))
             .replace("{income3x}",      (ps.income * 3).moneyFormat(ps.currency))
+            .replace("{knowledge}",     ps.financialKnowledge.toString())
+            .replace("{stress}",        ps.stress.toString())
             .replace("{name}",          currentCharacterName)
             .replace("{eraLabel}",      EraRegistry.findById(ps.eraId)?.name ?: ps.eraId)
 
@@ -445,6 +450,7 @@ class GameEngine(
                 message.copy(
                     text = substituteTemplate(event.message, sourceState),
                     emoji = event.flavor,
+                    schemeExplanation = event.schemeExplanation?.let { substituteTemplate(it, sourceState) },
                     sceneTag = primarySceneTag(event.tags)
                 )
             } else {

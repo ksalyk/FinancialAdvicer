@@ -1,21 +1,19 @@
 package kz.fearsom.financiallifev2.server.database
 
-import kz.fearsom.financiallifev2.server.database.tables.CharactersTable
-import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
-import kz.fearsom.financiallifev2.server.database.tables.ErasTable
-import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
-import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
-import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
-import kz.fearsom.financiallifev2.server.database.tables.UsersTable
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
 
-    fun init() {
+    /**
+     * Connects to PostgreSQL and returns the [Database] instance.
+     *
+     * Schema creation/migration is now handled exclusively by [MigrationRunner] — the old
+     * `SchemaUtils.createMissingTablesAndColumns` call has been removed from here so the
+     * migration framework is the single source of truth for DDL changes.
+     */
+    fun init(): Database {
         val jdbcUrl  = resolveJdbcUrl()
         val user     = System.getenv("DB_USER")     ?: "postgres"
         val password = System.getenv("DB_PASSWORD") ?: "postgres"
@@ -35,19 +33,7 @@ object DatabaseFactory {
             validate()
         }
 
-        Database.connect(HikariDataSource(config))
-
-        transaction {
-            SchemaUtils.createMissingTablesAndColumns(
-                UsersTable,
-                RefreshTokensTable,
-                GameSessionsTable,
-                GameStatesTable,
-                CompletedSessionsTable,
-                CharactersTable,
-                ErasTable
-            )
-        }
+        return Database.connect(HikariDataSource(config))
     }
 
     /**

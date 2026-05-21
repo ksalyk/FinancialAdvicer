@@ -20,7 +20,7 @@ data class GameUiState(
     val showStats: Boolean = false,
     // Dynamic character display info
     val characterName: String  = Strings.sysDefaultCharacterName,
-    val characterEmoji: String = "👨‍💻",
+    val characterEmoji: String = "🛒",
     val characterTitle: String = ""
 )
 
@@ -151,15 +151,15 @@ class GamePresenter(
         }
     }
 
-    /** Legacy default start — used when no session is selected. Loads Айдар (kz_2024). */
+    /** Legacy default start — used when no session is selected. Loads Amir (kz_2024). */
     fun startDefaultGame() {
         activeSessionId = null
         scope.launch {
             _uiState.value = _uiState.value.copy(
                 isTyping       = true,
                 characterName  = Strings.sysDefaultCharacterName,
-                characterEmoji = "🧑‍💻",
-                characterTitle = ""
+                characterEmoji = "🛒",
+                characterTitle = "Менеджер маркетплейса"
             )
             delay(800)
             engine.startGame(characterName = Strings.sysDefaultCharacterName)
@@ -193,7 +193,11 @@ class GamePresenter(
             suppressNextStateSideEffects = _uiState.value.gameState != null
             engine.relocalizeCurrentState(session.characterName)
         } else {
-            _uiState.value = _uiState.value.copy(characterName = Strings.sysDefaultCharacterName)
+            _uiState.value = _uiState.value.copy(
+                characterName = Strings.sysDefaultCharacterName,
+                characterEmoji = "🛒",
+                characterTitle = "Менеджер маркетплейса"
+            )
             suppressNextStateSideEffects = _uiState.value.gameState != null
             engine.relocalizeCurrentState(Strings.sysDefaultCharacterName)
         }

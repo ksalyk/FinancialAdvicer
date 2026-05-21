@@ -39,4 +39,12 @@ dependencies {
     implementation(libs.exposed.datetime)
     implementation(libs.postgresql)
     implementation(libs.hikari)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.serialization.json)
+    testImplementation(libs.h2)
 }

@@ -25,6 +25,7 @@ class ComposeAppCommonTest {
 
     @Test
     fun `session start date follows scenario graph instead of raw era start`() {
+        // secureStorage defaults to null → in-memory only, no platform deps needed in tests
         val repo = GameSessionRepository()
         val era = SeedData.eras.first { it.id == "kz_90s" }
         val character = SeedData.predefinedCharacters.first { it.id == "aidar_90s" }

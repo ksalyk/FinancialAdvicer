@@ -172,7 +172,8 @@ data class GameEvent(
     val tags: Set<String> = emptySet(),
     val poolWeight: Int = 10,
     val unique: Boolean = false,
-    val cooldownMonths: Int = 0
+    val cooldownMonths: Int = 0,
+    val schemeExplanation: String? = null
 )
 
 /** Entry in a weighted event pool. */
@@ -299,6 +300,7 @@ data class ChatMessage(
     val monthlyReport: MonthlyReport? = null,
     val textKey: String? = null,
     val textArgs: List<String> = emptyList(),
+    val schemeExplanation: String? = null,
     /**
      * Semantic scene category resolved from [GameEvent.tags].
      * Values: "scam" | "crisis" | "career" | "family" | "investment" |

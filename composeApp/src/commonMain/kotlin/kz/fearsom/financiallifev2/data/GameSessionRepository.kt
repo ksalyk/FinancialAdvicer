@@ -1,24 +1,47 @@
 package kz.fearsom.financiallifev2.data
 
-import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.model.*
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
+
+private const val KEY_SESSIONS     = "game_session_repo_sessions"
+private const val KEY_SAVED_STATES = "game_session_repo_saved_states"
 
 /**
- * In-memory repository for [GameSession] objects and their associated engine states.
+ * Repository for [GameSession] objects and their associated engine states.
  *
  * Responsibilities:
  *  - Create / list / complete sessions
  *  - Store serialised [GameState] so "Continue" can restore exactly where the player left off
  *  - Keep a reactive [sessions] flow so UIs observe changes automatically
+ *  - **Persist** sessions and saved states to [SecureStorage] so state survives process death
  *
- * No persistence yet — state survives app-foreground usage but not process death.
- * Replace with SQLDelight + server sync in a future sprint.
+ * ## Persistence strategy
+ * Both [sessions] and [savedStates] are serialised to JSON and written to [SecureStorage]
+ * on every mutative operation. On construction the repository attempts to restore from
+ * storage so a cold restart resumes from the last known state.
+ *
+ * [SecureStorage] operations are synchronous by design — call from a non-main dispatcher
+ * (e.g. `Dispatchers.IO`) if the repo is constructed off the main thread, or rely on
+ * Koin's lazy singleton creation which happens on the first background access.
+ *
+ * @param secureStorage  Platform-specific encrypted key-value store.
+ *                       Defaults to `null` — when null, persistence is skipped (useful in
+ *                       unit tests where no platform context is available). In production,
+ *                       Koin injects the `actual` [SecureStorage] instance.
  */
-class GameSessionRepository {
+class GameSessionRepository(
+    private val secureStorage: SecureStorage? = null
+) {
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults    = true
+    }
 
     private val _sessions = MutableStateFlow<List<GameSession>>(emptyList())
     val sessions: StateFlow<List<GameSession>> = _sessions.asStateFlow()
@@ -27,6 +50,53 @@ class GameSessionRepository {
     private val savedStates = mutableMapOf<String, GameState>()
 
     private var sessionCounter = 0
+
+    init {
+        restoreFromStorage()
+    }
+
+    // ── Persistence ───────────────────────────────────────────────────────────
+
+    private fun restoreFromStorage() {
+        if (secureStorage == null) return
+        try {
+            val sessionsJson = secureStorage.get(KEY_SESSIONS)
+            if (!sessionsJson.isNullOrBlank()) {
+                val restored = json.decodeFromString<List<GameSession>>(sessionsJson)
+                _sessions.value = restored
+                // Advance counter past the highest existing session number to avoid ID collisions
+                sessionCounter = restored
+                    .mapNotNull { it.id.removePrefix("session_").toIntOrNull() }
+                    .maxOrNull() ?: 0
+            }
+        } catch (_: Exception) {
+            // Corrupt or incompatible storage — start fresh; old data is discarded.
+        }
+
+        try {
+            val statesJson = secureStorage?.get(KEY_SAVED_STATES)
+            if (!statesJson.isNullOrBlank()) {
+                val restored = json.decodeFromString<Map<String, GameState>>(statesJson)
+                savedStates.putAll(restored)
+            }
+        } catch (_: Exception) {
+            // Same: start with empty map on corruption.
+        }
+    }
+
+    private fun persistSessions() {
+        secureStorage ?: return
+        try {
+            secureStorage.save(KEY_SESSIONS, json.encodeToString(_sessions.value))
+        } catch (_: Exception) { /* best-effort; UI state is unaffected */ }
+    }
+
+    private fun persistSavedStates() {
+        secureStorage ?: return
+        try {
+            secureStorage.save(KEY_SAVED_STATES, json.encodeToString(savedStates.toMap()))
+        } catch (_: Exception) { /* best-effort */ }
+    }
 
     // ── Create ────────────────────────────────────────────────────────────────
 
@@ -54,21 +124,22 @@ class GameSessionRepository {
         }
 
         val session = GameSession(
-            id              = "session_${++sessionCounter}",
-            userId          = userId,
-            eraId           = era.id,
-            eraName         = era.name,
-            characterType   = characterType,
-            characterId     = characterId,
-            characterName   = characterName,
-            characterEmoji  = characterEmoji,
-            characterTitle  = characterTitle,
-            initialStats    = initialStats,
-            currentStats    = initialStats,
-            currentGameYear = scenarioStart.year,
+            id               = "session_${++sessionCounter}",
+            userId           = userId,
+            eraId            = era.id,
+            eraName          = era.name,
+            characterType    = characterType,
+            characterId      = characterId,
+            characterName    = characterName,
+            characterEmoji   = characterEmoji,
+            characterTitle   = characterTitle,
+            initialStats     = initialStats,
+            currentStats     = initialStats,
+            currentGameYear  = scenarioStart.year,
             currentGameMonth = scenarioStart.month
         )
         _sessions.update { it + session }
+        persistSessions()
         return session
     }
 
@@ -86,6 +157,8 @@ class GameSessionRepository {
 
     fun saveGameState(sessionId: String, gameState: GameState) {
         savedStates[sessionId] = gameState
+        persistSavedStates()
+
         val ps = gameState.playerState
         _sessions.update { list ->
             list.map { s ->
@@ -106,6 +179,7 @@ class GameSessionRepository {
                 else s
             }
         }
+        persistSessions()
     }
 
     fun getSavedGameState(sessionId: String): GameState? =
@@ -121,6 +195,7 @@ class GameSessionRepository {
                 else s
             }
         }
+        persistSessions()
     }
 
     // ── Statistics helpers ────────────────────────────────────────────────────
@@ -128,19 +203,17 @@ class GameSessionRepository {
     fun getQuickStats(): QuickStats? {
         val all = _sessions.value
         if (all.isEmpty()) return null
-        val completed = all.filter { it.status == SessionStatus.COMPLETED }
-        val bestEnding = completed
-            .mapNotNull { it.ending }
-            .maxByOrNull { it.ordinal }
+        val completed  = all.filter { it.status == SessionStatus.COMPLETED }
+        val bestEnding = completed.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
         return QuickStats(
-            totalGames           = all.size,
-            bestEnding           = bestEnding,
-            lastPlayedCharacter  = all.lastOrNull()?.localized()?.characterName
+            totalGames          = all.size,
+            bestEnding          = bestEnding,
+            lastPlayedCharacter = all.lastOrNull()?.localized()?.characterName
         )
     }
 
     fun getPlayerStatistics(): PlayerStatistics {
-        val all = _sessions.value
+        val all       = _sessions.value
         val completed = all.filter { it.status == SessionStatus.COMPLETED }
         val bestEnding = completed.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
         val avgCapital = if (completed.isNotEmpty())
@@ -149,9 +222,8 @@ class GameSessionRepository {
         val endingDist = GameEnding.entries.associateWith { ending ->
             completed.count { it.ending == ending }
         }
-        val mostPlayedEra = all.groupBy { it.eraId }
-            .maxByOrNull { it.value.size }?.key
-        val perCharacter = all.groupBy { it.characterId }.map { (charId, sessions) ->
+        val mostPlayedEra = all.groupBy { it.eraId }.maxByOrNull { it.value.size }?.key
+        val perCharacter  = all.groupBy { it.characterId }.map { (charId, sessions) ->
             CharacterStatistics(
                 characterId    = charId,
                 characterName  = sessions.first().localized().characterName,
@@ -168,7 +240,7 @@ class GameSessionRepository {
                 eraId      = eraId,
                 eraName    = sessions.first().localized().eraName,
                 timesPlayed = sessions.size,
-                bestEnding = sessions.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
+                bestEnding  = sessions.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
             )
         }
         return PlayerStatistics(
@@ -183,12 +255,14 @@ class GameSessionRepository {
         )
     }
 
+    // ── Localization helper ───────────────────────────────────────────────────
+
     private fun GameSession.localized(): GameSession {
-        val era = SeedData.eras.find { it.id == eraId }
+        val era        = SeedData.eras.find { it.id == eraId }
         val predefined = SeedData.predefinedCharacters.find { it.id == characterId }
-        val bundle = SeedData.characterBundles.find { it.id == characterId }
+        val bundle     = SeedData.characterBundles.find { it.id == characterId }
         return copy(
-            eraName = era?.name ?: eraName,
+            eraName       = era?.name ?: eraName,
             characterName = predefined?.name ?: bundle?.label ?: characterName,
             characterTitle = predefined?.profession ?: bundle?.profession ?: characterTitle
         )

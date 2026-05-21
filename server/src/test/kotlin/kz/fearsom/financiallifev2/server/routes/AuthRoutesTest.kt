@@ -1,274 +1,336 @@
 package kz.fearsom.financiallifev2.server.routes
 
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.server.auth.JwtConfig
 import kz.fearsom.financiallifev2.server.models.AuthResponse
 import kz.fearsom.financiallifev2.server.models.LoginRequest
 import kz.fearsom.financiallifev2.server.models.RegisterRequest
+import kz.fearsom.financiallifev2.server.models.ServerUser
+import kz.fearsom.financiallifev2.server.plugins.configureSecurity
+import kz.fearsom.financiallifev2.server.plugins.configureSerialization
+import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
 import kz.fearsom.financiallifev2.server.repository.UserRepository
-import kotlinx.serialization.json.Json
-import org.junit.Before
 import org.junit.Test
+import java.security.MessageDigest
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
- * Comprehensive test suite for Auth endpoints.
- * Tests: POST /auth/register, POST /auth/login, GET /auth/me
+ * Unit tests for /api/v1/auth/ endpoints using an in-memory [MockUserRepository].
+ *
+ * No database required — [MockUserRepository] implements the [UserRepository] interface
+ * with simple ConcurrentHashMap storage.
+ *
+ * The test application is configured identically to production:
+ *   - ContentNegotiation (JSON)
+ *   - JWT Security plugin
+ *   - StatusPages
+ *   - authRoutes() with mock repository
  */
 class AuthRoutesTest {
 
-    private lateinit var mockUserRepository: MockUserRepository
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    @Before
-    fun setup() {
-        mockUserRepository = MockUserRepository()
+    // ── Test app setup ────────────────────────────────────────────────────────
+
+    private fun ApplicationTestBuilder.setupApp(repo: UserRepository) {
+        application {
+            configureSerialization()
+            configureSecurity()
+            configureStatusPages()
+            routing {
+                route("/api/v1") {
+                    authRoutes(repo, authLimiter = null, refreshLimiter = null)
+                }
+            }
+        }
     }
 
-    @Test
-    fun `test POST auth_register - success with valid data`() = testApplication {
-        val client = createClient()
+    private fun ApplicationTestBuilder.testClient() = createClient {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true; encodeDefaults = true })
+        }
+    }
 
-        val response = client.post("/auth/register") {
+    // ── Register ──────────────────────────────────────────────────────────────
+
+    @Test
+    fun `POST auth_register - success with valid data`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
+
+        val response = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "testuser", password = "password123"))
         }
 
         assertEquals(HttpStatusCode.Created, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
-        assertEquals(true, body.success)
-        assertNotNull(body.token)
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
+        assertTrue(body.success)
+        assertTrue(body.accessToken.isNotBlank(), "accessToken should be non-blank on success")
         assertEquals("testuser", body.username)
     }
 
     @Test
-    fun `test POST auth_register - fails with username too short`() = testApplication {
-        val client = createClient()
+    fun `POST auth_register - fails with username too short`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.post("/auth/register") {
+        val response = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "ab", password = "password123"))
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_login_too_short", body.message)
     }
 
     @Test
-    fun `test POST auth_register - fails with password too short`() = testApplication {
-        val client = createClient()
+    fun `POST auth_register - fails with password too short`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.post("/auth/register") {
+        val response = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "validuser", password = "123"))
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_password_too_short", body.message)
     }
 
     @Test
-    fun `test POST auth_register - fails when user already exists`() = testApplication {
-        val client = createClient()
+    fun `POST auth_register - fails when user already exists`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        // Register first user
-        client.post("/auth/register") {
+        // Register first
+        client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "duplicate", password = "password123"))
         }
 
-        // Try to register with same username
-        val response = client.post("/auth/register") {
+        // Second registration with same username
+        val response = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "duplicate", password = "password123"))
         }
 
         assertEquals(HttpStatusCode.Conflict, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_user_exists", body.message)
     }
 
-    @Test
-    fun `test POST auth_login - success with valid credentials`() = testApplication {
-        val client = createClient()
+    // ── Login ─────────────────────────────────────────────────────────────────
 
-        // First register
-        client.post("/auth/register") {
+    @Test
+    fun `POST auth_login - success with valid credentials`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
+
+        client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "loginuser", password = "password123"))
         }
 
-        // Then login
-        val response = client.post("/auth/login") {
+        val response = client.post("/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(username = "loginuser", password = "password123"))
         }
 
         assertEquals(HttpStatusCode.OK, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
-        assertEquals(true, body.success)
-        assertNotNull(body.token)
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
+        assertTrue(body.success)
+        assertTrue(body.accessToken.isNotBlank())
         assertEquals("loginuser", body.username)
     }
 
     @Test
-    fun `test POST auth_login - fails with non-existent user`() = testApplication {
-        val client = createClient()
+    fun `POST auth_login - fails with non-existent user`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.post("/auth/login") {
+        val response = client.post("/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(username = "nonexistent", password = "password123"))
         }
 
         assertEquals(HttpStatusCode.Unauthorized, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_user_not_found", body.message)
     }
 
     @Test
-    fun `test POST auth_login - fails with wrong password`() = testApplication {
-        val client = createClient()
+    fun `POST auth_login - fails with wrong password`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        // Register
-        client.post("/auth/register") {
+        client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "wrongpass", password = "correct123"))
         }
 
-        // Try with wrong password
-        val response = client.post("/auth/login") {
+        val response = client.post("/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(username = "wrongpass", password = "incorrect123"))
         }
 
         assertEquals(HttpStatusCode.Unauthorized, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_wrong_password", body.message)
     }
 
     @Test
-    fun `test POST auth_login - fails with empty fields`() = testApplication {
-        val client = createClient()
+    fun `POST auth_login - fails with blank fields`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.post("/auth/login") {
+        val response = client.post("/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(username = "", password = ""))
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
         assertEquals("err_auth_fill_fields", body.message)
     }
 
-    @Test
-    fun `test GET auth_me - success with valid token`() = testApplication {
-        val client = createClient()
+    // ── /auth/me ──────────────────────────────────────────────────────────────
 
-        // Register and get token
-        val registerResponse = client.post("/auth/register") {
+    @Test
+    fun `GET auth_me - success with valid JWT`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
+
+        val registerResponse = client.post("/api/v1/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(RegisterRequest(username = "meuser", password = "password123"))
         }
-        val registerData = Json.decodeFromString<AuthResponse>(registerResponse.bodyAsText())
-        val token = registerData.token
+        val registerData = json.decodeFromString<AuthResponse>(registerResponse.bodyAsText())
+        assertNotNull(registerData.accessToken)
 
-        // Get /auth/me
-        val response = client.get("/auth/me") {
-            header("Authorization", "Bearer $token")
+        val response = client.get("/api/v1/auth/me") {
+            header(HttpHeaders.Authorization, "Bearer ${registerData.accessToken}")
         }
 
         assertEquals(HttpStatusCode.OK, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
-        assertEquals(true, body.success)
+        val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
+        assertTrue(body.success)
         assertEquals("meuser", body.username)
     }
 
     @Test
-    fun `test GET auth_me - fails without authorization header`() = testApplication {
-        val client = createClient()
+    fun `GET auth_me - fails without Authorization header`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.get("/auth/me")
+        val response = client.get("/api/v1/auth/me")
 
         assertEquals(HttpStatusCode.Unauthorized, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
-        assertEquals(false, body.success)
     }
 
     @Test
-    fun `test GET auth_me - fails with invalid token`() = testApplication {
-        val client = createClient()
+    fun `GET auth_me - fails with malformed token`() = testApplication {
+        val repo = MockUserRepository()
+        setupApp(repo)
+        val client = testClient()
 
-        val response = client.get("/auth/me") {
-            header("Authorization", "Bearer invalid.token.here")
-        }
-
-        assertEquals(HttpStatusCode.Unauthorized, response.status)
-        val body = Json.decodeFromString<AuthResponse>(response.bodyAsText())
-        assertEquals(false, body.success)
-    }
-
-    @Test
-    fun `test GET auth_me - fails with expired token`() = testApplication {
-        val client = createClient()
-
-        // This test would need an actual expired token
-        // For now, using an obviously invalid token
-        val response = client.get("/auth/me") {
-            header("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+        val response = client.get("/api/v1/auth/me") {
+            header(HttpHeaders.Authorization, "Bearer not.a.real.token")
         }
 
         assertEquals(HttpStatusCode.Unauthorized, response.status)
     }
+}
 
-    // ────────────────────────────────────────────────────────────────────────────
+// ── In-memory mock ────────────────────────────────────────────────────────────
 
-    private fun ApplicationTestBuilder.createClient() = createClient {
-        // Apply auth routes with mock repository
-        install(io.ktor.client.plugins.JsonFeature)
-    }
+/**
+ * Thread-safe in-memory [UserRepository] for testing.
+ *
+ * Stores users in a [ConcurrentHashMap]. Passwords are SHA-256 hashed to mirror
+ * production behaviour so [verifyPassword] works correctly in tests.
+ * Refresh tokens are stored as plain UUIDs and expire only when explicitly set.
+ */
+internal class MockUserRepository : UserRepository {
 
-    /**
-     * Mock UserRepository for testing without database
-     */
-    private class MockUserRepository : UserRepository {
-        private val users = mutableMapOf<String, UserData>()
-        private var nextId = 1
+    private data class StoredToken(val userId: String, val expiresAt: Long)
 
-        data class UserData(
-            val id: String,
-            val username: String,
-            val passwordHash: String
+    private val users  = ConcurrentHashMap<String, ServerUser>()   // id → user
+    private val byName = ConcurrentHashMap<String, String>()        // username → id
+    private val tokens = ConcurrentHashMap<String, StoredToken>()   // rawToken → entry
+
+    override suspend fun findByUsername(username: String): ServerUser? =
+        byName[username.lowercase()]?.let { users[it] }
+
+    override suspend fun findById(id: String): ServerUser? = users[id]
+
+    override suspend fun existsByUsername(username: String): Boolean =
+        byName.containsKey(username.lowercase())
+
+    override suspend fun create(username: String, rawPassword: String): ServerUser {
+        val id   = UUID.randomUUID().toString()
+        val name = username.lowercase().trim()
+        val user = ServerUser(
+            id           = id,
+            username     = name,
+            passwordHash = sha256Hex(rawPassword),
+            createdAt    = System.currentTimeMillis()
         )
-
-        override fun existsByUsername(username: String): Boolean =
-            users.values.any { it.username == username }
-
-        override fun create(username: String, password: String): UserData {
-            val id = (nextId++).toString()
-            val user = UserData(id, username, hashPassword(password))
-            users[id] = user
-            return user
-        }
-
-        override fun findByUsername(username: String): UserData? =
-            users.values.find { it.username == username }
-
-        override fun findById(id: String): UserData? = users[id]
-
-        override fun verifyPassword(password: String, hash: String): Boolean =
-            hashPassword(password) == hash
-
-        private fun hashPassword(password: String): String = password.hashCode().toString()
+        users[id]   = user
+        byName[name] = id
+        return user
     }
+
+    override fun verifyPassword(rawPassword: String, storedHash: String): Boolean =
+        sha256Hex(rawPassword) == storedHash
+
+    override suspend fun createRefreshToken(userId: String): String {
+        val raw = UUID.randomUUID().toString()
+        tokens[raw] = StoredToken(userId, System.currentTimeMillis() + JwtConfig.REFRESH_TTL_MS)
+        return raw
+    }
+
+    override suspend fun consumeRefreshToken(rawToken: String): ServerUser? {
+        val entry = tokens.remove(rawToken) ?: return null
+        if (entry.expiresAt < System.currentTimeMillis()) return null
+        return users[entry.userId]
+    }
+
+    override suspend fun revokeAllTokens(userId: String) {
+        tokens.entries.removeIf { (_, entry) -> entry.userId == userId }
+    }
+
+    private fun sha256Hex(input: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(input.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
 }

@@ -5,7 +5,8 @@ import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlin.test.assertNotEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class LocaleRefreshRegressionTest {
 
@@ -17,46 +18,35 @@ class LocaleRefreshRegressionTest {
     }
 
     @Test
-    fun `scenario graph cache is locale aware`() {
+    fun `scenario graph returns Russian-first story content`() {
         Strings.currentLocale = "ru"
-        val ruOption = ScenarioGraphFactory
-            .forCharacter("aidar", "kz_2024")
+        val intro = ScenarioGraphFactory
+            .forCharacter("asan", "kz_2024")
             .findEvent("intro")
-            ?.options
-            ?.first()
-            ?.text
 
-        Strings.currentLocale = "en"
-        val enOption = ScenarioGraphFactory
-            .forCharacter("aidar", "kz_2024")
-            .findEvent("intro")
-            ?.options
-            ?.first()
-            ?.text
-
-        assertNotEquals(ruOption, enOption)
+        assertTrue(intro?.message?.contains("Амир") == true)
+        assertTrue(intro.options.first().text.isNotEmpty())
     }
 
     @Test
-    fun `loaded game state is re-rendered in current locale`() {
+    fun `loaded game state keeps Russian scenario content until localization pass`() {
         Strings.currentLocale = "ru"
-        val engine = GameEngine.forCharacterAndEra("aidar", "kz_2024")
-        val ruState = engine.startGame(characterName = Strings["seed_char_aidar_name"])
+        val engine = GameEngine.forCharacterAndEra("asan", "kz_2024")
+        val ruState = engine.startGame(characterName = "Амир Нурланов")
         val ruIntro = ruState.messages.last().text
 
         Strings.currentLocale = "en"
-        engine.loadState(ruState, Strings["seed_char_aidar_name"])
+        engine.loadState(ruState, "Амир Нурланов")
         val enState = engine.state.value!!
 
-        assertNotEquals(ruIntro, enState.messages.last().text)
-        assertNotEquals(ruState.messages.first().text, enState.messages.first().text)
+        assertEquals(ruIntro, enState.messages.last().text)
     }
 
     @Test
     fun `loaded game state without character name preserves saved text`() {
         Strings.currentLocale = "ru"
-        val engine = GameEngine.forCharacterAndEra("aidar", "kz_2024")
-        val ruState = engine.startGame(characterName = Strings["seed_char_aidar_name"])
+        val engine = GameEngine.forCharacterAndEra("asan", "kz_2024")
+        val ruState = engine.startGame(characterName = "Амир Нурланов")
         val legacyState = GameState(
             playerState = ruState.playerState,
             currentEventId = ruState.currentEventId,

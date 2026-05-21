@@ -1,1455 +1,928 @@
 package kz.fearsom.financiallifev2.scenarios
 
-import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.model.Condition.Stat.Field.*
-import kz.fearsom.financiallifev2.model.Condition.Stat.Op.*
+import kz.fearsom.financiallifev2.model.Condition
+import kz.fearsom.financiallifev2.model.Condition.Stat.Field.CAPITAL
+import kz.fearsom.financiallifev2.model.Condition.Stat.Field.STRESS
+import kz.fearsom.financiallifev2.model.Condition.Stat.Op.GTE
+import kz.fearsom.financiallifev2.model.Condition.Stat.Op.LTE
+import kz.fearsom.financiallifev2.model.Effect
+import kz.fearsom.financiallifev2.model.EndingType
+import kz.fearsom.financiallifev2.model.GameEvent
+import kz.fearsom.financiallifev2.model.GameOption
+import kz.fearsom.financiallifev2.model.MONTHLY_TICK
+import kz.fearsom.financiallifev2.model.PoolEntry
+import kz.fearsom.financiallifev2.model.ScheduledEvent
 
 /**
- * Shared library of financial scam and fraud events.
- * Each scam type has ERA VARIANTS — trigger events differ per era,
- * but follow-up/consequence events are shared.
+ * Era-aware scam library.
  *
- * Era mapping:
- *   kz_90s  — 1991-2000: no internet, personal visits, МММ wave
- *   kz_2005 — 2000-2009: early internet, dial-up, SMS, ICQ
- *   kz_2015 — 2014-2019: VKontakte, early Instagram, early WhatsApp
- *   kz_2024 — 2020+:     Telegram, Instagram, TikTok, Crypto, Pig Butchering
- *
- * Flag conventions:
- *   "learned.scam.X"     — player understands this scam type → weight drops 85%
- *   "lost_money_to_scam" — any scam weight drops further
- *   "in_mlm"             — player is in MLM now
+ * Same scam mechanic can exist in different decades, but the channel must match
+ * the era: paper receipts and landline calls in the 90s/2005, social networks in
+ * 2015, Telegram/apps/crypto in 2024.
  */
 object ScamEventLibrary {
 
-    // ── DSL helpers ───────────────────────────────────────────────────────────
-
-    private fun event(
+    private fun e(
         id: String,
         message: String,
         flavor: String = "💬",
-        priority: Int = 0,
         conditions: List<Condition> = emptyList(),
         tags: Set<String> = emptySet(),
         poolWeight: Int = 10,
         unique: Boolean = false,
         cooldownMonths: Int = 0,
+        schemeExplanation: String? = null,
         isEnding: Boolean = false,
         endingType: EndingType? = null,
         options: List<GameOption>
-    ) = GameEvent(id, message, flavor, options, conditions, priority, isEnding, endingType,
-                  tags, poolWeight, unique, cooldownMonths)
+    ) = GameEvent(
+        id = id,
+        message = message,
+        flavor = flavor,
+        options = options,
+        conditions = conditions,
+        priority = 0,
+        isEnding = isEnding,
+        endingType = endingType,
+        tags = tags,
+        poolWeight = poolWeight,
+        unique = unique,
+        cooldownMonths = cooldownMonths,
+        schemeExplanation = schemeExplanation
+    )
 
-    private fun option(
-        id: String, text: String, emoji: String, next: String, fx: Effect = Effect()
-    ) = GameOption(id, text, emoji, fx, next)
+    private fun o(id: String, text: String, emoji: String, next: String, fx: Effect = Effect()) =
+        GameOption(id, text, emoji, fx, next)
 
-    private fun stat(field: Condition.Stat.Field, op: Condition.Stat.Op, value: Long) =
-        Condition.Stat(field, op, value)
+    private fun capitalAtLeast(amount: Long) = Condition.Stat(CAPITAL, GTE, amount)
+    private fun capitalAtMost(amount: Long) = Condition.Stat(CAPITAL, LTE, amount)
+    private fun stressAtLeast(value: Long) = Condition.Stat(STRESS, GTE, value)
+    private fun era(id: String) = Condition.InEra(id)
+    private fun notLearned(tag: String) = Condition.NotFlag("learned.$tag")
 
-    private fun inEra(eraId: String) = Condition.InEra(eraId)
-    private fun notFlag(flag: String) = Condition.NotFlag(flag)
+    private val pyramidExplanation = story(
+        "Пирамида не зарабатывает на продукте. Выплаты ранним участникам идут из денег новых людей.",
+        "Проверка: откуда реальная прибыль, есть ли лицензия, можно ли вернуть деньги без привлечения новых участников, почему доходность обещают заранее."
+    )
 
-    // ════════════════════════════════════════════════════════════════════
-    //  1. PYRAMID SCHEME — Пирамиды
-    //  Общие follow-up: pyramidAvoided, pyramidCollapse, pyramidSmallLoss
-    // ════════════════════════════════════════════════════════════════════
+    private val mlmExplanation = story(
+        "MLM становится опасной схемой, когда главный заработок не от продаж клиентам, а от покупки стартовых наборов и привлечения новых участников.",
+        "Проверка: кто конечный покупатель, можно ли вернуть товар, сколько реально зарабатывает средний участник, есть ли обязательные закупки."
+    )
 
-    /** kz_90s — сосед приходит домой с предложением */
-    private fun pyramidNeighbor90s() = event(
-        id = "scam_pyramid_neighbor_90s",
-        message = Strings["scam_pyramid_neighbor_90s_msg"],
-        flavor = "🏚️",
-        tags = setOf("scam", "scam.pyramid", "social.friend"),
-        poolWeight = 18,
+    private val bettingExplanation = story(
+        "Каппер продает уверенность, а не преимущество. Если прогнозы были бы стабильной прибылью, их не продавали бы массово за небольшую плату.",
+        "Красные флаги: гарантия прохода, VIP-чат, просьба отыграться, скрины без полной истории ставок."
+    )
+
+    private val mfoExplanation = story(
+        "Быстрый заем опасен не суммой, а полной стоимостью: ежедневная ставка, штрафы, пролонгации и страховки превращают маленький долг в постоянный платеж.",
+        "Проверка: годовая эффективная ставка, штрафы, график платежей, право досрочного погашения, сколько будет уплачено всего."
+    )
+
+    private val middlemanExplanation = story(
+        "Схема посредника держится на предоплате и срочности: товар, поставщик или склад существуют только со слов человека, который уже просит деньги.",
+        "Защита: тестовая партия, договор, паспортные данные, проверка склада/юрлица, оплата частями после фактической приемки."
+    )
+
+    private val trainingExplanation = story(
+        "Тренинг-секта продает не навык, а эмоциональный подъем и следующий уровень доступа. После первой оплаты появляется более дорогой пакет.",
+        "Проверка: конкретный результат, программа, квалификация, отзывы вне сайта продавца, договор возврата, отсутствие давления «только сегодня»."
+    )
+
+    private val romanceExplanation = story(
+        "Romance scam сначала строит доверие и эмоциональную близость, потом переводит разговор к инвестициям или срочной помощи.",
+        "Защита: не переводить деньги человеку из переписки, проверять личность вне чата, не ставить приложения по ссылке, тестировать вывод до вложений."
+    )
+
+    private val forexCryptoExplanation = story(
+        "Фейковый брокер или биржа показывает прибыль в интерфейсе, но деньги могут не попадать на реальный рынок. Вывод блокируют под видом налога, комиссии или верификации.",
+        "Проверка: лицензия, юрлицо, независимые отзывы, домен, хранение клиентских средств, возможность вывести маленькую сумму без дополнительных платежей."
+    )
+
+    private val escrowExplanation = story(
+        "Фейковый escrow копирует знакомую страницу оплаты или доставки. Деньги уходят не в сервис, а на поддельный сайт.",
+        "Проверка: только официальный кабинет/приложение, правильный домен, номер заказа внутри сервиса, отсутствие просьбы перейти в мессенджер для оплаты."
+    )
+
+    private val presaleExplanation = story(
+        "Риск долевого строительства возникает, когда покупатель платит за будущую квартиру без защиты денег и контроля этапов стройки.",
+        "Проверка: земля, разрешение, история застройщика, судебные дела, отдельный счет, штрафы за задержку, запрет платить наличными посреднику."
+    )
+
+    private fun pyramid90s() = e(
+        id = "scam_pyramid_90s",
+        flavor = "📺",
+        tags = setOf("scam", "scam.pyramid"),
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 100_000L),
-            notFlag("learned.scam.pyramid"),
-            inEra("kz_90s")
+        poolWeight = 18,
+        conditions = listOf(era("kz_90s"), capitalAtLeast(50_000L), notLearned("scam.pyramid")),
+        schemeExplanation = pyramidExplanation,
+        message = story(
+            "Вечером сосед включает телевизор: там люди улыбаются и рассказывают, как «кооператив» уже выплатил им двойную сумму.",
+            "Он предлагает зайти завтра в офис и внести наличные. Договор обещают дать потом, когда очередь станет меньше."
         ),
         options = listOf(
-            option("pyramid_invest_full", Strings["scam_pyramid_neighbor_90s_opt_invest_full"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, stressDelta = 10, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_collapse", afterMonths = 2)
-                )),
-            option("pyramid_ask_docs", Strings["scam_pyramid_neighbor_90s_opt_ask_docs"], "🔍",
-                next = "scam_pyramid_avoided",
-                fx = Effect(knowledgeDelta = 8, stressDelta = -5)),
-            option("pyramid_small_bet", Strings["scam_pyramid_neighbor_90s_opt_small_bet"], "🎲",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -20_000, stressDelta = 10, riskDelta = 10,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_small_loss", afterMonths = 1)
-                )),
-            option("pyramid_decline", Strings["scam_pyramid_neighbor_90s_opt_decline"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5, stressDelta = -8,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
+            o("pyramid_pay_90s", "Внести деньги, пока очередь растет", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -80_000L, stressDelta = 8, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_pyramid_collapse", 2))),
+            o("pyramid_questions_90s", "Спросить, откуда берется прибыль", "🔍", "scam_pyramid_avoided",
+                Effect(knowledgeDelta = 10)),
+            o("pyramid_decline_90s", "Не участвовать", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, stressDelta = -5, setFlags = setOf("learned.scam.pyramid")))
         )
     )
 
-    /** kz_2005 — звонок по стационарному телефону + письмо по email */
-    private fun pyramidEmail2005() = event(
-        id = "scam_pyramid_email_2005",
-        message = Strings["scam_pyramid_email_2005_msg"],
-        flavor = "📧",
-        tags = setOf("scam", "scam.pyramid", "social.friend"),
-        poolWeight = 18,
+    private fun pyramid2005() = e(
+        id = "scam_pyramid_2005",
+        flavor = "📞",
+        tags = setOf("scam", "scam.pyramid"),
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 100_000L),
-            notFlag("learned.scam.pyramid"),
-            inEra("kz_2005")
-        ),
+        poolWeight = 15,
+        conditions = listOf(era("kz_2005"), capitalAtLeast(80_000L), notLearned("scam.pyramid")),
+        schemeExplanation = pyramidExplanation,
+        message = "Знакомый звонит на стационарный телефон и зовет в «инвестиционный клуб». Встреча в офисе, доходность 7% в месяц, вход наличными.",
         options = listOf(
-            option("pyramid_invest_full", Strings["scam_pyramid_email_2005_opt_invest_full"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, stressDelta = 10, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_collapse", afterMonths = 2)
-                )),
-            option("pyramid_ask_docs", Strings["scam_pyramid_email_2005_opt_ask_docs"], "🔍",
-                next = "scam_pyramid_avoided",
-                fx = Effect(knowledgeDelta = 8, stressDelta = -5)),
-            option("pyramid_small_bet", Strings["scam_pyramid_email_2005_opt_small_bet"], "🎲",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -20_000, stressDelta = 10, riskDelta = 10,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_small_loss", afterMonths = 1)
-                )),
-            option("pyramid_decline", Strings["scam_pyramid_email_2005_opt_decline"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5, stressDelta = -8,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
+            o("pyramid_pay_2005", "Съездить и внести стартовую сумму", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, stressDelta = 8, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_pyramid_collapse", 2))),
+            o("pyramid_docs_2005", "Попросить лицензию и договор заранее", "📋", "scam_pyramid_avoided",
+                Effect(knowledgeDelta = 10)),
+            o("pyramid_decline_2005", "Отказаться по телефону", "☎️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, stressDelta = -4, setFlags = setOf("learned.scam.pyramid")))
         )
     )
 
-    /** kz_2015 — звонок в WhatsApp + пост в VKontakte */
-    private fun pyramidVk2015() = event(
-        id = "scam_pyramid_vk_2015",
-        message = Strings["scam_pyramid_vk_2015_msg"],
+    private fun pyramid2015() = e(
+        id = "scam_pyramid_2015",
         flavor = "📱",
-        tags = setOf("scam", "scam.pyramid", "social.friend"),
-        poolWeight = 18,
+        tags = setOf("scam", "scam.pyramid"),
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 100_000L),
-            notFlag("learned.scam.pyramid"),
-            inEra("kz_2015")
-        ),
+        poolWeight = 16,
+        conditions = listOf(era("kz_2015"), capitalAtLeast(80_000L), notLearned("scam.pyramid")),
+        schemeExplanation = pyramidExplanation,
+        message = "В WhatsApp-группе бывший одноклассник пишет про «кассу взаимопомощи». Нужно внести сумму и привести двоих, тогда выплаты якобы пойдут автоматически.",
         options = listOf(
-            option("pyramid_invest_full", Strings["scam_pyramid_vk_2015_opt_invest_full"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, stressDelta = 10, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_collapse", afterMonths = 2)
-                )),
-            option("pyramid_ask_docs", Strings["scam_pyramid_vk_2015_opt_ask_docs"], "🔍",
-                next = "scam_pyramid_avoided",
-                fx = Effect(knowledgeDelta = 8, stressDelta = -5)),
-            option("pyramid_small_bet", Strings["scam_pyramid_vk_2015_opt_small_bet"], "🎲",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -20_000, stressDelta = 10, riskDelta = 10,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_small_loss", afterMonths = 1)
-                )),
-            option("pyramid_decline", Strings["scam_pyramid_vk_2015_opt_decline"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5, stressDelta = -8,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
+            o("pyramid_pay_2015", "Внести и не отставать от всех", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -100_000L, stressDelta = 8, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_pyramid_collapse", 2))),
+            o("pyramid_math_2015", "Посчитать, сколько людей нужно на 5 уровней", "🔢", "scam_pyramid_avoided",
+                Effect(knowledgeDelta = 12)),
+            o("pyramid_decline_2015", "Выйти из группы", "🚪", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, stressDelta = -4, setFlags = setOf("learned.scam.pyramid")))
         )
     )
 
-    /** kz_2024 — Telegram/WhatsApp */
-    private fun pyramidFriendCall() = event(
-        id = "scam_pyramid_friend",
-        message = Strings["scam_pyramid_friend_msg"],
-        flavor = "😰",
-        tags = setOf("scam", "scam.pyramid", "social.friend"),
-        poolWeight = 18,
+    private fun pyramid2024() = e(
+        id = "scam_pyramid_2024",
+        flavor = "📲",
+        tags = setOf("scam", "scam.pyramid"),
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 100_000L),
-            notFlag("learned.scam.pyramid"),
-            inEra("kz_2024")
-        ),
+        poolWeight = 16,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(80_000L), notLearned("scam.pyramid")),
+        schemeExplanation = pyramidExplanation,
+        message = "В Telegram зовут в закрытый клуб: «AI арбитраж, доход каждый день». В чате много скринов выплат, но все ссылки ведут на один и тот же сайт.",
         options = listOf(
-            option("pyramid_invest_full", Strings["scam_pyramid_friend_opt_invest_full"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, stressDelta = 10, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_collapse", afterMonths = 2)
-                )),
-            option("pyramid_ask_docs", Strings["scam_pyramid_friend_opt_ask_docs"], "🔍",
-                next = "scam_pyramid_avoided",
-                fx = Effect(knowledgeDelta = 8, stressDelta = -5)),
-            option("pyramid_small_bet", Strings["scam_pyramid_friend_opt_small_bet"], "🎲",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -20_000, stressDelta = 10, riskDelta = 10,
-                    scheduleEvent = ScheduledEvent("scam_pyramid_small_loss", afterMonths = 1)
-                )),
-            option("pyramid_decline", Strings["scam_pyramid_friend_opt_decline"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5, stressDelta = -8,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
+            o("pyramid_pay_2024", "Попробовать небольшой вход", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, stressDelta = 6, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_pyramid_collapse", 2))),
+            o("pyramid_check_2024", "Проверить юрлицо, домен и источник дохода", "🔍", "scam_pyramid_avoided",
+                Effect(knowledgeDelta = 12)),
+            o("pyramid_decline_2024", "Заблокировать чат", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, stressDelta = -4, setFlags = setOf("learned.scam.pyramid")))
         )
     )
 
-    // ── Pyramid shared follow-ups ─────────────────────────────────────────────
-
-    private fun pyramidAvoided() = event(
+    private fun pyramidAvoided() = e(
         id = "scam_pyramid_avoided",
-        message = Strings["scam_pyramid_avoided_msg"],
         flavor = "📚",
-        tags = setOf("scam.pyramid", "educational"),
+        tags = setOf("scam.pyramid", "reflection"),
+        schemeExplanation = pyramidExplanation,
+        message = "Вопросы ломают красивую картинку. Как только разговор доходит до источника прибыли и лицензии, собеседник начинает торопить или обижаться.",
         options = listOf(
-            option("pyramid_lesson_learned", Strings["scam_pyramid_avoided_opt_lesson_learned"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20, stressDelta = -10,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
+            o("pyramid_lesson", "Запомнить признаки пирамиды", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -6, setFlags = setOf("learned.scam.pyramid")))
         )
     )
 
-    private fun pyramidCollapse() = event(
+    private fun pyramidCollapse() = e(
         id = "scam_pyramid_collapse",
-        message = Strings["scam_pyramid_collapse_msg"],
         flavor = "💀",
         tags = setOf("scam.pyramid", "consequence"),
+        schemeExplanation = pyramidExplanation,
+        message = "Выплаты остановились. Офис закрыт, телефон не отвечает, в чате обещают «техническую паузу». Деньги ушли к тем, кто был выше.",
         options = listOf(
-            option("pyramid_rebuild", Strings["scam_pyramid_collapse_opt_rebuild"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 25, stressDelta = 20,
-                    setFlags = setOf("learned.scam.pyramid", "lost_money_to_scam")
-                ))
+            o("pyramid_rebuild", "Принять потерю и разобрать ошибку", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 24, stressDelta = 14, setFlags = setOf("learned.scam.pyramid", "lost_money_to_scam")))
         )
     )
 
-    private fun pyramidSmallLoss() = event(
-        id = "scam_pyramid_small_loss",
-        message = Strings["scam_pyramid_small_loss_msg"],
-        flavor = "😕",
-        tags = setOf("scam.pyramid", "consequence"),
-        options = listOf(
-            option("pyramid_small_lesson", Strings["scam_pyramid_small_loss_opt_lesson"], "📚",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20, stressDelta = 5,
-                    setFlags = setOf("learned.scam.pyramid")
-                ))
-        )
-    )
-
-    // ════════════════════════════════════════════════════════════════════
-    //  2. MLM — Сетевой маркетинг
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_90s — дверь в дверь, Гербалайф/Амвэй */
-    private fun mlmDoor90s() = event(
-        id = "scam_mlm_door_90s",
-        message = Strings["scam_mlm_door_90s_msg"],
+    private fun mlm90s() = e(
+        id = "scam_mlm_90s",
         flavor = "🚪",
-        tags = setOf("scam", "scam.mlm", "social.colleague"),
-        poolWeight = 14,
+        tags = setOf("scam", "scam.mlm"),
         unique = true,
-        conditions = listOf(
-            notFlag("learned.scam.mlm"),
-            inEra("kz_90s")
-        ),
+        poolWeight = 12,
+        conditions = listOf(era("kz_90s"), notLearned("scam.mlm")),
+        schemeExplanation = mlmExplanation,
+        message = "Знакомая приходит домой с каталогом банок и порошков. Говорит, что настоящие деньги не в продаже, а в своей команде.",
         options = listOf(
-            option("mlm_go_meeting", Strings["scam_mlm_door_90s_opt_go_meeting"], "💳",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -50_000, stressDelta = 5, riskDelta = 10,
-                    setFlags = setOf("in_mlm"),
-                    scheduleEvent = ScheduledEvent("scam_mlm_month_later", afterMonths = 3)
-                )),
-            option("mlm_ask_directly", Strings["scam_mlm_door_90s_opt_ask_directly"], "🔍",
-                next = "scam_mlm_confronted",
-                fx = Effect(knowledgeDelta = 5)),
-            option("mlm_decline", Strings["scam_mlm_door_90s_opt_decline"], "🙂",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 3,
-                    setFlags = setOf("learned.scam.mlm")
-                ))
+            o("mlm_buy_90s", "Купить стартовый набор", "📦", MONTHLY_TICK,
+                Effect(capitalDelta = -45_000L, riskDelta = 10, scheduleEvent = ScheduledEvent("scam_mlm_stock", 3))),
+            o("mlm_margin_90s", "Спросить маржу без привлечения людей", "🧮", "scam_mlm_exposed",
+                Effect(knowledgeDelta = 10)),
+            o("mlm_no_90s", "Отказаться", "🚪", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, setFlags = setOf("learned.scam.mlm")))
         )
     )
 
-    /** kz_2005 — звонок + физическая встреча, ранний интернет-маркетинг */
-    private fun mlmPhone2005() = event(
-        id = "scam_mlm_phone_2005",
-        message = Strings["scam_mlm_phone_2005_msg"],
+    private fun mlm2005() = e(
+        id = "scam_mlm_2005",
         flavor = "📞",
-        tags = setOf("scam", "scam.mlm", "social.colleague"),
-        poolWeight = 14,
+        tags = setOf("scam", "scam.mlm"),
         unique = true,
-        conditions = listOf(
-            notFlag("learned.scam.mlm"),
-            inEra("kz_2005")
-        ),
+        poolWeight = 12,
+        conditions = listOf(era("kz_2005"), notLearned("scam.mlm")),
+        schemeExplanation = mlmExplanation,
+        message = "Коллега зовет на презентацию в конференц-зал гостиницы. Обещают бизнес без начальника: косметика, БАДы, обучение и «лидерская линия».",
         options = listOf(
-            option("mlm_go_meeting", Strings["scam_mlm_phone_2005_opt_go_meeting"], "💳",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -35_000, stressDelta = 5, riskDelta = 10,
-                    setFlags = setOf("in_mlm"),
-                    scheduleEvent = ScheduledEvent("scam_mlm_month_later", afterMonths = 3)
-                )),
-            option("mlm_ask_directly", Strings["scam_mlm_phone_2005_opt_ask_directly"], "🔍",
-                next = "scam_mlm_confronted",
-                fx = Effect(knowledgeDelta = 5)),
-            option("mlm_decline", Strings["scam_mlm_phone_2005_opt_decline"], "🙂",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 3,
-                    setFlags = setOf("learned.scam.mlm")
-                ))
+            o("mlm_buy_2005", "Войти стартовым пакетом", "💳", MONTHLY_TICK,
+                Effect(capitalDelta = -70_000L, riskDelta = 10, scheduleEvent = ScheduledEvent("scam_mlm_stock", 3))),
+            o("mlm_question_2005", "Попросить средний доход участника", "🔍", "scam_mlm_exposed",
+                Effect(knowledgeDelta = 10)),
+            o("mlm_no_2005", "Уйти после презентации", "🚶", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, setFlags = setOf("learned.scam.mlm")))
         )
     )
 
-    /** kz_2015 — Instagram + WhatsApp группа */
-    private fun mlmInstagram2015() = event(
-        id = "scam_mlm_instagram_2015",
-        message = Strings["scam_mlm_instagram_2015_msg"],
+    private fun mlm2015() = e(
+        id = "scam_mlm_2015",
         flavor = "✨",
-        tags = setOf("scam", "scam.mlm", "social.colleague"),
-        poolWeight = 14,
+        tags = setOf("scam", "scam.mlm"),
         unique = true,
-        conditions = listOf(
-            notFlag("learned.scam.mlm"),
-            inEra("kz_2015")
-        ),
-        options = listOf(
-            option("mlm_go_meeting", Strings["scam_mlm_instagram_2015_opt_go_meeting"], "👀",
-                next = "scam_mlm_presentation",
-                fx = Effect(stressDelta = 3)),
-            option("mlm_ask_directly", Strings["scam_mlm_instagram_2015_opt_ask_directly"], "🔍",
-                next = "scam_mlm_confronted",
-                fx = Effect(knowledgeDelta = 5)),
-            option("mlm_decline", Strings["scam_mlm_instagram_2015_opt_decline"], "🙂",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 3,
-                    setFlags = setOf("learned.scam.mlm")
-                ))
-        )
-    )
-
-    /** kz_2024 — Telegram/Instagram */
-    private fun mlmColleague() = event(
-        id = "scam_mlm_colleague",
-        message = Strings["scam_mlm_colleague_msg"],
-        flavor = "✨",
-        tags = setOf("scam", "scam.mlm", "social.colleague"),
         poolWeight = 14,
+        conditions = listOf(era("kz_2015"), notLearned("scam.mlm")),
+        schemeExplanation = mlmExplanation,
+        message = "В Instagram знакомая пишет: «Ты сильная, тебе подойдет наш женский бизнес». Потом добавляет в WhatsApp-чат с мотивацией и планами закупок.",
+        options = listOf(
+            o("mlm_buy_2015", "Взять стартовый пакет", "🛍️", MONTHLY_TICK,
+                Effect(capitalDelta = -90_000L, riskDelta = 12, scheduleEvent = ScheduledEvent("scam_mlm_stock", 3))),
+            o("mlm_question_2015", "Спросить про возврат товара", "🔍", "scam_mlm_exposed",
+                Effect(knowledgeDelta = 10)),
+            o("mlm_no_2015", "Вежливо выйти из чата", "📵", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, stressDelta = -3, setFlags = setOf("learned.scam.mlm")))
+        )
+    )
+
+    private fun mlm2024() = e(
+        id = "scam_mlm_2024",
+        flavor = "📲",
+        tags = setOf("scam", "scam.mlm"),
         unique = true,
-        conditions = listOf(
-            notFlag("learned.scam.mlm"),
-            inEra("kz_2024")
-        ),
+        poolWeight = 12,
+        conditions = listOf(era("kz_2024"), notLearned("scam.mlm")),
+        schemeExplanation = mlmExplanation,
+        message = "В Telegram предлагают «комьюнити предпринимателей»: подписка, закупка товара и бонус за каждого приведенного участника.",
         options = listOf(
-            option("mlm_go_meeting", Strings["scam_mlm_colleague_opt_go_meeting"], "👀",
-                next = "scam_mlm_presentation",
-                fx = Effect(stressDelta = 3)),
-            option("mlm_ask_directly", Strings["scam_mlm_colleague_opt_ask_directly"], "🔍",
-                next = "scam_mlm_confronted",
-                fx = Effect(knowledgeDelta = 5)),
-            option("mlm_decline", Strings["scam_mlm_colleague_opt_decline"], "🙂",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 3,
-                    setFlags = setOf("learned.scam.mlm")
-                ))
+            o("mlm_buy_2024", "Оплатить вход", "💳", MONTHLY_TICK,
+                Effect(capitalDelta = -110_000L, riskDelta = 12, scheduleEvent = ScheduledEvent("scam_mlm_stock", 3))),
+            o("mlm_question_2024", "Попросить юнит-экономику без рефералов", "🧮", "scam_mlm_exposed",
+                Effect(knowledgeDelta = 10)),
+            o("mlm_no_2024", "Не входить", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, stressDelta = -3, setFlags = setOf("learned.scam.mlm")))
         )
     )
 
-    // ── MLM shared follow-ups ─────────────────────────────────────────────────
-
-    private fun mlmPresentation() = event(
-        id = "scam_mlm_presentation",
-        message = Strings["scam_mlm_presentation_msg"],
-        flavor = "📊",
-        tags = setOf("scam.mlm"),
+    private fun mlmExposed() = e(
+        id = "scam_mlm_exposed",
+        flavor = "📦",
+        tags = setOf("scam.mlm", "reflection"),
+        schemeExplanation = mlmExplanation,
+        message = "Как только убрать рекрутинг, бизнес становится обычной продажей товара с низкой маржой и высоким риском остаться со складом дома.",
         options = listOf(
-            option("mlm_join", Strings["scam_mlm_presentation_opt_join"], "💳",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -35_000, stressDelta = 5, riskDelta = 10,
-                    setFlags = setOf("in_mlm"),
-                    scheduleEvent = ScheduledEvent("scam_mlm_month_later", afterMonths = 3)
-                )),
-            option("mlm_decline_after", Strings["scam_mlm_presentation_opt_decline_after"], "❌",
-                next = "scam_mlm_confronted",
-                fx = Effect(knowledgeDelta = 12))
+            o("mlm_lesson", "Не путать продажи и вербовку", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -4, setFlags = setOf("learned.scam.mlm")))
         )
     )
 
-    private fun mlmConfronted() = event(
-        id = "scam_mlm_confronted",
-        message = Strings["scam_mlm_confronted_msg"],
-        flavor = "📖",
-        tags = setOf("scam.mlm", "educational"),
-        options = listOf(
-            option("mlm_understand", Strings["scam_mlm_confronted_opt_understand"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 18, stressDelta = -5,
-                    setFlags = setOf("learned.scam.mlm")
-                ))
-        )
-    )
-
-    private fun mlmMonthLater() = event(
-        id = "scam_mlm_month_later",
-        message = Strings["scam_mlm_month_later_msg"],
+    private fun mlmStock() = e(
+        id = "scam_mlm_stock",
         flavor = "📦",
         tags = setOf("scam.mlm", "consequence"),
+        schemeExplanation = mlmExplanation,
+        message = "Через три месяца дома лежат коробки. Продажи идут медленно, зато куратор предлагает купить следующий пакет, чтобы «не терять статус».",
         options = listOf(
-            option("mlm_exit", Strings["scam_mlm_month_later_opt_exit"], "🚪",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    stressDelta = -15, knowledgeDelta = 25,
-                    clearFlags = setOf("in_mlm"),
-                    setFlags = setOf("learned.scam.mlm")
-                )),
-            option("mlm_continue", Strings["scam_mlm_month_later_opt_continue"], "😤",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -35_000, stressDelta = 10, riskDelta = 5
-                ))
+            o("mlm_exit", "Остановиться и списать урок", "🚪", MONTHLY_TICK,
+                Effect(knowledgeDelta = 22, stressDelta = 8, setFlags = setOf("learned.scam.mlm", "lost_money_to_scam"))),
+            o("mlm_continue", "Докупить ради статуса", "😤", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, stressDelta = 14, riskDelta = 8))
         )
     )
 
-    // ════════════════════════════════════════════════════════════════════
-    //  3. BETTING / CAPPER
-    //  kz_90s/2005 — нет, kz_2015 — ранний, kz_2024 — Telegram
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_2005 — SMS-типстер, ранние букмекеры */
-    private fun capperSms2005() = event(
-        id = "scam_capper_sms_2005",
-        message = Strings["scam_capper_sms_2005_msg"],
+    private fun betting2005() = e(
+        id = "scam_betting_2005",
         flavor = "📟",
-        tags = setOf("scam", "scam.betting", "scam.capper"),
+        tags = setOf("scam", "scam.betting"),
+        unique = true,
+        poolWeight = 7,
+        conditions = listOf(era("kz_2005"), capitalAtLeast(40_000L), notLearned("scam.betting")),
+        schemeExplanation = bettingExplanation,
+        message = "После футбола знакомый дает номер SMS-типстера: «Он знает договорные матчи. Прогноз стоит копейки, банк поднимешь быстро».",
+        options = listOf(
+            o("betting_buy_2005", "Купить прогноз", "⚽", MONTHLY_TICK,
+                Effect(capitalDelta = -20_000L, riskDelta = 12, scheduleEvent = ScheduledEvent("scam_betting_loss", 1))),
+            o("betting_math_2005", "Посчитать комиссию букмекера и вероятность", "🔢", "scam_betting_explained",
+                Effect(knowledgeDelta = 10)),
+            o("betting_ignore_2005", "Не связываться", "🚫", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, setFlags = setOf("learned.scam.betting")))
+        )
+    )
+
+    private fun betting2015() = e(
+        id = "scam_betting_2015",
+        flavor = "⚽",
+        tags = setOf("scam", "scam.betting"),
+        unique = true,
         poolWeight = 10,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.betting"),
-            inEra("kz_2005")
-        ),
+        conditions = listOf(era("kz_2015"), capitalAtLeast(40_000L), notLearned("scam.betting")),
+        schemeExplanation = bettingExplanation,
+        message = "Во VK появляется каппер с бесплатным прогнозом и платным VIP. В комментариях только победы, проигрыши удалены.",
         options = listOf(
-            option("capper_buy", Strings["scam_capper_sms_2005_opt_buy"], "💰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -15_000, riskDelta = 15,
-                    scheduleEvent = ScheduledEvent("scam_capper_loses", afterMonths = 1)
-                )),
-            option("capper_research", Strings["scam_capper_sms_2005_opt_research"], "🔍",
-                next = "scam_capper_explained",
-                fx = Effect(knowledgeDelta = 10)),
-            option("capper_ignore", Strings["scam_capper_sms_2005_opt_ignore"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.betting")
-                ))
+            o("betting_buy_2015", "Купить VIP на неделю", "💰", MONTHLY_TICK,
+                Effect(capitalDelta = -35_000L, riskDelta = 14, scheduleEvent = ScheduledEvent("scam_betting_loss", 1))),
+            o("betting_audit_2015", "Попросить полную историю ставок", "🔍", "scam_betting_explained",
+                Effect(knowledgeDelta = 10)),
+            o("betting_ignore_2015", "Не играть", "🚫", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, setFlags = setOf("learned.scam.betting")))
         )
     )
 
-    /** kz_2015 — VKontakte канал + личное сообщение */
-    private fun capperVk2015() = event(
-        id = "scam_capper_vk_2015",
-        message = Strings["scam_capper_vk_2015_msg"],
-        flavor = "⚽",
-        tags = setOf("scam", "scam.betting", "scam.capper"),
-        poolWeight = 12,
+    private fun betting2024() = e(
+        id = "scam_betting_2024",
+        flavor = "🏟️",
+        tags = setOf("scam", "scam.betting"),
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.betting"),
-            inEra("kz_2015")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(40_000L), notLearned("scam.betting")),
+        schemeExplanation = bettingExplanation,
+        message = "Telegram-каппер показывает «лесенку»: поставить 20 тысяч, потом удвоить, потом забрать прибыль. В закрепе партнерская ссылка букмекера.",
         options = listOf(
-            option("capper_buy", Strings["scam_capper_vk_2015_opt_buy"], "💰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -25_000, riskDelta = 15,
-                    scheduleEvent = ScheduledEvent("scam_capper_loses", afterMonths = 1)
-                )),
-            option("capper_research", Strings["scam_capper_vk_2015_opt_research"], "🔍",
-                next = "scam_capper_explained",
-                fx = Effect(knowledgeDelta = 10)),
-            option("capper_ignore", Strings["scam_capper_vk_2015_opt_ignore"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.betting")
-                ))
+            o("betting_buy_2024", "Зайти по лесенке", "💰", MONTHLY_TICK,
+                Effect(capitalDelta = -50_000L, riskDelta = 14, scheduleEvent = ScheduledEvent("scam_betting_loss", 1))),
+            o("betting_check_2024", "Проверить конфликт интересов", "🔍", "scam_betting_explained",
+                Effect(knowledgeDelta = 10)),
+            o("betting_ignore_2024", "Не открывать букмекера", "🚫", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, setFlags = setOf("learned.scam.betting")))
         )
     )
 
-    /** kz_2024 — Telegram канал */
-    private fun capperTelegram() = event(
-        id = "scam_capper_telegram",
-        message = Strings["scam_capper_telegram_msg"],
-        flavor = "⚽",
-        tags = setOf("scam", "scam.betting", "scam.capper"),
-        poolWeight = 12,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.betting"),
-            inEra("kz_2024")
-        ),
-        options = listOf(
-            option("capper_buy", Strings["scam_capper_telegram_opt_buy"], "💰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -30_000, riskDelta = 15,
-                    scheduleEvent = ScheduledEvent("scam_capper_loses", afterMonths = 1)
-                )),
-            option("capper_research", Strings["scam_capper_telegram_opt_research"], "🔍",
-                next = "scam_capper_explained",
-                fx = Effect(knowledgeDelta = 10)),
-            option("capper_ignore", Strings["scam_capper_telegram_opt_ignore"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.betting")
-                ))
-        )
-    )
-
-    // ── Capper shared follow-ups ──────────────────────────────────────────────
-
-    private fun capperExplained() = event(
-        id = "scam_capper_explained",
-        message = Strings["scam_capper_explained_msg"],
+    private fun bettingExplained() = e(
+        id = "scam_betting_explained",
         flavor = "🔢",
-        tags = setOf("scam.betting", "educational"),
+        tags = setOf("scam.betting", "reflection"),
+        schemeExplanation = bettingExplanation,
+        message = "Когда смотреть полную историю, магия исчезает: серия побед продается, серия проигрышей скрывается, а партнерская ссылка платит капперу за проигрыши аудитории.",
         options = listOf(
-            option("capper_lesson", Strings["scam_capper_explained_opt_lesson"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20, stressDelta = -5,
-                    setFlags = setOf("learned.scam.betting")
-                ))
+            o("betting_lesson", "Не покупать уверенность", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -4, setFlags = setOf("learned.scam.betting")))
         )
     )
 
-    private fun capperLoses() = event(
-        id = "scam_capper_loses",
-        message = Strings["scam_capper_loses_msg"],
+    private fun bettingLoss() = e(
+        id = "scam_betting_loss",
         flavor = "😤",
         tags = setOf("scam.betting", "consequence"),
+        schemeExplanation = bettingExplanation,
+        message = "Прогноз проиграл. Каппер пишет: «Так бывает, следующий железный. Главное отбить». Это и есть ловушка отыгрыша.",
         options = listOf(
-            option("capper_stop", Strings["scam_capper_loses_opt_stop"], "🛑",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 18, stressDelta = 5,
-                    setFlags = setOf("learned.scam.betting", "lost_money_to_scam")
-                )),
-            option("capper_escalate", Strings["scam_capper_loses_opt_escalate"], "😰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, stressDelta = 20, riskDelta = 15,
-                    scheduleEvent = ScheduledEvent("scam_betting_deep_loss", afterMonths = 2)
-                ))
+            o("betting_stop", "Остановиться", "🛑", MONTHLY_TICK,
+                Effect(knowledgeDelta = 20, stressDelta = 5, setFlags = setOf("learned.scam.betting", "lost_money_to_scam"))),
+            o("betting_chase", "Отыграться", "😰", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, stressDelta = 18, riskDelta = 12))
         )
     )
 
-    private fun bettingDeepLoss() = event(
-        id = "scam_betting_deep_loss",
-        message = Strings["scam_betting_deep_loss_msg"],
-        flavor = "💀",
-        tags = setOf("scam.betting", "consequence"),
-        options = listOf(
-            option("betting_final_lesson", Strings["scam_betting_deep_loss_opt_final_lesson"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 30, stressDelta = 15,
-                    setFlags = setOf("learned.scam.betting", "lost_money_to_scam")
-                ))
-        )
-    )
-
-    // ════════════════════════════════════════════════════════════════════
-    //  4. ROMANCE SCAM / PIG BUTCHERING
-    //  kz_2015 — ранняя версия (ВКонтакте/Mamba), kz_2024 — WhatsApp
-    //  kz_90s / kz_2005 — не существует (нет интернета / слишком рано)
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_2015 — VKontakte / Mamba / ранний dating */
-    private fun romanceMamba2015() = event(
-        id = "scam_romance_mamba_2015",
-        message = Strings["scam_romance_mamba_2015_msg"],
-        flavor = "💌",
-        tags = setOf("scam", "scam.romance", "scam.crypto"),
-        poolWeight = 8,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 200_000L),
-            notFlag("learned.scam.romance"),
-            inEra("kz_2015")
-        ),
-        options = listOf(
-            option("romance_respond", Strings["scam_romance_mamba_2015_opt_respond"], "💬",
-                next = "scam_romance_buildup",
-                fx = Effect(stressDelta = -3)),
-            option("romance_suspicious", Strings["scam_romance_mamba_2015_opt_suspicious"], "🔍",
-                next = "scam_romance_caught",
-                fx = Effect(knowledgeDelta = 12)),
-            option("romance_ignore", Strings["scam_romance_mamba_2015_opt_ignore"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.romance")
-                ))
-        )
-    )
-
-    /** kz_2024 — WhatsApp "ошиблась номером" */
-    private fun romanceFirstContact() = event(
-        id = "scam_romance_contact",
-        message = Strings["scam_romance_contact_msg"],
-        flavor = "💌",
-        tags = setOf("scam", "scam.romance", "scam.crypto"),
-        poolWeight = 10,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 200_000L),
-            notFlag("learned.scam.romance"),
-            inEra("kz_2024")
-        ),
-        options = listOf(
-            option("romance_respond", Strings["scam_romance_contact_opt_respond"], "💬",
-                next = "scam_romance_buildup",
-                fx = Effect(stressDelta = -3)),
-            option("romance_suspicious", Strings["scam_romance_contact_opt_suspicious"], "🔍",
-                next = "scam_romance_caught",
-                fx = Effect(knowledgeDelta = 12)),
-            option("romance_ignore", Strings["scam_romance_contact_opt_ignore"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.romance")
-                ))
-        )
-    )
-
-    // ── Romance shared follow-ups ─────────────────────────────────────────────
-
-    private fun romanceBuildup() = event(
-        id = "scam_romance_buildup",
-        message = Strings["scam_romance_buildup_msg"],
-        flavor = "💕",
-        tags = setOf("scam.romance", "scam.crypto"),
-        options = listOf(
-            option("romance_interested", Strings["scam_romance_buildup_opt_interested"], "🤔",
-                next = "scam_romance_crypto_intro",
-                fx = Effect(stressDelta = 2, riskDelta = 5)),
-            option("romance_red_flag", Strings["scam_romance_buildup_opt_red_flag"], "🚩",
-                next = "scam_romance_caught",
-                fx = Effect(knowledgeDelta = 15))
-        )
-    )
-
-    private fun romanceCryptoIntro() = event(
-        id = "scam_romance_crypto_intro",
-        message = Strings["scam_romance_crypto_intro_msg"],
-        flavor = "📈",
-        tags = setOf("scam.romance", "scam.crypto"),
-        options = listOf(
-            option("romance_more_money", Strings["scam_romance_crypto_intro_opt_more_money"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -200_000, riskDelta = 20, stressDelta = 5,
-                    scheduleEvent = ScheduledEvent("scam_romance_freeze", afterMonths = 2)
-                )),
-            option("romance_withdraw_test", Strings["scam_romance_crypto_intro_opt_withdraw_test"], "🧪",
-                next = "scam_romance_withdrawal_blocked",
-                fx = Effect(knowledgeDelta = 15))
-        )
-    )
-
-    private fun romanceWithdrawalBlocked() = event(
-        id = "scam_romance_withdrawal_blocked",
-        message = Strings["scam_romance_withdrawal_blocked_msg"],
-        flavor = "🚨",
-        tags = setOf("scam.romance", "scam.crypto"),
-        options = listOf(
-            option("romance_pay_tax", Strings["scam_romance_withdrawal_blocked_opt_pay_tax"], "😰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -57_500, stressDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_romance_final", afterMonths = 1)
-                )),
-            option("romance_realize", Strings["scam_romance_withdrawal_blocked_opt_realize"], "💡",
-                next = "scam_romance_caught",
-                fx = Effect(knowledgeDelta = 25))
-        )
-    )
-
-    private fun romanceFreeze() = event(
-        id = "scam_romance_freeze",
-        message = Strings["scam_romance_freeze_msg"],
-        flavor = "🔒",
-        tags = setOf("scam.romance", "consequence"),
-        options = listOf(
-            option("romance_pay_more", Strings["scam_romance_freeze_opt_pay_more"], "😱",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -250_000, stressDelta = 25,
-                    scheduleEvent = ScheduledEvent("scam_romance_final", afterMonths = 1)
-                )),
-            option("romance_stop_loss", Strings["scam_romance_freeze_opt_stop_loss"], "✋",
-                next = "scam_romance_caught",
-                fx = Effect(knowledgeDelta = 20, stressDelta = 10))
-        )
-    )
-
-    private fun romanceFinal() = event(
-        id = "scam_romance_final",
-        message = Strings["scam_romance_final_msg"],
-        flavor = "💔",
-        tags = setOf("scam.romance", "consequence"),
-        options = listOf(
-            option("romance_report", Strings["scam_romance_final_opt_report"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 35, stressDelta = 20,
-                    setFlags = setOf("learned.scam.romance", "learned.scam.crypto", "lost_money_to_scam")
-                ))
-        )
-    )
-
-    private fun romanceCaught() = event(
-        id = "scam_romance_caught",
-        message = Strings["scam_romance_caught_msg"],
-        flavor = "🔍",
-        tags = setOf("scam.romance", "educational"),
-        options = listOf(
-            option("romance_safe", Strings["scam_romance_caught_opt_safe"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 25, stressDelta = -5,
-                    setFlags = setOf("learned.scam.romance")
-                ))
-        )
-    )
-
-    // ════════════════════════════════════════════════════════════════════
-    //  5. CRYPTO SCAM — фейковые биржи
-    //  kz_2015 — ранний Bitcoin (не полностью crypto scam, скорее Forex)
-    //  kz_2024 — Telegram, полноценный крипто-скам
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_2015 — ранний Bitcoin / Forex-лохотрон */
-    private fun cryptoForex2015() = event(
-        id = "scam_crypto_forex_2015",
-        message = Strings["scam_crypto_forex_2015_msg"],
-        flavor = "📊",
-        tags = setOf("scam", "scam.crypto"),
-        poolWeight = 10,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.crypto"),
-            inEra("kz_2015")
-        ),
-        options = listOf(
-            option("crypto_exchange_invest", Strings["scam_crypto_forex_2015_opt_crypto_exchange_invest"], "🚀",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_crypto_withdrawal_trap", afterMonths = 2)
-                )),
-            option("crypto_exchange_check", Strings["scam_crypto_forex_2015_opt_crypto_exchange_check"], "🔎",
-                next = "scam_crypto_no_license",
-                fx = Effect(knowledgeDelta = 10)),
-            option("crypto_exchange_ignore", Strings["scam_crypto_forex_2015_opt_crypto_exchange_ignore"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.crypto")
-                ))
-        )
-    )
-
-    /** kz_2024 — Telegram канал с 52k подписчиков */
-    private fun cryptoFakeExchange() = event(
-        id = "scam_crypto_exchange",
-        message = Strings["scam_crypto_exchange_msg"],
-        flavor = "📊",
-        tags = setOf("scam", "scam.crypto"),
-        poolWeight = 15,
-        unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.crypto"),
-            inEra("kz_2024")
-        ),
-        options = listOf(
-            option("crypto_exchange_invest", Strings["scam_crypto_exchange_opt_crypto_exchange_invest"], "🚀",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -100_000, riskDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_crypto_withdrawal_trap", afterMonths = 2)
-                )),
-            option("crypto_exchange_check", Strings["scam_crypto_exchange_opt_crypto_exchange_check"], "🔎",
-                next = "scam_crypto_no_license",
-                fx = Effect(knowledgeDelta = 10)),
-            option("crypto_exchange_ignore", Strings["scam_crypto_exchange_opt_crypto_exchange_ignore"], "🛡️",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.crypto")
-                ))
-        )
-    )
-
-    // ── Crypto shared follow-ups ──────────────────────────────────────────────
-
-    private fun cryptoNoLicense() = event(
-        id = "scam_crypto_no_license",
-        message = Strings["scam_crypto_no_license_msg"],
-        flavor = "🔍",
-        tags = setOf("scam.crypto", "educational"),
-        options = listOf(
-            option("crypto_lesson", Strings["scam_crypto_no_license_opt_crypto_lesson"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 22, stressDelta = -5,
-                    setFlags = setOf("learned.scam.crypto")
-                ))
-        )
-    )
-
-    private fun cryptoWithdrawalTrap() = event(
-        id = "scam_crypto_withdrawal_trap",
-        message = Strings["scam_crypto_withdrawal_trap_msg"],
-        flavor = "🚨",
-        tags = setOf("scam.crypto", "consequence"),
-        options = listOf(
-            option("crypto_pay_more", Strings["scam_crypto_withdrawal_trap_opt_crypto_pay_more"], "😰",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -15_000, stressDelta = 20,
-                    scheduleEvent = ScheduledEvent("scam_crypto_final_disappear", afterMonths = 1)
-                )),
-            option("crypto_stop_now", Strings["scam_crypto_withdrawal_trap_opt_crypto_stop_now"], "🛑",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 25, stressDelta = 15,
-                    setFlags = setOf("learned.scam.crypto", "lost_money_to_scam")
-                ))
-        )
-    )
-
-    private fun cryptoFinalDisappear() = event(
-        id = "scam_crypto_final_disappear",
-        message = Strings["scam_crypto_final_disappear_msg"],
-        flavor = "💀",
-        tags = setOf("scam.crypto", "consequence"),
-        options = listOf(
-            option("crypto_final_lesson", Strings["scam_crypto_final_disappear_opt_crypto_final_lesson"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 30, stressDelta = 15,
-                    setFlags = setOf("learned.scam.crypto", "lost_money_to_scam")
-                ))
-        )
-    )
-
-    // ════════════════════════════════════════════════════════════════════
-    //  6. MFO — Микрофинансовые организации
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_90s / kz_2005 — неформальный «ростовщик», сосед или знакомый */
-    private fun mfoNeighborLender90s() = event(
-        id = "scam_mfo_neighbor_90s",
-        message = Strings["scam_mfo_neighbor_90s_msg"],
+    private fun mfo90s() = e(
+        id = "scam_mfo_90s",
         flavor = "🏚️",
         tags = setOf("scam", "scam.mfo", "debt"),
-        poolWeight = 12,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, LTE, 100_000L),
-            stat(STRESS, GTE, 40L),
-            notFlag("learned.scam.mfo"),
-            inEra("kz_90s")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_90s"), capitalAtMost(80_000L), stressAtLeast(35L), notLearned("scam.mfo")),
+        schemeExplanation = mfoExplanation,
+        message = "Знакомый предлагает занять наличные «до зарплаты». Проценты считает на словах: если задержишь, сумма просто вырастет.",
         options = listOf(
-            option("mfo_take_quick", Strings["scam_mfo_neighbor_90s_opt_mfo_take_quick"], "⚡",
-                next = "scam_mfo_signed",
-                fx = Effect(capitalDelta = 50_000, debtDelta = 50_000, stressDelta = -5)),
-            option("mfo_read_contract", Strings["scam_mfo_neighbor_90s_opt_mfo_read_contract"], "📋",
-                next = "scam_mfo_contract_revealed",
-                fx = Effect(knowledgeDelta = 10)),
-            option("mfo_call_bank", Strings["scam_mfo_neighbor_90s_opt_mfo_call_bank"], "📞",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    stressDelta = 5, knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.mfo")
-                ))
+            o("mfo_take_90s", "Взять деньги сейчас", "⚡", "scam_mfo_signed",
+                Effect(capitalDelta = 50_000L, debtDelta = 70_000L, stressDelta = -4)),
+            o("mfo_terms_90s", "Записать срок, сумму и штрафы", "📋", "scam_mfo_contract",
+                Effect(knowledgeDelta = 10)),
+            o("mfo_skip_90s", "Урезать расходы вместо долга", "✂️", MONTHLY_TICK,
+                Effect(expensesDelta = -15_000L, stressDelta = 5, knowledgeDelta = 8, setFlags = setOf("learned.scam.mfo")))
         )
     )
 
-    /** kz_2005 — первые МФО с физическими офисами */
-    private fun mfoOffice2005() = event(
-        id = "scam_mfo_office_2005",
-        message = Strings["scam_mfo_office_2005_msg"],
+    private fun mfo2005() = e(
+        id = "scam_mfo_2005",
         flavor = "🏦",
         tags = setOf("scam", "scam.mfo", "debt"),
-        poolWeight = 12,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, LTE, 100_000L),
-            stat(STRESS, GTE, 40L),
-            notFlag("learned.scam.mfo"),
-            inEra("kz_2005")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2005"), capitalAtMost(120_000L), stressAtLeast(35L), notLearned("scam.mfo")),
+        schemeExplanation = mfoExplanation,
+        message = "В офисе возле остановки выдают быстрый заем по удостоверению. Менеджер улыбается: «Переплата маленькая, просто подпишите здесь и здесь».",
         options = listOf(
-            option("mfo_take_quick", Strings["scam_mfo_office_2005_opt_mfo_take_quick"], "⚡",
-                next = "scam_mfo_signed",
-                fx = Effect(capitalDelta = 80_000, debtDelta = 80_000, stressDelta = -5)),
-            option("mfo_read_contract", Strings["scam_mfo_office_2005_opt_mfo_read_contract"], "📋",
-                next = "scam_mfo_contract_revealed",
-                fx = Effect(knowledgeDelta = 10)),
-            option("mfo_call_bank", Strings["scam_mfo_office_2005_opt_mfo_call_bank"], "📞",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    stressDelta = 5, knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.mfo")
-                ))
+            o("mfo_take_2005", "Подписать быстро", "⚡", "scam_mfo_signed",
+                Effect(capitalDelta = 90_000L, debtDelta = 140_000L, stressDelta = -4)),
+            o("mfo_read_2005", "Прочитать полную стоимость", "📋", "scam_mfo_contract",
+                Effect(knowledgeDelta = 10)),
+            o("mfo_skip_2005", "Не брать", "✂️", MONTHLY_TICK,
+                Effect(expensesDelta = -20_000L, stressDelta = 5, knowledgeDelta = 8, setFlags = setOf("learned.scam.mfo")))
         )
     )
 
-    /** kz_2015 / kz_2024 — онлайн МФО */
-    private fun mfoUrgentOnline() = event(
-        id = "scam_mfo_urgent",
-        message = Strings["scam_mfo_urgent_msg"],
-        flavor = "🏦",
+    private fun mfoOnline2015() = e(
+        id = "scam_mfo_2015",
+        flavor = "💳",
         tags = setOf("scam", "scam.mfo", "debt"),
-        poolWeight = 12,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, LTE, 100_000L),
-            stat(STRESS, GTE, 40L),
-            notFlag("learned.scam.mfo"),
-            Condition.InEra("kz_2015")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2015"), capitalAtMost(120_000L), stressAtLeast(35L), notLearned("scam.mfo")),
+        schemeExplanation = mfoExplanation,
+        message = "На сайте МФО обещают перевод на карту за 15 минут. Большая кнопка «получить», а полная стоимость спрятана в PDF.",
         options = listOf(
-            option("mfo_take_quick", Strings["scam_mfo_urgent_opt_mfo_take_quick"], "⚡",
-                next = "scam_mfo_signed",
-                fx = Effect(capitalDelta = 80_000, debtDelta = 80_000, stressDelta = -5)),
-            option("mfo_read_contract", Strings["scam_mfo_urgent_opt_mfo_read_contract"], "📋",
-                next = "scam_mfo_contract_revealed",
-                fx = Effect(knowledgeDelta = 10)),
-            option("mfo_call_bank", Strings["scam_mfo_urgent_opt_mfo_call_bank"], "📞",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    stressDelta = 5, knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.mfo")
-                ))
+            o("mfo_take_2015", "Взять онлайн-заем", "⚡", "scam_mfo_signed",
+                Effect(capitalDelta = 90_000L, debtDelta = 150_000L, stressDelta = -4)),
+            o("mfo_read_2015", "Открыть PDF и посчитать переплату", "📋", "scam_mfo_contract",
+                Effect(knowledgeDelta = 10)),
+            o("mfo_skip_2015", "Искать другой вариант", "✂️", MONTHLY_TICK,
+                Effect(expensesDelta = -20_000L, stressDelta = 5, knowledgeDelta = 8, setFlags = setOf("learned.scam.mfo")))
         )
     )
 
-    private fun mfoUrgent2024() = event(
-        id = "scam_mfo_urgent_2024",
-        message = Strings["scam_mfo_urgent_2024_msg"],
-        flavor = "🏦",
+    private fun mfoOnline2024() = e(
+        id = "scam_mfo_2024",
+        flavor = "📲",
         tags = setOf("scam", "scam.mfo", "debt"),
-        poolWeight = 12,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, LTE, 100_000L),
-            stat(STRESS, GTE, 40L),
-            notFlag("learned.scam.mfo"),
-            inEra("kz_2024")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2024"), capitalAtMost(120_000L), stressAtLeast(35L), notLearned("scam.mfo")),
+        schemeExplanation = mfoExplanation,
+        message = "Приложение предлагает деньги до зарплаты. Push пишет: «Одобрено 120 000, заберите сегодня». Ниже мелко: комиссия, страховка, штраф за каждый день.",
         options = listOf(
-            option("mfo_take_quick", Strings["scam_mfo_urgent_2024_opt_mfo_take_quick"], "⚡",
-                next = "scam_mfo_signed",
-                fx = Effect(capitalDelta = 80_000, debtDelta = 80_000, stressDelta = -5)),
-            option("mfo_read_contract", Strings["scam_mfo_urgent_2024_opt_mfo_read_contract"], "📋",
-                next = "scam_mfo_contract_revealed",
-                fx = Effect(knowledgeDelta = 10)),
-            option("mfo_call_bank", Strings["scam_mfo_urgent_2024_opt_mfo_call_bank"], "📞",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    stressDelta = 5, knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.mfo")
-                ))
+            o("mfo_take_2024", "Забрать деньги в приложении", "⚡", "scam_mfo_signed",
+                Effect(capitalDelta = 120_000L, debtDelta = 190_000L, stressDelta = -4)),
+            o("mfo_read_2024", "Посчитать полную стоимость", "📋", "scam_mfo_contract",
+                Effect(knowledgeDelta = 10)),
+            o("mfo_skip_2024", "Закрыть приложение", "✂️", MONTHLY_TICK,
+                Effect(expensesDelta = -25_000L, stressDelta = 5, knowledgeDelta = 8, setFlags = setOf("learned.scam.mfo")))
         )
     )
 
-    // ── MFO shared follow-ups ─────────────────────────────────────────────────
-
-    private fun mfoContractRevealed() = event(
-        id = "scam_mfo_contract_revealed",
-        message = Strings["scam_mfo_contract_revealed_msg"],
+    private fun mfoContract() = e(
+        id = "scam_mfo_contract",
         flavor = "⚠️",
-        tags = setOf("scam.mfo", "educational"),
+        tags = setOf("scam.mfo", "reflection"),
+        schemeExplanation = mfoExplanation,
+        message = "После расчета видно: быстрые деньги стоят дороже, чем казалось. Проблема не в займе, а в том, что он покупает один спокойный день ценой следующих месяцев.",
         options = listOf(
-            option("mfo_understand", Strings["scam_mfo_contract_revealed_opt_mfo_understand"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20,
-                    setFlags = setOf("learned.scam.mfo")
-                ))
+            o("mfo_lesson", "Не брать долг без полной стоимости", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -4, setFlags = setOf("learned.scam.mfo")))
         )
     )
 
-    private fun mfoSigned() = event(
+    private fun mfoSigned() = e(
         id = "scam_mfo_signed",
-        message = Strings["scam_mfo_signed_msg"],
         flavor = "😰",
         tags = setOf("scam.mfo", "consequence"),
+        schemeExplanation = mfoExplanation,
+        message = "Срок платежа пришел быстрее, чем зарплата. Приложение предлагает продлить заем, но продление платное и тело долга почти не уменьшается.",
         options = listOf(
-            option("mfo_pay_urgently", Strings["scam_mfo_signed_opt_mfo_pay_urgently"], "🚨",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    debtDelta = -128_000, capitalDelta = -128_000,
-                    stressDelta = -10, knowledgeDelta = 20,
-                    setFlags = setOf("learned.scam.mfo")
-                )),
-            option("mfo_rollover", Strings["scam_mfo_signed_opt_mfo_rollover"], "💳",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    debtDelta = 128_000, debtPaymentDelta = 15_000,
-                    stressDelta = 20, riskDelta = 15
-                ))
+            o("mfo_pay", "Закрыть долг любой ценой", "🧾", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, debtDelta = -120_000L, stressDelta = 8, knowledgeDelta = 18, setFlags = setOf("learned.scam.mfo"))),
+            o("mfo_roll", "Продлить еще раз", "💳", MONTHLY_TICK,
+                Effect(debtDelta = 90_000L, debtPaymentDelta = 20_000L, stressDelta = 18, riskDelta = 12))
         )
     )
 
-    // ════════════════════════════════════════════════════════════════════
-    //  7. MIDDLEMAN / CHINA GOODS — Схема посредника
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_90s — «челнок» из Турции */
-    private fun middlemanTurkey90s() = event(
-        id = "scam_middleman_turkey_90s",
-        message = Strings["scam_middleman_turkey_90s_msg"],
-        flavor = "✈️",
+    private fun middleman90s() = e(
+        id = "scam_middleman_90s",
+        flavor = "🧳",
         tags = setOf("scam", "scam.middleman"),
-        poolWeight = 10,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 200_000L),
-            notFlag("learned.scam.middleman"),
-            inEra("kz_90s")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_90s"), capitalAtLeast(120_000L), notLearned("scam.middleman")),
+        schemeExplanation = middlemanExplanation,
+        message = "Перекуп обещает привезти товар из Турции дешевле рынка. Просит наличные сейчас, расписку напишет «когда вернется».",
         options = listOf(
-            option("middleman_invest", Strings["scam_middleman_turkey_90s_opt_middleman_invest"], "🏭",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -200_000, riskDelta = 20, stressDelta = 5,
-                    scheduleEvent = ScheduledEvent("scam_middleman_result", afterMonths = 2)
-                )),
-            option("middleman_ask_contract", Strings["scam_middleman_turkey_90s_opt_middleman_ask_contract"], "📋",
-                next = "scam_middleman_contract_refused",
-                fx = Effect(knowledgeDelta = 10)),
-            option("middleman_decline", Strings["scam_middleman_turkey_90s_opt_middleman_decline"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.middleman")
-                ))
+            o("middleman_pay_90s", "Отдать предоплату", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -160_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_middleman_result", 2))),
+            o("middleman_docs_90s", "Попросить расписку и свидетелей", "📋", "scam_middleman_contract_refused",
+                Effect(knowledgeDelta = 10)),
+            o("middleman_skip_90s", "Не входить без товара", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.middleman")))
         )
     )
 
-    /** kz_2005 — ранний Alibaba + физический посредник */
-    private fun middlemanAlibaba2005() = event(
-        id = "scam_middleman_alibaba_2005",
-        message = Strings["scam_middleman_alibaba_2005_msg"],
+    private fun middleman2005() = e(
+        id = "scam_middleman_2005",
         flavor = "📦",
         tags = setOf("scam", "scam.middleman"),
-        poolWeight = 10,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 300_000L),
-            notFlag("learned.scam.middleman"),
-            inEra("kz_2005")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2005"), capitalAtLeast(180_000L), notLearned("scam.middleman")),
+        schemeExplanation = middlemanExplanation,
+        message = "Посредник показывает распечатку с Alibaba и предлагает заказать партию техники. Интернет медленный, проверить поставщика трудно, зато скидка «только сегодня».",
         options = listOf(
-            option("middleman_invest", Strings["scam_middleman_alibaba_2005_opt_middleman_invest"], "🏭",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -500_000, riskDelta = 20, stressDelta = 5,
-                    scheduleEvent = ScheduledEvent("scam_middleman_result", afterMonths = 2)
-                )),
-            option("middleman_ask_contract", Strings["scam_middleman_alibaba_2005_opt_middleman_ask_contract"], "📋",
-                next = "scam_middleman_contract_refused",
-                fx = Effect(knowledgeDelta = 10)),
-            option("middleman_decline", Strings["scam_middleman_alibaba_2005_opt_middleman_decline"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.middleman")
-                ))
+            o("middleman_pay_2005", "Внести предоплату", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -250_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_middleman_result", 2))),
+            o("middleman_docs_2005", "Попросить контракт и тестовую партию", "📋", "scam_middleman_contract_refused",
+                Effect(knowledgeDelta = 10)),
+            o("middleman_skip_2005", "Не входить", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.middleman")))
         )
     )
 
-    /** kz_2015 — AliExpress / популярный e-commerce */
-    private fun middlemanAli2015() = event(
-        id = "scam_middleman_ali_2015",
-        message = Strings["scam_middleman_ali_2015_msg"],
+    private fun middleman2015() = e(
+        id = "scam_middleman_2015",
         flavor = "📦",
         tags = setOf("scam", "scam.middleman"),
-        poolWeight = 10,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 300_000L),
-            notFlag("learned.scam.middleman"),
-            inEra("kz_2015")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2015"), capitalAtLeast(180_000L), notLearned("scam.middleman")),
+        schemeExplanation = middlemanExplanation,
+        message = "В Instagram продают «оптовый доступ» к поставщику с AliExpress. Нужно оплатить карту и получить закрытую таблицу.",
         options = listOf(
-            option("middleman_invest", Strings["scam_middleman_ali_2015_opt_middleman_invest"], "🏭",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -500_000, riskDelta = 20, stressDelta = 5,
-                    scheduleEvent = ScheduledEvent("scam_middleman_result", afterMonths = 2)
-                )),
-            option("middleman_ask_contract", Strings["scam_middleman_ali_2015_opt_middleman_ask_contract"], "📋",
-                next = "scam_middleman_contract_refused",
-                fx = Effect(knowledgeDelta = 10)),
-            option("middleman_decline", Strings["scam_middleman_ali_2015_opt_middleman_decline"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.middleman")
-                ))
+            o("middleman_pay_2015", "Оплатить доступ", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -180_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_middleman_result", 2))),
+            o("middleman_docs_2015", "Попросить договор и реальные инвойсы", "📋", "scam_middleman_contract_refused",
+                Effect(knowledgeDelta = 10)),
+            o("middleman_skip_2015", "Не платить за воздух", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.middleman")))
         )
     )
 
-    /** kz_2024 — Telegram/Instagram перекуп */
-    private fun middlemanChina2024() = event(
-        id = "scam_middleman_china",
-        message = Strings["scam_middleman_china_msg"],
-        flavor = "📦",
+    private fun middleman2024() = e(
+        id = "scam_middleman_2024",
+        flavor = "🚚",
         tags = setOf("scam", "scam.middleman"),
-        poolWeight = 10,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 300_000L),
-            notFlag("learned.scam.middleman"),
-            inEra("kz_2024")
-        ),
+        poolWeight = 10,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(180_000L), notLearned("scam.middleman")),
+        schemeExplanation = middlemanExplanation,
+        message = "Telegram-перекуп предлагает товар из Китая с маржой 40%. Он присылает видео склада, но не дает название компании и просит перевод на карту.",
         options = listOf(
-            option("middleman_invest", Strings["scam_middleman_china_opt_middleman_invest"], "🏭",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -500_000, riskDelta = 20, stressDelta = 5,
-                    scheduleEvent = ScheduledEvent("scam_middleman_result", afterMonths = 2)
-                )),
-            option("middleman_ask_contract", Strings["scam_middleman_china_opt_middleman_ask_contract"], "📋",
-                next = "scam_middleman_contract_refused",
-                fx = Effect(knowledgeDelta = 10)),
-            option("middleman_decline", Strings["scam_middleman_china_opt_middleman_decline"], "🚫",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 8,
-                    setFlags = setOf("learned.scam.middleman")
-                ))
+            o("middleman_pay_2024", "Перевести предоплату", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -250_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_middleman_result", 2))),
+            o("middleman_docs_2024", "Попросить БИН, договор и оплату через счет", "📋", "scam_middleman_contract_refused",
+                Effect(knowledgeDelta = 10)),
+            o("middleman_skip_2024", "Не платить на карту", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.middleman")))
         )
     )
 
-    // ── Middleman shared follow-ups ───────────────────────────────────────────
-
-    private fun middlemanContractRefused() = event(
+    private fun middlemanRefused() = e(
         id = "scam_middleman_contract_refused",
-        message = Strings["scam_middleman_contract_refused_msg"],
         flavor = "🚩",
-        tags = setOf("scam.middleman", "educational"),
+        tags = setOf("scam.middleman", "reflection"),
+        schemeExplanation = middlemanExplanation,
+        message = "На просьбе о договоре и проверке поставщика человек раздражается. Хорошая сделка не исчезает от одного нормального вопроса.",
         options = listOf(
-            option("middleman_lesson", Strings["scam_middleman_contract_refused_opt_middleman_lesson"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 18, stressDelta = -5,
-                    setFlags = setOf("learned.scam.middleman")
-                ))
+            o("middleman_lesson", "Доверять проверке, а не срочности", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -4, setFlags = setOf("learned.scam.middleman")))
         )
     )
 
-    private fun middlemanResult() = event(
+    private fun middlemanResult() = e(
         id = "scam_middleman_result",
-        message = Strings["scam_middleman_result_msg"],
         flavor = "💀",
         tags = setOf("scam.middleman", "consequence"),
+        schemeExplanation = middlemanExplanation,
+        message = "Срок поставки прошел. Сначала были обещания, потом болезнь родственника, потом телефон выключился. Товара нет.",
         options = listOf(
-            option("middleman_loss_lesson", Strings["scam_middleman_result_opt_middleman_loss_lesson"], "📖",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 28, stressDelta = 20,
-                    setFlags = setOf("learned.scam.middleman", "lost_money_to_scam")
-                ))
+            o("middleman_loss_lesson", "Зафиксировать потерю и правило предоплаты", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 24, stressDelta = 16, setFlags = setOf("learned.scam.middleman", "lost_money_to_scam")))
         )
     )
 
-    // ════════════════════════════════════════════════════════════════════
-    //  8. TRAINING CULT — Тренинги-секты
-    // ════════════════════════════════════════════════════════════════════
-
-    /** kz_90s — семинар по книге Кийосаки / начало тренинговой культуры */
-    private fun trainingKiyosaki90s() = event(
-        id = "scam_training_kiyosaki_90s",
-        message = Strings["scam_training_kiyosaki_90s_msg"],
+    private fun training90s() = e(
+        id = "scam_training_90s",
         flavor = "📚",
         tags = setOf("scam", "scam.training"),
-        poolWeight = 8,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 50_000L),
-            notFlag("learned.scam.training"),
-            inEra("kz_90s")
-        ),
-        options = listOf(
-            option("training_pay", Strings["scam_training_kiyosaki_90s_opt_training_pay"], "💳",
-                next = "scam_training_first_level",
-                fx = Effect(capitalDelta = -50_000, stressDelta = -5, knowledgeDelta = 3)),
-            option("training_research", Strings["scam_training_kiyosaki_90s_opt_training_research"], "🔍",
-                next = "scam_training_reviews",
-                fx = Effect(knowledgeDelta = 8)),
-            option("training_decline", Strings["scam_training_kiyosaki_90s_opt_training_decline"], "🙅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.training")
-                ))
-        )
+        poolWeight = 7,
+        conditions = listOf(era("kz_90s"), capitalAtLeast(40_000L), notLearned("scam.training")),
+        schemeExplanation = trainingExplanation,
+        message = "В ДК проводят семинар «как стать богатым за год». Первый билет недорогой, но на сцене уже продают закрытый курс.",
+        options = trainingOptions(40_000L)
     )
 
-    /** kz_2005 — «Бизнес Молодость» прообраз, корпоративные тренинги */
-    private fun trainingBusiness2005() = event(
-        id = "scam_training_business_2005",
-        message = Strings["scam_training_business_2005_msg"],
+    private fun training2005() = e(
+        id = "scam_training_2005",
         flavor = "🧘",
         tags = setOf("scam", "scam.training"),
-        poolWeight = 8,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 80_000L),
-            notFlag("learned.scam.training"),
-            inEra("kz_2005")
-        ),
-        options = listOf(
-            option("training_pay", Strings["scam_training_business_2005_opt_training_pay"], "💳",
-                next = "scam_training_first_level",
-                fx = Effect(capitalDelta = -80_000, stressDelta = -5, knowledgeDelta = 3)),
-            option("training_research", Strings["scam_training_business_2005_opt_training_research"], "🔍",
-                next = "scam_training_reviews",
-                fx = Effect(knowledgeDelta = 8)),
-            option("training_decline", Strings["scam_training_business_2005_opt_training_decline"], "🙅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.training")
-                ))
-        )
+        poolWeight = 7,
+        conditions = listOf(era("kz_2005"), capitalAtLeast(60_000L), notLearned("scam.training")),
+        schemeExplanation = trainingExplanation,
+        message = "В гостинице проходит бизнес-тренинг: «мышление миллионера», «пакет VIP только сегодня», оплата в кассу у выхода.",
+        options = trainingOptions(70_000L)
     )
 
-    /** kz_2015 — «Бизнес Молодость», Instagram-коучи */
-    private fun trainingBm2015() = event(
-        id = "scam_training_bm_2015",
-        message = Strings["scam_training_bm_2015_msg"],
+    private fun training2015() = e(
+        id = "scam_training_2015",
         flavor = "🔥",
         tags = setOf("scam", "scam.training"),
-        poolWeight = 11,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 80_000L),
-            notFlag("learned.scam.training"),
-            inEra("kz_2015")
-        ),
-        options = listOf(
-            option("training_pay", Strings["scam_training_bm_2015_opt_training_pay"], "💳",
-                next = "scam_training_first_level",
-                fx = Effect(capitalDelta = -80_000, stressDelta = -5, knowledgeDelta = 3)),
-            option("training_research", Strings["scam_training_bm_2015_opt_training_research"], "🔍",
-                next = "scam_training_reviews",
-                fx = Effect(knowledgeDelta = 8)),
-            option("training_decline", Strings["scam_training_bm_2015_opt_training_decline"], "🙅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.training")
-                ))
-        )
+        poolWeight = 9,
+        conditions = listOf(era("kz_2015"), capitalAtLeast(60_000L), notLearned("scam.training")),
+        schemeExplanation = trainingExplanation,
+        message = "Instagram-коуч обещает запустить онлайн-школу за 21 день. Вебинар бесплатный, но «настоящая работа» начинается после оплаты тарифа.",
+        options = trainingOptions(90_000L)
     )
 
-    /** kz_2024 — Telegram/TikTok коучи */
-    private fun trainingCult2024() = event(
-        id = "scam_training_cult",
-        message = Strings["scam_training_cult_msg"],
-        flavor = "🧘",
+    private fun training2024() = e(
+        id = "scam_training_2024",
+        flavor = "📲",
         tags = setOf("scam", "scam.training"),
-        poolWeight = 11,
         unique = true,
-        conditions = listOf(
-            stat(CAPITAL, GTE, 80_000L),
-            notFlag("learned.scam.training"),
-            inEra("kz_2024")
-        ),
-        options = listOf(
-            option("training_pay", Strings["scam_training_cult_opt_training_pay"], "💳",
-                next = "scam_training_first_level",
-                fx = Effect(capitalDelta = -80_000, stressDelta = -5, knowledgeDelta = 3)),
-            option("training_research", Strings["scam_training_cult_opt_training_research"], "🔍",
-                next = "scam_training_reviews",
-                fx = Effect(knowledgeDelta = 8)),
-            option("training_decline", Strings["scam_training_cult_opt_training_decline"], "🙅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 5,
-                    setFlags = setOf("learned.scam.training")
-                ))
-        )
+        poolWeight = 9,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(60_000L), notLearned("scam.training")),
+        schemeExplanation = trainingExplanation,
+        message = "TikTok ведет на марафон по «финансовому мышлению». В чате сотни сообщений, куратор пишет: «Если не оплатишь сегодня, значит выбираешь бедность».",
+        options = trainingOptions(120_000L)
     )
 
-    // ── Training shared follow-ups ────────────────────────────────────────────
+    private fun trainingOptions(price: Long) = listOf(
+        o("training_pay", "Оплатить первый уровень", "💳", "scam_training_level_two",
+            Effect(capitalDelta = -price, stressDelta = -4, knowledgeDelta = 2)),
+        o("training_check", "Проверить программу и договор возврата", "🔍", "scam_training_checked",
+            Effect(knowledgeDelta = 10)),
+        o("training_skip", "Не покупать эмоцию", "🛡️", MONTHLY_TICK,
+            Effect(knowledgeDelta = 6, setFlags = setOf("learned.scam.training")))
+    )
 
-    private fun trainingReviews() = event(
-        id = "scam_training_reviews",
-        message = Strings["scam_training_reviews_msg"],
+    private fun trainingChecked() = e(
+        id = "scam_training_checked",
         flavor = "🔍",
-        tags = setOf("scam.training", "educational"),
+        tags = setOf("scam.training", "reflection"),
+        schemeExplanation = trainingExplanation,
+        message = "В программе много мотивации и мало проверяемого навыка. Договор возврата туманный, а отзывы на независимых площадках совсем другие.",
         options = listOf(
-            option("training_research_lesson", Strings["scam_training_reviews_opt_training_research_lesson"], "✅",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20, stressDelta = -5,
-                    setFlags = setOf("learned.scam.training")
-                ))
+            o("training_lesson", "Учиться по измеримому результату", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 18, stressDelta = -3, setFlags = setOf("learned.scam.training")))
         )
     )
 
-    private fun trainingFirstLevel() = event(
-        id = "scam_training_first_level",
-        message = Strings["scam_training_first_level_msg"],
-        flavor = "🔥",
-        tags = setOf("scam.training"),
-        options = listOf(
-            option("training_escalate", Strings["scam_training_first_level_opt_training_escalate"], "💸",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    capitalDelta = -200_000, stressDelta = -5, knowledgeDelta = 2,
-                    scheduleEvent = ScheduledEvent("scam_training_deeper", afterMonths = 2)
-                )),
-            option("training_stop", Strings["scam_training_first_level_opt_training_stop"], "🛑",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 20, stressDelta = 5,
-                    setFlags = setOf("learned.scam.training")
-                ))
-        )
-    )
-
-    private fun trainingDeeper() = event(
-        id = "scam_training_deeper",
-        message = Strings["scam_training_deeper_msg"],
+    private fun trainingLevelTwo() = e(
+        id = "scam_training_level_two",
         flavor = "💡",
         tags = setOf("scam.training", "consequence"),
+        schemeExplanation = trainingExplanation,
+        message = "После первого уровня говорят, что настоящий доступ откроется в VIP. Цена выше, давление сильнее: «Иначе ты сольешь свой потенциал».",
         options = listOf(
-            option("training_exit", Strings["scam_training_deeper_opt_training_exit"], "🚪",
-                next = MONTHLY_TICK,
-                fx = Effect(
-                    knowledgeDelta = 25, stressDelta = 10,
-                    setFlags = setOf("learned.scam.training", "lost_money_to_scam")
-                ))
+            o("training_exit", "Остановиться", "🛑", MONTHLY_TICK,
+                Effect(knowledgeDelta = 20, stressDelta = 6, setFlags = setOf("learned.scam.training", "lost_money_to_scam"))),
+            o("training_pay_more", "Оплатить VIP", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -220_000L, stressDelta = -4, riskDelta = 12))
         )
     )
 
-    // ════════════════════════════════════════════════════════════════════
-    //  EXPORT
-    // ════════════════════════════════════════════════════════════════════
-
-    val all: List<GameEvent> get() = listOf(
-        // Pyramid — 4 era variants + shared follow-ups
-        pyramidNeighbor90s(), pyramidEmail2005(), pyramidVk2015(), pyramidFriendCall(),
-        pyramidAvoided(), pyramidCollapse(), pyramidSmallLoss(),
-        // MLM — 4 era variants + shared follow-ups
-        mlmDoor90s(), mlmPhone2005(), mlmInstagram2015(), mlmColleague(),
-        mlmPresentation(), mlmConfronted(), mlmMonthLater(),
-        // Capper — 3 era variants (no 90s) + shared follow-ups
-        capperSms2005(), capperVk2015(), capperTelegram(),
-        capperExplained(), capperLoses(), bettingDeepLoss(),
-        // Romance — 2 era variants (2015+) + shared follow-ups
-        romanceMamba2015(), romanceFirstContact(),
-        romanceBuildup(), romanceCryptoIntro(), romanceWithdrawalBlocked(),
-        romanceFreeze(), romanceFinal(), romanceCaught(),
-        // Crypto — 2 era variants (2015+) + shared follow-ups
-        cryptoForex2015(), cryptoFakeExchange(),
-        cryptoNoLicense(), cryptoWithdrawalTrap(), cryptoFinalDisappear(),
-        // MFO — 4 era variants + shared follow-ups
-        mfoNeighborLender90s(), mfoOffice2005(), mfoUrgentOnline(), mfoUrgent2024(),
-        mfoContractRevealed(), mfoSigned(),
-        // Middleman — 4 era variants + shared follow-ups
-        middlemanTurkey90s(), middlemanAlibaba2005(), middlemanAli2015(), middlemanChina2024(),
-        middlemanContractRefused(), middlemanResult(),
-        // Training — 4 era variants + shared follow-ups
-        trainingKiyosaki90s(), trainingBusiness2005(), trainingBm2015(), trainingCult2024(),
-        trainingReviews(), trainingFirstLevel(), trainingDeeper()
+    private fun romance2015() = e(
+        id = "scam_romance_2015",
+        flavor = "💌",
+        tags = setOf("scam", "scam.romance", "scam.forex"),
+        unique = true,
+        poolWeight = 7,
+        conditions = listOf(era("kz_2015"), capitalAtLeast(120_000L), notLearned("scam.romance")),
+        schemeExplanation = romanceExplanation,
+        message = "На Mamba/VK начинается теплая переписка. Через пару недель собеседник рассказывает про наставника на валютном рынке и предлагает попробовать вместе.",
+        options = listOf(
+            o("romance_invest_2015", "Довериться и попробовать", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_forex_withdrawal", 2))),
+            o("romance_check_2015", "Попросить видеозвонок и не смешивать деньги", "📹", "scam_romance_caught",
+                Effect(knowledgeDelta = 12)),
+            o("romance_skip_2015", "Закрыть тему денег", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, setFlags = setOf("learned.scam.romance")))
+        )
     )
 
-    /**
-     * Pool entries — all era variants included.
-     * Era conditions on each event act as the gate;
-     * EraDefinition.poolWeightModifiers provide further suppression (e.g. crypto=0 in 90s).
-     */
+    private fun romance2024() = e(
+        id = "scam_romance_2024",
+        flavor = "💌",
+        tags = setOf("scam", "scam.romance", "scam.crypto"),
+        unique = true,
+        poolWeight = 10,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(120_000L), notLearned("scam.romance")),
+        schemeExplanation = romanceExplanation,
+        message = "В WhatsApp пишет человек «ошиблась номером». Разговор становится личным, потом появляется тема криптобиржи, где у нее якобы стабильно получается.",
+        options = listOf(
+            o("romance_invest_2024", "Перевести небольшую сумму", "💸", MONTHLY_TICK,
+                Effect(capitalDelta = -150_000L, riskDelta = 20, scheduleEvent = ScheduledEvent("scam_romance_freeze", 2))),
+            o("romance_check_2024", "Попросить видеозвонок и тестовый вывод", "🧪", "scam_romance_caught",
+                Effect(knowledgeDelta = 12)),
+            o("romance_skip_2024", "Не обсуждать деньги с незнакомцем", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 6, setFlags = setOf("learned.scam.romance")))
+        )
+    )
+
+    private fun romanceCaught() = e(
+        id = "scam_romance_caught",
+        flavor = "🚩",
+        tags = setOf("scam.romance", "reflection"),
+        schemeExplanation = romanceExplanation,
+        message = "На просьбе о видеозвонке и выводе маленькой суммы история начинает сыпаться. Теплая переписка была частью воронки.",
+        options = listOf(
+            o("romance_lesson", "Держать отношения отдельно от инвестиций", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 22, stressDelta = -4, setFlags = setOf("learned.scam.romance")))
+        )
+    )
+
+    private fun romanceFreeze() = e(
+        id = "scam_romance_freeze",
+        flavor = "🔒",
+        tags = setOf("scam.romance", "scam.crypto", "consequence"),
+        schemeExplanation = romanceExplanation,
+        message = "В кабинете нарисована прибыль, но вывод заблокирован: нужно оплатить налог/комиссию. Собеседник давит мягко: «Я же тоже так делала».",
+        options = listOf(
+            o("romance_pay_tax", "Оплатить комиссию", "😰", MONTHLY_TICK,
+                Effect(capitalDelta = -90_000L, stressDelta = 18, scheduleEvent = ScheduledEvent("scam_romance_final", 1))),
+            o("romance_stop", "Остановиться", "🛑", "scam_romance_caught",
+                Effect(knowledgeDelta = 18, stressDelta = 8))
+        )
+    )
+
+    private fun romanceFinal() = e(
+        id = "scam_romance_final",
+        flavor = "💔",
+        tags = setOf("scam.romance", "consequence"),
+        schemeExplanation = romanceExplanation,
+        message = "Аккаунт исчез. Поддержка молчит. Теперь видно, что вся история вела к одному моменту: заставить доплатить после первой потери.",
+        options = listOf(
+            o("romance_final_lesson", "Зафиксировать урок", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 28, stressDelta = 18, setFlags = setOf("learned.scam.romance", "learned.scam.crypto", "lost_money_to_scam")))
+        )
+    )
+
+    private fun forex2015() = e(
+        id = "scam_forex_2015",
+        flavor = "📊",
+        tags = setOf("scam", "scam.forex", "scam.crypto"),
+        unique = true,
+        poolWeight = 9,
+        conditions = listOf(era("kz_2015"), capitalAtLeast(80_000L), notLearned("scam.forex")),
+        schemeExplanation = forexCryptoExplanation,
+        message = "Баннер в интернете ведет на Forex/Bitcoin-платформу. Менеджер звонит и обещает заработать на девальвации, если пополнить счет сегодня.",
+        options = listOf(
+            o("forex_pay_2015", "Пополнить счет", "🚀", MONTHLY_TICK,
+                Effect(capitalDelta = -100_000L, riskDelta = 18, scheduleEvent = ScheduledEvent("scam_forex_withdrawal", 2))),
+            o("forex_check_2015", "Проверить лицензию и вывод", "🔍", "scam_forex_checked",
+                Effect(knowledgeDelta = 12)),
+            o("forex_skip_2015", "Не торговать в панике", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.forex", "learned.scam.crypto")))
+        )
+    )
+
+    private fun crypto2024() = e(
+        id = "scam_crypto_2024",
+        flavor = "📈",
+        tags = setOf("scam", "scam.crypto"),
+        unique = true,
+        poolWeight = 13,
+        conditions = listOf(era("kz_2024"), capitalAtLeast(80_000L), notLearned("scam.crypto")),
+        schemeExplanation = forexCryptoExplanation,
+        message = "Telegram-канал рекламирует новую биржу с бонусом за депозит. В интерфейсе красивые графики, но приложение ставится не из официального магазина.",
+        options = listOf(
+            o("crypto_pay_2024", "Закинуть депозит", "🚀", MONTHLY_TICK,
+                Effect(capitalDelta = -140_000L, riskDelta = 20, scheduleEvent = ScheduledEvent("scam_forex_withdrawal", 2))),
+            o("crypto_check_2024", "Проверить домен, лицензию и вывод", "🔍", "scam_forex_checked",
+                Effect(knowledgeDelta = 12)),
+            o("crypto_skip_2024", "Не ставить приложение по ссылке", "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 8, setFlags = setOf("learned.scam.crypto")))
+        )
+    )
+
+    private fun forexChecked() = e(
+        id = "scam_forex_checked",
+        flavor = "🔍",
+        tags = setOf("scam.forex", "scam.crypto", "reflection"),
+        schemeExplanation = forexCryptoExplanation,
+        message = "Проверка показывает несостыковки: юрлицо в офшоре, лицензия не бьется, вывод маленькой суммы требует «активации счета».",
+        options = listOf(
+            o("forex_lesson", "Не путать интерфейс с реальным рынком", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 22, stressDelta = -4, setFlags = setOf("learned.scam.forex", "learned.scam.crypto")))
+        )
+    )
+
+    private fun forexWithdrawal() = e(
+        id = "scam_forex_withdrawal",
+        flavor = "🚨",
+        tags = setOf("scam.forex", "scam.crypto", "consequence"),
+        schemeExplanation = forexCryptoExplanation,
+        message = "В кабинете прибыль, но вывести ее нельзя: менеджер просит оплатить комиссию, налог или верификацию. Без этого счет якобы заморозят.",
+        options = listOf(
+            o("forex_pay_fee", "Заплатить комиссию", "😰", MONTHLY_TICK,
+                Effect(capitalDelta = -60_000L, stressDelta = 18, scheduleEvent = ScheduledEvent("scam_forex_final", 1))),
+            o("forex_stop", "Остановиться и не доплачивать", "🛑", MONTHLY_TICK,
+                Effect(knowledgeDelta = 24, stressDelta = 10, setFlags = setOf("learned.scam.forex", "learned.scam.crypto", "lost_money_to_scam")))
+        )
+    )
+
+    private fun forexFinal() = e(
+        id = "scam_forex_final",
+        flavor = "💀",
+        tags = setOf("scam.forex", "scam.crypto", "consequence"),
+        schemeExplanation = forexCryptoExplanation,
+        message = "После доплаты появляется новая причина блокировки. Это не рынок, а воронка дополнительных платежей.",
+        options = listOf(
+            o("forex_final_lesson", "Закрыть тему и записать правила проверки", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 28, stressDelta = 16, setFlags = setOf("learned.scam.forex", "learned.scam.crypto", "lost_money_to_scam")))
+        )
+    )
+
+    private fun escrowLoss() = e(
+        id = "scam_escrow_loss",
+        flavor = "💳",
+        tags = setOf("scam.escrow", "consequence"),
+        schemeExplanation = escrowExplanation,
+        message = "Официальный кабинет не видит заказа. Поддержка сервиса говорит: такой сделки нет. Ссылка была копией, а деньги ушли напрямую мошеннику.",
+        options = listOf(
+            o("escrow_lesson_loss", "Проверять оплату только внутри сервиса", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 24, stressDelta = 14, setFlags = setOf("learned.scam.escrow", "lost_money_to_scam")))
+        )
+    )
+
+    private fun escrowChecked() = e(
+        id = "scam_escrow_checked",
+        flavor = "🔍",
+        tags = setOf("scam.escrow", "reflection"),
+        schemeExplanation = escrowExplanation,
+        message = "В официальном приложении заказа нет. Домен в ссылке отличается одной буквой. Сделка развалилась до оплаты, как и должна развалиться плохая схема.",
+        options = listOf(
+            o("escrow_lesson", "Не платить вне официального сервиса", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 20, stressDelta = -4, setFlags = setOf("learned.scam.escrow")))
+        )
+    )
+
+    private fun presaleDelay() = e(
+        id = "scam_presale_delay",
+        flavor = "🏚️",
+        tags = setOf("scam.presale", "mortgage", "consequence"),
+        schemeExplanation = presaleExplanation,
+        message = "Стройка встала. Менеджеры говорят про перенос сроков, потом про смену подрядчика. Деньги внесены, а рычагов почти нет.",
+        options = listOf(
+            o("presale_lesson_loss", "Разобрать риск долевого строительства", "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 26, stressDelta = 18, setFlags = setOf("learned.scam.presale", "lost_money_to_scam")))
+        )
+    )
+
+    private fun presaleChecked() = e(
+        id = "scam_presale_checked",
+        flavor = "📋",
+        tags = setOf("scam.presale", "mortgage", "reflection"),
+        schemeExplanation = presaleExplanation,
+        message = "Проверка показывает судебные дела и странного посредника в договоре. Скидка была платой за риск, который тебе пытались не показать.",
+        options = listOf(
+            o("presale_lesson", "Покупать только понятный риск", "✅", MONTHLY_TICK,
+                Effect(knowledgeDelta = 22, stressDelta = -4, setFlags = setOf("learned.scam.presale")))
+        )
+    )
+
+    val all: List<GameEvent> get() = listOf(
+        pyramid90s(), pyramid2005(), pyramid2015(), pyramid2024(), pyramidAvoided(), pyramidCollapse(),
+        mlm90s(), mlm2005(), mlm2015(), mlm2024(), mlmExposed(), mlmStock(),
+        betting2005(), betting2015(), betting2024(), bettingExplained(), bettingLoss(),
+        mfo90s(), mfo2005(), mfoOnline2015(), mfoOnline2024(), mfoContract(), mfoSigned(),
+        middleman90s(), middleman2005(), middleman2015(), middleman2024(), middlemanRefused(), middlemanResult(),
+        training90s(), training2005(), training2015(), training2024(), trainingChecked(), trainingLevelTwo(),
+        romance2015(), romance2024(), romanceCaught(), romanceFreeze(), romanceFinal(),
+        forex2015(), crypto2024(), forexChecked(), forexWithdrawal(), forexFinal(),
+        escrowLoss(), escrowChecked(), presaleDelay(), presaleChecked()
+    )
+
     val poolEntries: List<PoolEntry> get() = listOf(
-        // Pyramid
-        PoolEntry("scam_pyramid_neighbor_90s", baseWeight = 18),
-        PoolEntry("scam_pyramid_email_2005",   baseWeight = 18),
-        PoolEntry("scam_pyramid_vk_2015",      baseWeight = 18),
-        PoolEntry("scam_pyramid_friend",       baseWeight = 18),
-        // MLM
-        PoolEntry("scam_mlm_door_90s",         baseWeight = 14),
-        PoolEntry("scam_mlm_phone_2005",       baseWeight = 14),
-        PoolEntry("scam_mlm_instagram_2015",   baseWeight = 14),
-        PoolEntry("scam_mlm_colleague",        baseWeight = 14),
-        // Capper (no 90s)
-        PoolEntry("scam_capper_sms_2005",      baseWeight = 10),
-        PoolEntry("scam_capper_vk_2015",       baseWeight = 12),
-        PoolEntry("scam_capper_telegram",      baseWeight = 12),
-        // Romance (2015+)
-        PoolEntry("scam_romance_mamba_2015",   baseWeight = 8),
-        PoolEntry("scam_romance_contact",      baseWeight = 10),
-        // Crypto (2015+)
-        PoolEntry("scam_crypto_forex_2015",    baseWeight = 10),
-        PoolEntry("scam_crypto_exchange",      baseWeight = 15),
-        // MFO
-        PoolEntry("scam_mfo_neighbor_90s",     baseWeight = 12),
-        PoolEntry("scam_mfo_office_2005",      baseWeight = 12),
-        PoolEntry("scam_mfo_urgent",           baseWeight = 12),
-        PoolEntry("scam_mfo_urgent_2024",      baseWeight = 12),
-        // Middleman
-        PoolEntry("scam_middleman_turkey_90s", baseWeight = 10),
-        PoolEntry("scam_middleman_alibaba_2005", baseWeight = 10),
-        PoolEntry("scam_middleman_ali_2015",   baseWeight = 10),
-        PoolEntry("scam_middleman_china",      baseWeight = 10),
-        // Training
-        PoolEntry("scam_training_kiyosaki_90s", baseWeight = 8),
-        PoolEntry("scam_training_business_2005", baseWeight = 8),
-        PoolEntry("scam_training_bm_2015",     baseWeight = 11),
-        PoolEntry("scam_training_cult",        baseWeight = 11)
+        PoolEntry("scam_pyramid_90s", 18),
+        PoolEntry("scam_pyramid_2005", 15),
+        PoolEntry("scam_pyramid_2015", 16),
+        PoolEntry("scam_pyramid_2024", 16),
+        PoolEntry("scam_mlm_90s", 12),
+        PoolEntry("scam_mlm_2005", 12),
+        PoolEntry("scam_mlm_2015", 14),
+        PoolEntry("scam_mlm_2024", 12),
+        PoolEntry("scam_betting_2005", 7),
+        PoolEntry("scam_betting_2015", 10),
+        PoolEntry("scam_betting_2024", 10),
+        PoolEntry("scam_mfo_90s", 10),
+        PoolEntry("scam_mfo_2005", 10),
+        PoolEntry("scam_mfo_2015", 10),
+        PoolEntry("scam_mfo_2024", 10),
+        PoolEntry("scam_middleman_90s", 10),
+        PoolEntry("scam_middleman_2005", 10),
+        PoolEntry("scam_middleman_2015", 10),
+        PoolEntry("scam_middleman_2024", 10),
+        PoolEntry("scam_training_90s", 7),
+        PoolEntry("scam_training_2005", 7),
+        PoolEntry("scam_training_2015", 9),
+        PoolEntry("scam_training_2024", 9),
+        PoolEntry("scam_romance_2015", 7),
+        PoolEntry("scam_romance_2024", 10),
+        PoolEntry("scam_forex_2015", 9),
+        PoolEntry("scam_crypto_2024", 13)
     )
 
     fun findById(id: String): GameEvent? = all.find { it.id == id }

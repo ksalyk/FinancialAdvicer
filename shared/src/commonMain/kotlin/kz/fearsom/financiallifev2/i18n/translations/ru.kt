@@ -16,7 +16,6 @@ package kz.fearsom.financiallifev2.i18n.translations
 //    evt_aidar90s_* — Aidar90sScenarioGraph events
 //    evt_asan_*    — AsanScenarioGraph events
 //    evt_dana_*    — DanaScenarioGraph events
-//    evt_erbolat_* — ErbolatScenarioGraph events
 // ════════════════════════════════════════════════════════════════════
 
 val ruStrings: Map<String, String> = mapOf(
@@ -235,7 +234,7 @@ val ruStrings: Map<String, String> = mapOf(
 
     // ── System / GameEngine ──────────────────────────────────────────
     "sys_game_start"                 to "🎮 Финансовое приключение началось! Помогай %s строить финансовое будущее.",
-    "sys_default_character_name"     to "Асан",
+    "sys_default_character_name"     to "Амир Нурланов",
 
     // ── MonthlyReport ────────────────────────────────────────────────
     "sys_monthly_title"              to "📊 %s %d — Итоги месяца",
@@ -1174,9 +1173,6 @@ val ruStrings: Map<String, String> = mapOf(
     //  DANA SCENARIO GRAPH — TODO: add keys when migrating DanaScenarioGraph.kt
     // ════════════════════════════════════════════════════════════════════
 
-    // ════════════════════════════════════════════════════════════════════
-    //  ERBOLAT SCENARIO GRAPH — TODO: add keys when migrating ErbolatScenarioGraph.kt
-    // ════════════════════════════════════════════════════════════════════
     // ════════════════════════════════════════════════════════════════════
     //  SEED DATA STRINGS
     // ════════════════════════════════════════════════════════════════════

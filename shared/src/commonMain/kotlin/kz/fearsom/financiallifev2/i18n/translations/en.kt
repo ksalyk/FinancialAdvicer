@@ -223,7 +223,7 @@ val enStrings: Map<String, String> = mapOf(
 
     // ── System / GameEngine ──────────────────────────────────────────
     "sys_game_start"                 to "🎮 The financial adventure has begun! Help %s build their financial future.",
-    "sys_default_character_name"     to "Asan",
+    "sys_default_character_name"     to "Amir Nurlanov",
 
     // ── MonthlyReport ────────────────────────────────────────────────
     "sys_monthly_title"              to "📊 %s %d — Monthly Summary",

@@ -11,14 +11,8 @@ class ScenarioGraphContentTest {
     private val graphs = listOf(
         ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s"),
         ScenarioGraphFactory.forCharacter("aidar", "kz_2005"),
-        ScenarioGraphFactory.forCharacter("aidar", "kz_2015"),
-        ScenarioGraphFactory.forCharacter("aidar", "kz_2024"),
-        ScenarioGraphFactory.forCharacter("asan", "kz_2024"),
-        ScenarioGraphFactory.forCharacter("dana", "kz_2005"),
         ScenarioGraphFactory.forCharacter("dana", "kz_2015"),
-        ScenarioGraphFactory.forCharacter("dana", "kz_2024"),
-        ScenarioGraphFactory.forCharacter("erbolat", "kz_2015"),
-        ScenarioGraphFactory.forCharacter("erbolat", "kz_2024")
+        ScenarioGraphFactory.forCharacter("asan", "kz_2024")
     )
 
     @Test

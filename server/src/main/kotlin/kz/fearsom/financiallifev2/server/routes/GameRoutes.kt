@@ -23,6 +23,7 @@ import kz.fearsom.financiallifev2.server.repository.RecordSessionRequest
 import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 private val log = LoggerFactory.getLogger("GameRoutes")
 
@@ -77,16 +78,59 @@ data class SnapshotDto(
 // in Routing.kt, so call.principal<JWTPrincipal>()!! is always non-null.
 
 /**
- * Per-user mutex that serialises concurrent /game/choose requests for the same userId.
+ * Thread-safe per-user mutex pool with LRU-style eviction.
  *
- * Without this, two simultaneous POST /game/choose calls both load the same stale stateJson,
- * compute divergent new states, and the last upsertSession write wins — silently dropping
- * one choice. The mutex ensures load → process → save is atomic per user.
+ * Without per-user serialisation, two concurrent POST /game/choose calls load the same
+ * stale stateJson, compute divergent states, and the last write wins — silently dropping
+ * a choice. The mutex ensures the load → process → save sequence is atomic per user.
  *
- * The map grows by one entry per distinct userId that ever calls /choose and is never evicted.
- * For a game with reasonable user counts this is fine; add a size-bound cache if needed.
+ * Each entry tracks the last-access timestamp. A background-free prune runs lazily on
+ * every [getLock] call once [pruneIntervalMs] has elapsed since the last prune, removing
+ * entries idle for more than [idleTimeoutMs]. This bounds memory at O(activeUsers) rather
+ * than O(allTimeUsers).
+ *
+ * @param idleTimeoutMs  Evict entries idle longer than this (default: 15 minutes).
+ * @param pruneIntervalMs How often to sweep for stale entries (default: 5 minutes).
  */
-private val choiceLocks = ConcurrentHashMap<String, Mutex>()
+internal class ChoiceLockManager(
+    private val idleTimeoutMs: Long  = 15L * 60 * 1000,
+    private val pruneIntervalMs: Long =  5L * 60 * 1000
+) {
+    private data class Entry(val mutex: Mutex, val lastAccessed: AtomicLong)
+
+    private val locks       = ConcurrentHashMap<String, Entry>()
+    private val lastPruneAt = AtomicLong(System.currentTimeMillis())
+
+    /** Returns (or creates) the mutex for [userId], updating its last-access timestamp. */
+    fun getLock(userId: String): Mutex {
+        val now   = System.currentTimeMillis()
+        val entry = locks.compute(userId) { _, existing ->
+            existing?.also { it.lastAccessed.set(now) }
+                ?: Entry(Mutex(), AtomicLong(now))
+        }!!
+
+        // Opportunistic prune — avoids a dedicated GC thread.
+        if (now - lastPruneAt.get() >= pruneIntervalMs) {
+            pruneExpired(now)
+        }
+
+        return entry.mutex
+    }
+
+    /** Current number of tracked entries (for monitoring / tests). */
+    fun size(): Int = locks.size
+
+    private fun pruneExpired(now: Long) {
+        lastPruneAt.set(now)
+        val cutoff = now - idleTimeoutMs
+        val removed = locks.entries.removeIf { (_, entry) ->
+            entry.lastAccessed.get() < cutoff && !entry.mutex.isLocked
+        }
+        if (removed) log.debug("ChoiceLockManager pruned stale entries, remaining={}", locks.size)
+    }
+}
+
+private val choiceLockManager = ChoiceLockManager()
 
 fun Route.gameRoutes(
     gameRepository: GameRepository,
@@ -201,7 +245,7 @@ fun Route.gameRoutes(
 
             // Serialise concurrent choices for the same user so that the
             // load → process → save sequence is never interleaved.
-            val mutex = choiceLocks.computeIfAbsent(userId) { Mutex() }
+            val mutex = choiceLockManager.getLock(userId)
             mutex.withLock {
                 val session = gameRepository.loadSession(userId)
                     ?: return@withLock call.respond(HttpStatusCode.NotFound, mapOf("error" to "No active session"))
@@ -339,5 +383,5 @@ private fun ApplicationCall.jwtUserId(): String =
  * the case where BOTH are unknown — that's the only path that reaches `error()` in forEra.
  * Keep in sync with ScenarioGraphFactory whenever new characters or eras are added.
  */
-private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana", "erbolat")
+private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana")
 private val VALID_ERA_IDS       = setOf("kz_90s", "kz_2005", "kz_2015", "kz_2024")

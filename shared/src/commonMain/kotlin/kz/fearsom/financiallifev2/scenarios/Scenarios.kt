@@ -11,7 +11,6 @@ import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.ErbolatScenarioGraph
 import kotlin.concurrent.Volatile
 
 // ─── DSL helpers ─────────────────────────────────────────────────────────────
@@ -26,12 +25,13 @@ internal fun event(
     poolWeight: Int = 10,
     unique: Boolean = false,
     cooldownMonths: Int = 0,
+    schemeExplanation: String? = null,
     isEnding: Boolean = false,
     endingType: EndingType? = null,
     options: List<GameOption>
 ) = GameEvent(
     id, message, flavor, options, conditions, priority, isEnding, endingType,
-    tags, poolWeight, unique, cooldownMonths
+    tags, poolWeight, unique, cooldownMonths, schemeExplanation
 )
 
 internal fun option(
@@ -125,11 +125,10 @@ object ScenarioGraphFactory {
     }
 
     private fun buildGraph(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
-        "aidar_90s" -> Aidar90sScenarioGraph()
-        "aidar"     -> AidarScenarioGraph(eraId)
-        "asan"      -> AsanScenarioGraph()
-        "dana"      -> DanaScenarioGraph(eraId)
-        "erbolat"   -> ErbolatScenarioGraph(eraId)
+        "aidar_90s" -> if (eraId == "kz_90s") Aidar90sScenarioGraph() else forEra(eraId)
+        "aidar"     -> if (eraId == "kz_2005") AidarScenarioGraph(eraId) else forEra(eraId)
+        "asan"      -> if (eraId == "kz_2024" || eraId == "modern_kz_2024") AsanScenarioGraph() else forEra(eraId)
+        "dana"      -> if (eraId == "kz_2015") DanaScenarioGraph(eraId) else forEra(eraId)
         else        -> forEra(eraId)  // bundles: fall back to era-specific graph
     }
 
@@ -137,8 +136,8 @@ object ScenarioGraphFactory {
     private fun forEra(eraId: String): ScenarioGraph = when (eraId) {
         "kz_90s"  -> Aidar90sScenarioGraph()
         "kz_2005" -> AidarScenarioGraph(eraId)
-        "kz_2015" -> AidarScenarioGraph(eraId)
-        "kz_2024" -> AidarScenarioGraph(eraId)
+        "kz_2015" -> DanaScenarioGraph(eraId)
+        "kz_2024", "modern_kz_2024" -> AsanScenarioGraph()
         else      -> error("No scenario graph for eraId=$eraId")
     }
 }

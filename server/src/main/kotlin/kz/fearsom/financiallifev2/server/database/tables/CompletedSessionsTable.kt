@@ -13,7 +13,7 @@ import org.jetbrains.exposed.sql.Table
  * [characterId]     — e.g. "asan"
  * [characterName]   — display name, e.g. "Асан"
  * [characterEmoji]  — e.g. "👨‍💻"
- * [eraId]           — e.g. "modern_kz_2024"
+ * [eraId]           — e.g. "kz_2024"
  * [eraName]         — display name
  * [ending]          — GameEnding.name()
  * [finalCapital]    — liquid savings at game end (₸)

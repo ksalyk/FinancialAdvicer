@@ -106,6 +106,10 @@ object EraEventLibrary {
             tags = setOf("scam", "scam.pyramid", "era.kz_90s"),
             unique = true,
             poolWeight = 25,
+            schemeExplanation = story(
+                "МММ-подобная схема платит старым вкладчикам деньгами новых. Она выглядит реальной, пока очередь растет.",
+                "Защита: искать источник прибыли, проверять лицензию, не верить гарантированной доходности и не занимать под обещанный процент."
+            ),
             options = listOf(
                 GameOption("invest_mmm", Strings["evt_era_mmm_wave_90s_opt_invest_mmm"], "💸",
                     effects = Effect(
@@ -145,6 +149,30 @@ object EraEventLibrary {
             options = listOf(
                 GameOption("be_grateful", Strings["evt_era_mmm_skeptic_result_opt_be_grateful"], "🙏",
                     effects = Effect(knowledgeDelta = 10, stressDelta = -5),
+                    next = MONTHLY_TICK)
+            )
+        ),
+
+        // ── KZ Credit / Construction Boom 2008 ───────────────────────
+
+        GameEvent(
+            id = "era_mortgage_freeze_2008",
+            message = story(
+                "Осень 2008. В банке меняются лица: ипотеку режут, стройки замирают, клиенты приходят с договорами долевого участия и спрашивают, что теперь делать.",
+                "Руслан видит, как риск, спрятанный в мелком шрифте, становится реальной жизнью: платежи остались, а доходы и цены уже другие."
+            ),
+            flavor = "🏚️",
+            tags = setOf("crisis", "mortgage", "era.kz_2005"),
+            unique = true,
+            options = listOf(
+                GameOption("freeze_restructure", "Пересобрать платежи и не брать новый долг", "📋",
+                    effects = Effect(stressDelta = 8, knowledgeDelta = 18, debtPaymentDelta = -25_000L),
+                    next = MONTHLY_TICK),
+                GameOption("freeze_buy_discount", "Купить просевший актив только после проверки", "🔍",
+                    effects = Effect(capitalDelta = -250_000L, investmentsDelta = 250_000L, stressDelta = 10, knowledgeDelta = 12),
+                    next = MONTHLY_TICK),
+                GameOption("freeze_panic_credit", "Взять кредит, чтобы переждать", "💳",
+                    effects = Effect(debtDelta = 500_000L, debtPaymentDelta = 30_000L, stressDelta = 18, riskDelta = 12),
                     next = MONTHLY_TICK)
             )
         ),
@@ -229,6 +257,30 @@ object EraEventLibrary {
                     effects = Effect(capitalDelta = -80_000, stressDelta = 10),
                     next = MONTHLY_TICK)
             )
+        ),
+
+        // ── KZ 2024 platform economy ──────────────────────────────────
+
+        GameEvent(
+            id = "era_online_credit_rules_2024",
+            message = story(
+                "Лето 2024. В новостях снова обсуждают онлайн-кредиты, лимиты и проверки заемщиков. В приложениях денег меньше не стало, но условия теперь приходится читать внимательнее.",
+                "Для Амира это хороший месяц, чтобы закрыть слабые места: долг, подписки, импульсные покупки и платежи вне официальных сервисов."
+            ),
+            flavor = "📲",
+            tags = setOf("world", "debt", "era.modern"),
+            unique = true,
+            options = listOf(
+                GameOption("audit_online_debt", "Проверить долги, подписки и лимиты", "🧾",
+                    effects = Effect(expensesDelta = -25_000L, knowledgeDelta = 14, stressDelta = -5),
+                    next = MONTHLY_TICK),
+                GameOption("ignore_online_rules", "Не трогать, пока платежи проходят", "😶",
+                    effects = Effect(stressDelta = 6),
+                    next = MONTHLY_TICK),
+                GameOption("close_small_debt", "Закрыть мелкий долг досрочно", "✅",
+                    effects = Effect(capitalDelta = -80_000L, debtDelta = -80_000L, knowledgeDelta = 8, stressDelta = -4),
+                    next = MONTHLY_TICK)
+            )
         )
     )
 
@@ -242,11 +294,12 @@ object EraEventLibrary {
 object EraRegistry {
 
     val MODERN_KZ_2024 get() = EraDefinition(
-        id = "modern_kz_2024",
+        id = "kz_2024",
         name = Strings.eraModernKz2024Name,
         startYear = 2020,
         endYear = 2030,
         globalEvents = listOf(
+            EraGlobalEvent("era_online_credit_rules_2024", year = 2024, month = 7),
             EraGlobalEvent("era_covid_shock_2020",    year = 2020, month = 3),
             EraGlobalEvent("era_kz_devaluation_2022", year = 2022, month = 3, probability = 0.85f)
         ),
@@ -269,10 +322,7 @@ object EraRegistry {
         globalEvents = listOf(
             EraGlobalEvent("era_ussr_collapse",  year = 1991, month = 12),
             EraGlobalEvent("era_tenge_introduced", year = 1993, month = 11),
-            EraGlobalEvent("era_mmm_wave_90s",   year = 1994, month = 6, probability = 0.9f),
-            EraGlobalEvent("chechen_war_broadcast", year = 1994, month = 12),
-            EraGlobalEvent("nuclear_disarmament_reaction", year = 1995, month = 4),
-            EraGlobalEvent("capital_move_debate", year = 1997, month = 12)
+            EraGlobalEvent("era_mmm_wave_90s",   year = 1994, month = 6, probability = 0.9f)
         ),
         poolWeightModifiers = mapOf(
             "scam.pyramid" to 4.0f,    // MMM era — rampant
@@ -280,6 +330,26 @@ object EraRegistry {
             "scam.romance" to 0.0f,    // no internet yet
             "crisis"       to 3.0f,
             "scam.mlm"     to 2.0f     // Amway/Oriflame wave just starting
+        )
+    )
+
+    val KZ_2005_CREDIT_BOOM get() = EraDefinition(
+        id = "kz_2005",
+        name = "Кредитный бум 2005-2010",
+        startYear = 2005,
+        endYear = 2010,
+        globalEvents = listOf(
+            EraGlobalEvent("era_mortgage_freeze_2008", year = 2008, month = 9)
+        ),
+        poolWeightModifiers = mapOf(
+            "scam.presale"  to 3.0f,
+            "scam.pyramid"  to 1.8f,
+            "scam.mlm"      to 1.8f,
+            "scam.betting"  to 1.2f,
+            "scam.crypto"   to 0.0f,
+            "scam.romance"  to 0.0f,
+            "mortgage"      to 2.0f,
+            "crisis"        to 1.5f
         )
     )
 
@@ -295,11 +365,15 @@ object EraRegistry {
             "scam.pyramid" to 2.0f,
             "scam.mlm"     to 2.5f,
             "crisis"       to 2.0f,
+            "scam.forex"   to 2.0f,
             "scam.crypto"  to 0.5f  // early crypto, not mainstream yet
         )
     )
 
-    private val all get() = listOf(MODERN_KZ_2024, KZ_90S, KZ_2015_DEVALUATION)
+    private val all get() = listOf(MODERN_KZ_2024, KZ_90S, KZ_2005_CREDIT_BOOM, KZ_2015_DEVALUATION)
 
-    fun findById(eraId: String): EraDefinition? = all.find { it.id == eraId }
+    fun findById(eraId: String): EraDefinition? {
+        val normalized = if (eraId == "modern_kz_2024") "kz_2024" else eraId
+        return all.find { it.id == normalized }
+    }
 }

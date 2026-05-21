@@ -14,6 +14,7 @@ import kz.fearsom.financiallifev2.server.models.AuthResponse
 import kz.fearsom.financiallifev2.server.models.LoginRequest
 import kz.fearsom.financiallifev2.server.models.RefreshRequest
 import kz.fearsom.financiallifev2.server.models.RegisterRequest
+import kz.fearsom.financiallifev2.server.plugins.RateLimiter
 import kz.fearsom.financiallifev2.server.plugins.authRateLimiter
 import kz.fearsom.financiallifev2.server.plugins.checkRateLimit
 import kz.fearsom.financiallifev2.server.plugins.refreshRateLimiter
@@ -32,12 +33,16 @@ private const val ERR_AUTH_WRONG_PASSWORD = "err_auth_wrong_password"
 private const val ERR_AUTH_REFRESH_MISSING = "err_auth_refresh_missing"
 private const val ERR_AUTH_REFRESH_INVALID = "err_auth_refresh_invalid"
 
-fun Route.authRoutes(userRepository: UserRepository) {
+fun Route.authRoutes(
+    userRepository: UserRepository,
+    authLimiter: RateLimiter? = authRateLimiter,
+    refreshLimiter: RateLimiter? = refreshRateLimiter,
+) {
     route("/auth") {
 
         // ── POST /auth/register ───────────────────────────────────────────────
         post("/register") {
-            if (!call.checkRateLimit(authRateLimiter)) return@post
+            if (authLimiter != null && !call.checkRateLimit(authLimiter)) return@post
             val req = call.receive<RegisterRequest>()
 
             val username = req.username.trim()
@@ -78,7 +83,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
 
         // ── POST /auth/login ──────────────────────────────────────────────────
         post("/login") {
-            if (!call.checkRateLimit(authRateLimiter)) return@post
+            if (authLimiter != null && !call.checkRateLimit(authLimiter)) return@post
             val req = call.receive<LoginRequest>()
 
             if (req.username.isBlank() || req.password.isBlank()) {
@@ -121,7 +126,7 @@ fun Route.authRoutes(userRepository: UserRepository) {
         // ── POST /auth/refresh ────────────────────────────────────────────────
         // Accepts the long-lived refreshToken, rotates it, and issues a new pair.
         post("/refresh") {
-            if (!call.checkRateLimit(refreshRateLimiter)) return@post
+            if (refreshLimiter != null && !call.checkRateLimit(refreshLimiter)) return@post
             val req = call.receive<RefreshRequest>()
 
             if (req.refreshToken.isBlank()) {

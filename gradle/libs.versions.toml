@@ -25,6 +25,7 @@ exposed = "0.57.0"
 postgresql = "42.7.10"
 hikari = "7.0.2"
 napier = "2.7.1"
+h2 = "2.2.224"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -80,6 +81,8 @@ hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-testExt-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-testExt" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-espresso" }

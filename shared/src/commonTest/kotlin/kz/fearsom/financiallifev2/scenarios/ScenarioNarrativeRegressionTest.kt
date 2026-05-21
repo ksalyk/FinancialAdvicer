@@ -24,8 +24,8 @@ class ScenarioNarrativeRegressionTest {
 
     @Test
     fun `2015 devaluation still wins over pool events on August 2015 tick`() {
-        val engine = GameEngine.forCharacterAndEra("aidar", "kz_2015")
-        val graph = ScenarioGraphFactory.forCharacter("aidar", "kz_2015")
+        val engine = GameEngine.forCharacterAndEra("dana", "kz_2015")
+        val graph = ScenarioGraphFactory.forCharacter("dana", "kz_2015")
         engine.loadState(
             GameState(
                 playerState = graph.initialPlayerState.copy(month = 7, year = 2015),
@@ -33,7 +33,7 @@ class ScenarioNarrativeRegressionTest {
                 messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
                 isWaitingForChoice = true
             ),
-            characterName = "Айдар"
+            characterName = "Жанар"
         )
 
         val next = engine.makeChoice("save_cash")
@@ -41,39 +41,39 @@ class ScenarioNarrativeRegressionTest {
     }
 
     @Test
-    fun `chechen war broadcast wins over pool events on December 1994 tick`() {
-        val engine = GameEngine.forCharacterAndEra("aidar_90s", "kz_90s")
-        val graph = ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s")
+    fun `2008 mortgage freeze wins over pool events on September 2008 tick`() {
+        val engine = GameEngine.forCharacterAndEra("aidar", "kz_2005")
+        val graph = ScenarioGraphFactory.forCharacter("aidar", "kz_2005")
         engine.loadState(
             GameState(
-                playerState = graph.initialPlayerState.copy(month = 11, year = 1994),
+                playerState = graph.initialPlayerState.copy(month = 8, year = 2008),
                 currentEventId = "normal_life",
                 messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
                 isWaitingForChoice = true
             ),
-            characterName = "Айдар"
+            characterName = "Руслан"
         )
 
         val next = engine.makeChoice("do_nothing")
-        assertEquals("chechen_war_broadcast", next.currentEventId)
+        assertEquals("era_mortgage_freeze_2008", next.currentEventId)
     }
 
     @Test
-    fun `nuclear disarmament event wins over pool events on April 1995 tick`() {
-        val engine = GameEngine.forCharacterAndEra("aidar_90s", "kz_90s")
-        val graph = ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s")
+    fun `2024 online credit rules wins over pool events on July 2024 tick`() {
+        val engine = GameEngine.forCharacterAndEra("asan", "kz_2024")
+        val graph = ScenarioGraphFactory.forCharacter("asan", "kz_2024")
         engine.loadState(
             GameState(
-                playerState = graph.initialPlayerState.copy(month = 3, year = 1995),
+                playerState = graph.initialPlayerState.copy(month = 6, year = 2024),
                 currentEventId = "normal_life",
                 messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
                 isWaitingForChoice = true
             ),
-            characterName = "Айдар"
+            characterName = "Амир"
         )
 
         val next = engine.makeChoice("do_nothing")
-        assertEquals("nuclear_disarmament_reaction", next.currentEventId)
+        assertEquals("era_online_credit_rules_2024", next.currentEventId)
     }
 
     @Test
@@ -90,7 +90,7 @@ class ScenarioNarrativeRegressionTest {
             characterName = "Айдар"
         )
 
-        val next = engine.makeChoice("hold_tenge")
+        val next = engine.makeChoice("exchange_all")
         assertEquals(CurrencyCode.KZT, next.playerState.currency)
         assertEquals(53_000L, next.playerState.capital)
         assertEquals(15_000L, next.playerState.income)
@@ -99,8 +99,8 @@ class ScenarioNarrativeRegressionTest {
 
     @Test
     fun `unique conditional event does not repeat after it was triggered once`() {
-        val engine = GameEngine.forCharacterAndEra("aidar", "kz_2024")
-        val graph = ScenarioGraphFactory.forCharacter("aidar", "kz_2024")
+        val engine = GameEngine.forCharacterAndEra("asan", "kz_2024")
+        val graph = ScenarioGraphFactory.forCharacter("asan", "kz_2024")
         engine.loadState(
             GameState(
                 playerState = graph.initialPlayerState.copy(
@@ -111,16 +111,16 @@ class ScenarioNarrativeRegressionTest {
                 messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
                 isWaitingForChoice = true
             ),
-            characterName = "Айдар"
+            characterName = "Амир"
         )
 
         val first = engine.makeChoice("save_cash")
         assertEquals("investment_unlock", first.currentEventId)
 
-        val afterSkip = engine.makeChoice("skip_iis")
+        val afterSkip = engine.makeChoice("skip_investing")
         assertTrue("investment_unlock" in afterSkip.playerState.triggeredUniqueEvents)
 
-        val reloaded = GameEngine.forCharacterAndEra("aidar", "kz_2024")
+        val reloaded = GameEngine.forCharacterAndEra("asan", "kz_2024")
         reloaded.loadState(
             afterSkip.copy(
                 currentEventId = "normal_life",
@@ -128,7 +128,7 @@ class ScenarioNarrativeRegressionTest {
                 gameOver = false,
                 endingType = null
             ),
-            characterName = "Айдар"
+            characterName = "Амир"
         )
 
         val second = reloaded.makeChoice("save_cash")

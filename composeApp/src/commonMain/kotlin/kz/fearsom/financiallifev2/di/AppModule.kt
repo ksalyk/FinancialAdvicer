@@ -77,8 +77,8 @@ val commonModule = module {
     // ── Game engine ───────────────────────────────────────────────────────────
     single { GameEngine() }
 
-    // ── Session repository (in-memory; replace with SQLDelight in Sprint 4) ──
-    single { GameSessionRepository() }
+    // ── Session repository — persisted to SecureStorage for offline resilience ──
+    single { GameSessionRepository(secureStorage = get<SecureStorage>()) }
 
     // ── Feature flags (local; swap impl here when remote config is added) ────
     // Bound as the interface so all callers are agnostic of the storage backend.

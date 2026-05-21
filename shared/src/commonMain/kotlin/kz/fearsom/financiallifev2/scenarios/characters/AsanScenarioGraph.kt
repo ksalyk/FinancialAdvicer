@@ -4,26 +4,27 @@ import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.arcs.asanConditionals
-import kz.fearsom.financiallifev2.scenarios.arcs.asanEndingsArc
-import kz.fearsom.financiallifev2.scenarios.arcs.asanEventPool
-import kz.fearsom.financiallifev2.scenarios.arcs.asanNormalLifeArc
-import kz.fearsom.financiallifev2.scenarios.arcs.asanStoryArc
+import kz.fearsom.financiallifev2.scenarios.arcs.amir2024StoryArc
 import kz.fearsom.financiallifev2.scenarios.arcs.buildEvents
+import kz.fearsom.financiallifev2.scenarios.arcs.endingsArc
+import kz.fearsom.financiallifev2.scenarios.arcs.regularLifeArc
+import kz.fearsom.financiallifev2.scenarios.arcs.storyConditionals
+import kz.fearsom.financiallifev2.scenarios.arcs.storyEventPool
+import kz.fearsom.financiallifev2.scenarios.arcs.StoryBalance
 
 class AsanScenarioGraph : ScenarioGraph() {
 
     override val initialPlayerState: PlayerState = PlayerState(
-        capital = 200_000L,
-        income = 450_000L,
-        expenses = 180_000L,
-        debt = 120_000L,
-        debtPaymentMonthly = 15_000L,
+        capital = 260_000L,
+        income = 520_000L,
+        expenses = 255_000L,
+        debt = 180_000L,
+        debtPaymentMonthly = 30_000L,
         investments = 0L,
         investmentReturnRate = 0.10,
-        stress = 25,
-        financialKnowledge = 10,
-        riskLevel = 15,
+        stress = 38,
+        financialKnowledge = 24,
+        riskLevel = 22,
         month = 1,
         year = 2024,
         characterId = "asan",
@@ -31,12 +32,21 @@ class AsanScenarioGraph : ScenarioGraph() {
     )
 
     override val events: Map<String, GameEvent> = listOf(
-        asanStoryArc(),
-        asanNormalLifeArc(),
-        asanEndingsArc()
+        amir2024StoryArc(),
+        regularLifeArc("kz_2024"),
+        endingsArc()
     ).buildEvents()
 
-    override val conditionalEvents: List<GameEvent> = asanConditionals()
+    override val conditionalEvents: List<GameEvent> = storyConditionals(
+        StoryBalance(
+            stabilityCapital = 1_500_000L,
+            freedomCapital = 4_500_000L,
+            wealthCapital = 12_000_000L,
+            debtCrisisDebt = 1_400_000L,
+            debtCrisisCapital = 180_000L,
+            investmentTicket = 180_000L
+        )
+    )
 
-    override val eventPool: List<PoolEntry> = asanEventPool()
+    override val eventPool: List<PoolEntry> = storyEventPool("kz_2024")
 }

@@ -47,6 +47,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -243,25 +244,44 @@ fun ChatScreen(
         }
     }
 
-    // When action panel appears, ensure message is visible above it
-    LaunchedEffect(uiState.currentOptions.isNotEmpty()) {
+    // When action panel appears, adjust scroll to keep message visible above it.
+    // The panel is approximately 160-200dp tall (label + 1-2 options + padding + nav insets).
+    // Use an offset that accounts for panel height so message bottom sits just above panel top.
+    // 250dp offset ensures the message is comfortably visible above the action panel.
+    LaunchedEffect(uiState.currentOptions.isNotEmpty(), messages.size) {
         if (uiState.currentOptions.isNotEmpty() && messages.isNotEmpty()) {
-            delay(300) // Wait for AnimatedVisibility to complete (slideInVertically + fadeIn)
-            listState.animateScrollToItem(messages.size - 1, Int.MAX_VALUE)
+            // Wait for panel animation to fully complete and layout to settle
+            delay(500)
+            // 250dp offset positions the last message such that its bottom sits
+            // approximately 250 pixels from the viewport top (accounting for panel taking bottom space)
+            listState.scrollToItem(messages.size - 1, 250)
         }
     }
 
     // Track-scroll to bottom while the typing animation reveals characters.
     // Each character grows the card height, pushing content past the viewport edge.
-    // scrollToItem with Int.MAX_VALUE offset is clamped by Compose to the item's
-    // actual end — effectively "scroll to absolute bottom of this item".
+    // Use 250dp offset to keep bottom of message visible during animation.
     // Keyed on both isAnimating AND messages.size so the effect always captures the
     // correct last-item index even if a message arrives while animation is running.
     LaunchedEffect(isAnimating, messages.size) {
         if (!isAnimating) return@LaunchedEffect
         while (isAnimating) {
-            listState.scrollToItem(messages.size - 1, Int.MAX_VALUE)
+            listState.scrollToItem(messages.size - 1, 250)
             delay(50) // 20 fps — sufficient for text-growth tracking
+        }
+    }
+
+    // Continue scrolling to keep message visible while action panel slides in.
+    // The panel animation takes ~240ms (slideInVertically + fadeIn).
+    // We track for 300ms to cover animation completion + layout settlement.
+    val isPanelAppearing = uiState.currentOptions.isNotEmpty() && !isAnimating
+    LaunchedEffect(isPanelAppearing, messages.size) {
+        if (!isPanelAppearing || messages.isEmpty()) return@LaunchedEffect
+        var elapsed = 0
+        while (elapsed < 300) {
+            listState.scrollToItem(messages.size - 1, 250)
+            delay(50)
+            elapsed += 50
         }
     }
 
@@ -577,6 +597,7 @@ private fun DiaryEntryCard(
     val shape = RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)
     val lineColor = colors.diaryLine
     val sceneRes = sceneDrawableFor(message.sceneTag)
+    var showExplanation by remember(message.id) { mutableStateOf(false) }
 
     // Pure render — no animation logic lives here.
     // displayedLength is driven by the screen-scoped coroutine in ChatScreen and
@@ -737,6 +758,55 @@ private fun DiaryEntryCard(
                     style = DiaryTextStyle.copy(color = colors.diaryInk),
                     fontStyle = FontStyle.Normal
                 )
+
+                val explanation = message.schemeExplanation
+                if (explanation != null && displayedLength >= message.text.length) {
+                    Spacer(Modifier.height(12.dp))
+                    FilledTonalButton(
+                        onClick = { showExplanation = !showExplanation },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = colors.backgroundElevated.copy(alpha = 0.92f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = colors.textPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            if (showExplanation) "Скрыть разбор" else "Разобрать схему",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.textPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = showExplanation,
+                        enter = fadeIn(tween(180)) + slideInVertically(tween(180)) { it / 4 },
+                        exit = fadeOut(tween(120))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 10.dp)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.backgroundElevated.copy(alpha = 0.82f))
+                                .border(1.dp, GoldPrimary.copy(alpha = 0.28f), RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = explanation,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textPrimary,
+                                lineHeight = 19.sp
+                            )
+                        }
+                    }
+                }
             }
         }
     }

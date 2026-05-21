@@ -26,8 +26,6 @@ fun Application.configureStatusPages() {
         status(HttpStatusCode.NotFound) { call, _ ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("Not found", 404))
         }
-        status(HttpStatusCode.Unauthorized) { call, _ ->
-            call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Unauthorized", 401))
-        }
+
     }
 }
