@@ -368,14 +368,15 @@ class GameEngine(
     /**
      * Maps a [GameEvent]'s tag set to a single scene category string consumed by the UI.
      *
-     * Priority order matters: a "scam + crisis" event should show the scam scene.
+     * Priority order matters: mortgage/presale events should keep their housing scene,
+     * while a "scam + crisis" event should show the scam scene.
      * Returns null for routine events (salary, monthly tick, consequence-only) so
      * the diary card renders without an image and doesn't visually overload the feed.
      */
     private fun primarySceneTag(tags: Set<String>): String? = when {
+        "mortgage" in tags                  -> "mortgage"
         tags.any { it.startsWith("scam") }  -> "scam"
         "crisis" in tags                    -> "crisis"
-        "mortgage" in tags                  -> "mortgage"
         "windfall" in tags                  -> "windfall"
         "career" in tags                    -> "career"
         "investment" in tags                -> "investment"

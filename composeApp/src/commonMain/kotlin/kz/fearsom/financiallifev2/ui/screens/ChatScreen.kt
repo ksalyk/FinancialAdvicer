@@ -92,14 +92,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import financiallifev2.composeapp.generated.resources.Res
-import financiallifev2.composeapp.generated.resources.scene_career
-import financiallifev2.composeapp.generated.resources.scene_crisis
-import financiallifev2.composeapp.generated.resources.scene_family
-import financiallifev2.composeapp.generated.resources.scene_investment
-import financiallifev2.composeapp.generated.resources.scene_mortgage
-import financiallifev2.composeapp.generated.resources.scene_scam
-import financiallifev2.composeapp.generated.resources.scene_windfall
-import financiallifev2.composeapp.generated.resources.scene_world
+import financiallifev2.composeapp.generated.resources.scene_career_v2
+import financiallifev2.composeapp.generated.resources.scene_crisis_v2
+import financiallifev2.composeapp.generated.resources.scene_family_v2
+import financiallifev2.composeapp.generated.resources.scene_investment_v2
+import financiallifev2.composeapp.generated.resources.scene_mortgage_v2
+import financiallifev2.composeapp.generated.resources.scene_scam_v2
+import financiallifev2.composeapp.generated.resources.scene_windfall_v2
+import financiallifev2.composeapp.generated.resources.scene_world_v2
 import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.i18n.Strings
@@ -575,14 +575,14 @@ private fun DiaryMessageItem(
  */
 @Composable
 private fun sceneDrawableFor(tag: String?): DrawableResource? = when (tag) {
-    "scam" -> Res.drawable.scene_scam
-    "crisis" -> Res.drawable.scene_crisis
-    "career" -> Res.drawable.scene_career
-    "family" -> Res.drawable.scene_family
-    "investment" -> Res.drawable.scene_investment
-    "mortgage" -> Res.drawable.scene_mortgage
-    "windfall" -> Res.drawable.scene_windfall
-    "world" -> Res.drawable.scene_world
+    "scam" -> Res.drawable.scene_scam_v2
+    "crisis" -> Res.drawable.scene_crisis_v2
+    "career" -> Res.drawable.scene_career_v2
+    "family" -> Res.drawable.scene_family_v2
+    "investment" -> Res.drawable.scene_investment_v2
+    "mortgage" -> Res.drawable.scene_mortgage_v2
+    "windfall" -> Res.drawable.scene_windfall_v2
+    "world" -> Res.drawable.scene_world_v2
     else -> null
 }
 

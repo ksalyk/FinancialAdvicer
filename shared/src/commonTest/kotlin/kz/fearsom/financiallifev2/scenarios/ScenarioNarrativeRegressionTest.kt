@@ -56,6 +56,7 @@ class ScenarioNarrativeRegressionTest {
 
         val next = engine.makeChoice("do_nothing")
         assertEquals("era_mortgage_freeze_2008", next.currentEventId)
+        assertEquals("mortgage", next.messages.last { it.sender == MessageSender.CHARACTER }.sceneTag)
     }
 
     @Test
