@@ -2,20 +2,26 @@ package kz.fearsom.financiallifev2.server.repository
 
 import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 
 /** PostgreSQL-backed implementation of [GameRepository] via Exposed ORM. */
-class DatabaseGameRepository : GameRepository {
+class DatabaseGameRepository(private val db: Database) : GameRepository {
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Live session (GameSessionsTable) — upserted on every auto-save
     // ══════════════════════════════════════════════════════════════════════════
 
     override suspend fun loadSession(userId: String): GameSessionRow? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameSessionsTable
                 .selectAll()
                 .where { GameSessionsTable.userId eq userId }
@@ -29,7 +35,7 @@ class DatabaseGameRepository : GameRepository {
         currentEventId: String
     ) {
         val now = System.currentTimeMillis()
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val exists = GameSessionsTable
                 .selectAll()
                 .where { GameSessionsTable.userId eq userId }
@@ -53,7 +59,7 @@ class DatabaseGameRepository : GameRepository {
     }
 
     override suspend fun deleteSession(userId: String) {
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameSessionsTable.deleteWhere { GameSessionsTable.userId eq userId }
         }
     }
@@ -70,7 +76,7 @@ class DatabaseGameRepository : GameRepository {
         val snapshotId = UUID.randomUUID().toString()
         val now        = System.currentTimeMillis()
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameStatesTable.insert {
                 it[GameStatesTable.snapshotId] = snapshotId
                 it[GameStatesTable.userId]     = userId
@@ -85,7 +91,7 @@ class DatabaseGameRepository : GameRepository {
 
     /** Returns snapshots for a user ordered by most-recent first. */
     override suspend fun listSnapshots(userId: String, limit: Int): List<GameSnapshotRow> =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameStatesTable
                 .selectAll()
                 .where { GameStatesTable.userId eq userId }
@@ -95,7 +101,7 @@ class DatabaseGameRepository : GameRepository {
         }
 
     override suspend fun loadSnapshot(snapshotId: String): GameSnapshotRow? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameStatesTable
                 .selectAll()
                 .where { GameStatesTable.snapshotId eq snapshotId }
@@ -104,7 +110,7 @@ class DatabaseGameRepository : GameRepository {
         }
 
     override suspend fun deleteSnapshot(snapshotId: String) {
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             GameStatesTable.deleteWhere { GameStatesTable.snapshotId eq snapshotId }
         }
     }

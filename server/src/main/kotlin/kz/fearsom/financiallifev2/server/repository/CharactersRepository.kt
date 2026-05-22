@@ -1,13 +1,17 @@
 package kz.fearsom.financiallifev2.server.repository
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.server.database.tables.CharactersTable
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -35,14 +39,14 @@ data class UpsertCharacterRequest(
 
 // ── Repository ────────────────────────────────────────────────────────────────
 
-class CharactersRepository {
+class CharactersRepository(private val db: Database) {
 
     private val json = Json { ignoreUnknownKeys = true }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
     suspend fun findById(id: String): CharacterRow? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             CharactersTable
                 .selectAll()
                 .where { CharactersTable.id eq id }
@@ -52,7 +56,7 @@ class CharactersRepository {
 
     /** Returns all characters; [activeOnly] = false returns soft-deleted ones too. */
     suspend fun listAll(activeOnly: Boolean = true): List<CharacterRow> =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val query = CharactersTable.selectAll()
             if (activeOnly) query.where { CharactersTable.isActive eq true }
             query.map { it.toRow() }
@@ -68,7 +72,7 @@ class CharactersRepository {
         val now = System.currentTimeMillis()
         val eraIdsJson = json.encodeToString(req.eraIds)
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val exists = CharactersTable
                 .selectAll()
                 .where { CharactersTable.id eq req.id }
@@ -113,7 +117,7 @@ class CharactersRepository {
      */
     suspend fun softDelete(characterId: String): Boolean {
         val now = System.currentTimeMillis()
-        return newSuspendedTransaction {
+        return newSuspendedTransaction(db = db) {
             val updated = CharactersTable.update({ CharactersTable.id eq characterId }) {
                 it[isActive]  = false
                 it[updatedAt] = now
@@ -134,7 +138,7 @@ class CharactersRepository {
      * Returns the number of statistics rows deleted.
      */
     suspend fun deleteWithStatsCascade(characterId: String): DeleteResult =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             // 1. Delete statistics first (child rows)
             val statsDeleted = CompletedSessionsTable.deleteWhere {
                 CompletedSessionsTable.characterId eq characterId

@@ -57,11 +57,11 @@ fun Application.module() {
     }
 
     // 3. Repositories (singletons for server lifetime)
-    val userRepository       = DatabaseUserRepository()
-    val gameRepository       = DatabaseGameRepository()
-    val statisticsRepository = DatabaseStatisticsRepository()
-    val charactersRepository = CharactersRepository()
-    val erasRepository       = ErasRepository()
+    val userRepository       = DatabaseUserRepository(database)
+    val gameRepository       = DatabaseGameRepository(database)
+    val statisticsRepository = DatabaseStatisticsRepository(database)
+    val charactersRepository = CharactersRepository(database)
+    val erasRepository       = ErasRepository(database)
 
     // 4. Seed hardcoded characters/eras into DB (upsert — safe on every restart)
     runBlocking {

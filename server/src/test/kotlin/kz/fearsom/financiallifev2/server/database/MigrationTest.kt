@@ -5,10 +5,10 @@ import kz.fearsom.financiallifev2.server.database.migrations.DataValidation
 import kz.fearsom.financiallifev2.server.database.migrations.MigrationRunner
 import kz.fearsom.financiallifev2.server.database.migrations.MigrationVersion
 import kz.fearsom.financiallifev2.server.database.migrations.SchemaVersionsTable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

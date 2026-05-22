@@ -2,8 +2,8 @@ package kz.fearsom.financiallifev2.server.database
 
 import kotlinx.coroutines.runBlocking
 import kz.fearsom.financiallifev2.server.database.migrations.MigrationRunner
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 /**
  * Shared test fixture that spins up an in-memory H2 database (PostgreSQL-compatible mode)

@@ -4,19 +4,23 @@ import kz.fearsom.financiallifev2.server.auth.JwtConfig
 import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
 import kz.fearsom.financiallifev2.server.database.tables.UsersTable
 import kz.fearsom.financiallifev2.server.models.ServerUser
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import java.security.MessageDigest
 import java.util.UUID
 
 /** PostgreSQL-backed implementation of [UserRepository] via Exposed ORM. */
-class DatabaseUserRepository : UserRepository {
+class DatabaseUserRepository(private val db: Database) : UserRepository {
 
     // ── User Read ─────────────────────────────────────────────────────────────
 
     override suspend fun findByUsername(username: String): ServerUser? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             UsersTable
                 .selectAll()
                 .where { UsersTable.username eq username.lowercase() }
@@ -25,7 +29,7 @@ class DatabaseUserRepository : UserRepository {
         }
 
     override suspend fun findById(id: String): ServerUser? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             UsersTable
                 .selectAll()
                 .where { UsersTable.id eq id }
@@ -34,7 +38,7 @@ class DatabaseUserRepository : UserRepository {
         }
 
     override suspend fun existsByUsername(username: String): Boolean =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             UsersTable
                 .selectAll()
                 .where { UsersTable.username eq username.lowercase() }
@@ -54,7 +58,7 @@ class DatabaseUserRepository : UserRepository {
         val hash      = sha256Hex(rawPassword)
         val now       = System.currentTimeMillis()
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             UsersTable.insert {
                 it[UsersTable.id]           = id
                 it[UsersTable.username]     = lowerName
@@ -81,7 +85,7 @@ class DatabaseUserRepository : UserRepository {
         val raw = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             RefreshTokensTable.insert {
                 it[RefreshTokensTable.token]     = raw
                 it[RefreshTokensTable.userId]    = userId
@@ -103,7 +107,7 @@ class DatabaseUserRepository : UserRepository {
     override suspend fun consumeRefreshToken(rawToken: String): ServerUser? {
         val now = System.currentTimeMillis()
 
-        return newSuspendedTransaction {
+        return newSuspendedTransaction(db = db) {
             val row = RefreshTokensTable
                 .selectAll()
                 .where { RefreshTokensTable.token eq rawToken }
@@ -136,7 +140,7 @@ class DatabaseUserRepository : UserRepository {
      * Call on explicit logout or password change to invalidate all sessions.
      */
     override suspend fun revokeAllTokens(userId: String) {
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             RefreshTokensTable.deleteWhere { RefreshTokensTable.userId eq userId }
         }
     }

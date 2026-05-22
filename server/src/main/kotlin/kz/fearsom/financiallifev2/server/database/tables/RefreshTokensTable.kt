@@ -1,6 +1,6 @@
 package kz.fearsom.financiallifev2.server.database.tables
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 /**
  * Persisted refresh tokens.

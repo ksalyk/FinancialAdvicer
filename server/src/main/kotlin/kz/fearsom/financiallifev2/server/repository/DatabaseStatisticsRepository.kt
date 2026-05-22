@@ -2,17 +2,18 @@ package kz.fearsom.financiallifev2.server.repository
 
 import kz.fearsom.financiallifev2.model.GameEnding
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 
 /** PostgreSQL-backed implementation of [StatisticsRepository] via Exposed ORM. */
-class DatabaseStatisticsRepository : StatisticsRepository {
+class DatabaseStatisticsRepository(private val db: Database) : StatisticsRepository {
 
     /**
      * Persists a single completed game session.
@@ -26,7 +27,7 @@ class DatabaseStatisticsRepository : StatisticsRepository {
         val id  = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             CompletedSessionsTable.insert {
                 it[CompletedSessionsTable.id]               = id
                 it[CompletedSessionsTable.userId]           = userId
@@ -57,7 +58,7 @@ class DatabaseStatisticsRepository : StatisticsRepository {
      * the logic mirrors the client-side `GameSessionRepository.getPlayerStatistics()`.
      */
     override suspend fun getPlayerStatistics(userId: String): PlayerStatisticsDto =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val rows = CompletedSessionsTable
                 .selectAll()
                 .where { CompletedSessionsTable.userId eq userId }
@@ -128,21 +129,21 @@ class DatabaseStatisticsRepository : StatisticsRepository {
     // ── Targeted deletes (used by Admin API cascade) ──────────────────────────
 
     override suspend fun deleteByCharacterId(characterId: String): Int =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             CompletedSessionsTable.deleteWhere {
                 CompletedSessionsTable.characterId eq characterId
             }
         }
 
     override suspend fun deleteByEraId(eraId: String): Int =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             CompletedSessionsTable.deleteWhere {
                 CompletedSessionsTable.eraId eq eraId
             }
         }
 
     override suspend fun deleteByCharacterIdForUser(userId: String, characterId: String): Int =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             CompletedSessionsTable.deleteWhere {
                 (CompletedSessionsTable.userId eq userId) and
                 (CompletedSessionsTable.characterId eq characterId)

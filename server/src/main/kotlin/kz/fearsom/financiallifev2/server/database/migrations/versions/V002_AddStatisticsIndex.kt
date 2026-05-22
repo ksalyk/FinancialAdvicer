@@ -1,8 +1,8 @@
 package kz.fearsom.financiallifev2.server.database.migrations.versions
 
 import kz.fearsom.financiallifev2.server.database.migrations.Migration
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
 /**
  * Adds a covering index on `completed_sessions(ending)` for fast ending-distribution queries.

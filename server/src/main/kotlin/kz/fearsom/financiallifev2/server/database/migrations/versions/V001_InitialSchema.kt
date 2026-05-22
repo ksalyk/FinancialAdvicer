@@ -8,9 +8,9 @@ import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
 import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
 import kz.fearsom.financiallifev2.server.database.tables.UsersTable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
 /**
  * Initial schema: creates all core tables and indexes.

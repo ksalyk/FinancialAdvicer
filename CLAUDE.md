@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents when working with code in this repository.
 
 ## Build Commands
 
@@ -17,6 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Start the Ktor server
 ./gradlew :server:run
 
+# Start PostgreSQL via Docker (required for server)
+docker compose up -d
+
+# Stop and remove containers
+docker compose down
+
+# Stop + wipe database volume
+docker compose down -v
+
 # Clean build
 ./gradlew clean
 ```
@@ -31,12 +40,12 @@ FinancialLifeV2/
 └── landing/       # Web landing page
 ```
 
-Key versions: Kotlin 2.3, Compose Multiplatform 1.10, Ktor 3.1.2, Koin 4.2.0-RC1, Android minSdk 26 / targetSdk 36.
+Key versions: Kotlin 2.3.20, Compose Multiplatform 1.10.3, Ktor 3.4.2, Koin 4.2.1, Android minSdk 26 / targetSdk 36.
 
 ## Architecture
 
 ### 3-Layer Game Engine (in `:shared`)
-1. **Narrative Graph** (`engine/GameEngine.kt`) — directed event graph with branching via `GameEvent`, `GameOption`, and `Condition`. `ScenarioGraphFactory` builds graphs per character + era combination.
+1. **Narrative Graph** (`engine/GameEngine.kt`) — directed event graph with branching via `GameEvent`, `GameOption`, and `Condition`. `ScenarioGraphFactory` (in `scenarios/Scenarios.kt`) builds graphs per character + era combination.
 2. **Player State** (`model/Models.kt`) — `PlayerState` holds 10 financial metrics (capital, income, expenses, debt, stress, knowledge, risk level, etc.) plus flags, era/character IDs, and event tracking.
 3. **Economic Simulation** — `GameEngine.monthlyTick()` computes net cash flow, reduces debt principal, and updates stress dynamics.
 
@@ -63,8 +72,10 @@ ChatScreen → GamePresenter.onChoiceSelected()
 
 ### Dependency Injection (Koin)
 - `commonModule` in `di/AppModule.kt` — all shared dependencies
-- `androidModule` in `di/AndroidModule.kt` — platform overrides (e.g., `SecureStorage` via `EncryptedSharedPreferences`)
+- `androidModule` in `di/AndroidModule.kt` — platform overrides (e.g., `SecureStorage` via Android Keystore AES-256-GCM)
+- `SecureStorage` is platform-specific: Android uses KeyStore-backed encryption, iOS uses Keychain
 - Circular dependency between `HttpClient` and `AuthRepository` is broken by lazy `get()` resolution
+- `GameSessionRepository` persists active sessions + saved states to `SecureStorage` for offline resilience
 
 ### Authentication
 - JWT (RS256) + refresh token rotation on the server
@@ -81,6 +92,20 @@ ChatScreen → GamePresenter.onChoiceSelected()
 - Light/dark mode detected automatically from system
 
 ### Server
-- Routes: `/auth` (login/register/refresh/logout), `/game` (session CRUD + save/load state)
+- Routes: `/auth` (login/register/refresh/logout), `/game` (session CRUD + save/load state), `/admin` (character/era management with ADMIN_KEY Bearer auth)
 - Database: PostgreSQL via Exposed ORM — tables in `server/database/tables/`
+- Migration system: `MigrationRunner` applies versioned migrations on startup (`server/database/migrations/versions/`)
 - Plugins: rate limiting, CORS, security headers, JWT validation
+- Local development: PostgreSQL via `docker compose up -d` (see `docker-compose.yml`)
+- Logging: Logback for server (rotated logs in `server/logs/`), Napier for KMP client
+
+### Internationalization (i18n)
+- `Strings` singleton (`:shared/i18n/Strings.kt`) — all UI strings keyed by `StringKeys` enum
+- Locale switching via `LocaleRepository` — persists to `SecureStorage`, reactive `StateFlow` updates UI
+- Device locale cached once on app start via `initDeviceLocaleCache()` to avoid repeated platform calls
+- Platform-specific `deviceLocale()` in `LocaleSource.android/ios.kt`
+
+### Feature Flags
+- `FeatureFlagRepository` interface with local `SecureStorage` backend (`LocalFeatureFlagRepository`)
+- Synchronous `get()`/`set()` + reactive `observe()` via `StateFlow`
+- Designed for easy swap to remote config — see interface KDoc for strategy

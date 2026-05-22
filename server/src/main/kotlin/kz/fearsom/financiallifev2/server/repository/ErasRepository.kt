@@ -5,9 +5,14 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.ErasTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -41,14 +46,14 @@ data class UpsertEraRequest(
 
 // ── Repository ────────────────────────────────────────────────────────────────
 
-class ErasRepository {
+class ErasRepository(private val db: Database) {
 
     private val json = Json { ignoreUnknownKeys = true }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
     suspend fun findById(id: String): EraRow? =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             ErasTable
                 .selectAll()
                 .where { ErasTable.id eq id }
@@ -58,7 +63,7 @@ class ErasRepository {
 
     /** Returns all eras; [activeOnly] = false returns soft-deleted ones too. */
     suspend fun listAll(activeOnly: Boolean = true): List<EraRow> =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val query = ErasTable.selectAll()
             if (activeOnly) query.where { ErasTable.isActive eq true }
             query.map { it.toRow() }
@@ -74,7 +79,7 @@ class ErasRepository {
         val now = System.currentTimeMillis()
         val charIdsJson = json.encodeToString(req.availableCharacterIds)
 
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             val exists = ErasTable
                 .selectAll()
                 .where { ErasTable.id eq req.id }
@@ -125,7 +130,7 @@ class ErasRepository {
      */
     suspend fun softDelete(eraId: String): Boolean {
         val now = System.currentTimeMillis()
-        return newSuspendedTransaction {
+        return newSuspendedTransaction(db = db) {
             val updated = ErasTable.update({ ErasTable.id eq eraId }) {
                 it[isActive]  = false
                 it[updatedAt] = now
@@ -144,7 +149,7 @@ class ErasRepository {
      * Returns how many statistics rows were deleted.
      */
     suspend fun deleteWithStatsCascade(eraId: String): EraDeleteResult =
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             // 1. Delete statistics first (child rows)
             val statsDeleted = CompletedSessionsTable.deleteWhere {
                 CompletedSessionsTable.eraId eq eraId

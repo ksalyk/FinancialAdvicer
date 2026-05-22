@@ -2,7 +2,7 @@ package kz.fearsom.financiallifev2.server.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 
 object DatabaseFactory {
 

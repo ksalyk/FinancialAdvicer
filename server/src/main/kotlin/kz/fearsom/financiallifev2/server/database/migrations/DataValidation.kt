@@ -5,9 +5,9 @@ import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
 import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
 import kz.fearsom.financiallifev2.server.database.tables.UsersTable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.slf4j.LoggerFactory
 
 data class ValidationReport(
