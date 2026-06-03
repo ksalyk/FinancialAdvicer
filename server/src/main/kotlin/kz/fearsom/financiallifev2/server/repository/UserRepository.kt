@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.server.repository
 
+import kz.fearsom.financiallifev2.admin.AdminUserRow
 import kz.fearsom.financiallifev2.server.models.ServerUser
 
 /**
@@ -32,4 +33,26 @@ interface UserRepository {
     suspend fun createRefreshToken(userId: String): String
     suspend fun consumeRefreshToken(rawToken: String): ServerUser?
     suspend fun revokeAllTokens(userId: String)
+
+    // ── Admin operations ───────────────────────────────────────────────────────
+
+    /** Paginated user list with optional username search. Never includes passwordHash. */
+    suspend fun listUsers(limit: Int, offset: Long, search: String?): List<AdminUserRow>
+
+    /** Total user count, optionally filtered by [search]. */
+    suspend fun countUsers(search: String?): Long
+
+    /**
+     * Hashes [rawPassword] and updates the user's stored hash,
+     * then revokes all existing refresh tokens for the user.
+     * Returns false if [userId] not found.
+     */
+    suspend fun updatePassword(userId: String, rawPassword: String): Boolean
+
+    /**
+     * Hard-deletes a user and all their data in one transaction:
+     * refresh_tokens, game_state_snapshots, game_sessions, completed_sessions, users.
+     * Returns false if [userId] not found.
+     */
+    suspend fun deleteUserCascade(userId: String): Boolean
 }

@@ -1,10 +1,18 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
 }
 
+@OptIn(ExperimentalWasmDsl::class)
 kotlin {
+    // Required for :admin (wasmJs SPA)
+    wasmJs {
+        browser()
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)

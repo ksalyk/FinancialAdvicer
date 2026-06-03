@@ -1,7 +1,8 @@
 package kz.fearsom.financiallifev2.server.repository
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.admin.CharacterRow
+import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.server.database.tables.CharactersTable
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -13,29 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
-// ── DTOs ─────────────────────────────────────────────────────────────────────
-
-@Serializable
-data class CharacterRow(
-    val id: String,
-    val name: String,
-    val emoji: String,
-    val type: String,       // "PREDEFINED" | "BUNDLE"
-    val eraIds: List<String>,
-    val isActive: Boolean,
-    val createdAt: Long,
-    val updatedAt: Long
-)
-
-@Serializable
-data class UpsertCharacterRequest(
-    val id: String,
-    val name: String,
-    val emoji: String,
-    val type: String,
-    val eraIds: List<String>,
-    val isActive: Boolean = true
-)
+// DTOs live in :shared/admin/AdminDtos.kt so the wasmJs :admin module can reuse them.
 
 // ── Repository ────────────────────────────────────────────────────────────────
 

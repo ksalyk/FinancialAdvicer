@@ -5,21 +5,27 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
+import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
+import kz.fearsom.financiallifev2.admin.UpsertEraRequest
+import kz.fearsom.financiallifev2.server.plugins.AdminSession
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
 import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
-import kz.fearsom.financiallifev2.server.repository.UpsertCharacterRequest
-import kz.fearsom.financiallifev2.server.repository.UpsertEraRequest
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("AdminRoutes")
 
-/** Checks the ADMIN_KEY Bearer token; returns false and responds 401 if invalid. */
-private fun ApplicationCall.isAdminAuthorized(): Boolean {
+/**
+ * Returns true if the request carries a valid admin session cookie OR a valid ADMIN_KEY Bearer token.
+ * This preserves backward compatibility for programmatic/API access via the static key.
+ */
+internal fun ApplicationCall.isAdminAuthorized(): Boolean {
+    if (sessions.get<AdminSession>() != null) return true
     val adminKey = System.getenv("ADMIN_KEY") ?: "dev-admin-key"
-    val provided = request.header(HttpHeaders.Authorization)
+    val bearer = request.header(HttpHeaders.Authorization)
         ?.removePrefix("Bearer ")?.trim() ?: ""
-    return provided == adminKey
+    return bearer == adminKey
 }
 
 /**

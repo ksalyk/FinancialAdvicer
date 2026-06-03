@@ -1,8 +1,9 @@
 package kz.fearsom.financiallifev2.server.repository
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.admin.EraRow
+import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.ErasTable
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -14,35 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 
-// ── DTOs ─────────────────────────────────────────────────────────────────────
-
-@Serializable
-data class EraRow(
-    val id: String,
-    val name: String,
-    val description: String,
-    val emoji: String,
-    val startYear: Int,
-    val endYear: Int,
-    val availableCharacterIds: List<String>,
-    val isActive: Boolean,
-    val isLocked: Boolean,
-    val createdAt: Long,
-    val updatedAt: Long
-)
-
-@Serializable
-data class UpsertEraRequest(
-    val id: String,
-    val name: String,
-    val description: String,
-    val emoji: String,
-    val startYear: Int,
-    val endYear: Int,
-    val availableCharacterIds: List<String>,
-    val isActive: Boolean = true,
-    val isLocked: Boolean = false
-)
+// DTOs live in :shared/admin/AdminDtos.kt so the wasmJs :admin module can reuse them.
 
 // ── Repository ────────────────────────────────────────────────────────────────
 

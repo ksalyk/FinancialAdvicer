@@ -1,14 +1,21 @@
 package kz.fearsom.financiallifev2.server.repository
 
+import kz.fearsom.financiallifev2.admin.AdminUserRow
 import kz.fearsom.financiallifev2.server.auth.JwtConfig
+import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
+import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
+import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
 import kz.fearsom.financiallifev2.server.database.tables.RefreshTokensTable
 import kz.fearsom.financiallifev2.server.database.tables.UsersTable
 import kz.fearsom.financiallifev2.server.models.ServerUser
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import java.security.MessageDigest
@@ -144,6 +151,74 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
             RefreshTokensTable.deleteWhere { RefreshTokensTable.userId eq userId }
         }
     }
+
+    // ── Admin operations ─────────────────────────────────────────────────────
+
+    override suspend fun listUsers(limit: Int, offset: Long, search: String?): List<AdminUserRow> =
+        newSuspendedTransaction(db = db) {
+            val query = UsersTable.selectAll()
+            if (!search.isNullOrBlank()) {
+                query.where { UsersTable.username like "%${search.lowercase()}%" }
+            }
+            val userRows = query
+                .orderBy(UsersTable.createdAt, SortOrder.DESC)
+                .limit(limit)
+                .offset(offset)
+                .map { it.toServerUser() }
+
+            if (userRows.isEmpty()) return@newSuspendedTransaction emptyList()
+
+            // Batch-count completed games per user in one query — no N+1.
+            val userIds = userRows.map { it.id }
+            val gameCounts: Map<String, Int> = CompletedSessionsTable
+                .selectAll()
+                .where { CompletedSessionsTable.userId inList userIds }
+                .groupBy { it[CompletedSessionsTable.userId] }
+                .mapValues { (_, rows) -> rows.size }
+
+            userRows.map { u ->
+                AdminUserRow(
+                    id          = u.id,
+                    username    = u.username,
+                    createdAt   = u.createdAt,
+                    gamesPlayed = gameCounts[u.id] ?: 0
+                )
+            }
+        }
+
+    override suspend fun countUsers(search: String?): Long =
+        newSuspendedTransaction(db = db) {
+            val query = UsersTable.selectAll()
+            if (!search.isNullOrBlank()) {
+                query.where { UsersTable.username like "%${search.lowercase()}%" }
+            }
+            query.count()
+        }
+
+    override suspend fun updatePassword(userId: String, rawPassword: String): Boolean {
+        val hash = sha256Hex(rawPassword)
+        return newSuspendedTransaction(db = db) {
+            val updated = UsersTable.update({ UsersTable.id eq userId }) {
+                it[passwordHash] = hash
+            }
+            if (updated > 0) {
+                // Revoke all tokens so existing sessions must re-auth.
+                RefreshTokensTable.deleteWhere { RefreshTokensTable.userId eq userId }
+                true
+            } else false
+        }
+    }
+
+    override suspend fun deleteUserCascade(userId: String): Boolean =
+        newSuspendedTransaction(db = db) {
+            // Delete child rows first (no DB-level FK cascades), then the user row.
+            RefreshTokensTable.deleteWhere    { RefreshTokensTable.userId    eq userId }
+            GameStatesTable.deleteWhere       { GameStatesTable.userId       eq userId }
+            GameSessionsTable.deleteWhere     { GameSessionsTable.userId     eq userId }
+            CompletedSessionsTable.deleteWhere { CompletedSessionsTable.userId eq userId }
+            val deleted = UsersTable.deleteWhere { UsersTable.id eq userId }
+            deleted > 0
+        }
 
     // ── Mapping ──────────────────────────────────────────────────────────────
 

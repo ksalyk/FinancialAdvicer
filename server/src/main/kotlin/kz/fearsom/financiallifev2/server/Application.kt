@@ -17,11 +17,12 @@ import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseGameRepository
+import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
+import kz.fearsom.financiallifev2.admin.UpsertEraRequest
+import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.repository.DatabaseStatisticsRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseUserRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
-import kz.fearsom.financiallifev2.server.repository.UpsertCharacterRequest
-import kz.fearsom.financiallifev2.server.repository.UpsertEraRequest
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Application")
@@ -112,6 +113,7 @@ fun Application.module() {
     configureSerialization()
     configureCORS()
     configureStatusPages()
-    configureSecurity()           // JWT auth plugin
+    configureAdminSession()       // Session plugin (must be before Authentication)
+    configureSecurity()           // JWT + session auth providers
     configureRouting(userRepository, gameRepository, statisticsRepository, charactersRepository, erasRepository)
 }

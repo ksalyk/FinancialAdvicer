@@ -4,6 +4,25 @@ plugins {
     application
 }
 
+// ── Admin SPA bundling ────────────────────────────────────────────────────────
+// Copies the :admin wasmJs production bundle into the server classpath so
+// Ktor's staticResources("/admin", "admin-ui") can serve it.
+//
+// Run manually:   ./gradlew :admin:wasmJsBrowserDistribution :server:run
+// Full build:     ./gradlew :server:build   (processResources depends on this task)
+val copyAdminUi by tasks.registering(Copy::class) {
+    group = "build"
+    description = "Copies :admin wasmJs bundle into server resources"
+
+    dependsOn(":admin:wasmJsBrowserDistribution")
+    from(project(":admin").layout.buildDirectory.dir("dist/wasmJs/productionExecutable"))
+    into(layout.projectDirectory.dir("src/main/resources/admin-ui"))
+}
+
+tasks.named("processResources") {
+    dependsOn(copyAdminUi)
+}
+
 application {
     mainClass.set("kz.fearsom.financiallifev2.server.ApplicationKt")
 }
@@ -29,6 +48,8 @@ dependencies {
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.sessions)
+    implementation(libs.ktor.server.static)
     implementation(libs.logback.classic)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

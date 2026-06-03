@@ -8,6 +8,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.admin.AdminUserRow
 import kz.fearsom.financiallifev2.server.auth.JwtConfig
 import kz.fearsom.financiallifev2.server.models.AuthResponse
 import kz.fearsom.financiallifev2.server.models.LoginRequest
@@ -327,6 +328,36 @@ internal class MockUserRepository : UserRepository {
 
     override suspend fun revokeAllTokens(userId: String) {
         tokens.entries.removeIf { (_, entry) -> entry.userId == userId }
+    }
+
+    // ── Admin stubs ───────────────────────────────────────────────────────────
+
+    override suspend fun listUsers(limit: Int, offset: Long, search: String?): List<AdminUserRow> {
+        val filtered = if (search.isNullOrBlank()) users.values.toList()
+                       else users.values.filter { it.username.contains(search, ignoreCase = true) }
+        return filtered
+            .sortedByDescending { it.createdAt }
+            .drop(offset.toInt())
+            .take(limit)
+            .map { u -> AdminUserRow(id = u.id, username = u.username, createdAt = u.createdAt, gamesPlayed = 0) }
+    }
+
+    override suspend fun countUsers(search: String?): Long =
+        if (search.isNullOrBlank()) users.size.toLong()
+        else users.values.count { it.username.contains(search, ignoreCase = true) }.toLong()
+
+    override suspend fun updatePassword(userId: String, rawPassword: String): Boolean {
+        val existing = users[userId] ?: return false
+        users[userId] = existing.copy(passwordHash = sha256Hex(rawPassword))
+        revokeAllTokens(userId)
+        return true
+    }
+
+    override suspend fun deleteUserCascade(userId: String): Boolean {
+        val user = users.remove(userId) ?: return false
+        byName.remove(user.username)
+        revokeAllTokens(userId)
+        return true
     }
 
     private fun sha256Hex(input: String): String =
