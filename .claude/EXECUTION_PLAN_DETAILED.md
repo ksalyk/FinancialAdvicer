@@ -10,9 +10,9 @@
 - Per-task **DS** (design-system) blocks follow design:design-system: *Tokens used → New tokens needed → Component placement → Accessibility*.
 
 **Stack reminder** (don't re-derive this in every task):
-- Kotlin 2.3, Compose Multiplatform 1.10, Ktor 3.1.2, Koin 4.2.0-RC1
-- Modules: `:composeApp` (Android+iOS UI), `:shared` (engine), `:server` (Ktor JVM + PG/Exposed), `:landing` (wasmJs)
-- Auth: JWT RS256 + refresh-token rotation. Client stores tokens in `TokenStorage` + platform `SecureStorage`.
+- Kotlin 2.3.20, Compose Multiplatform 1.10.3, Ktor 3.4.2, Koin 4.2.1, Android minSdk 26 / targetSdk 36
+- Modules: `:composeApp` (Android+iOS UI), `:shared` (engine), `:server` (Ktor JVM + PG/Exposed), `:landing` (wasmJs), `:admin` (wasmJs admin SPA, new)
+- Auth: JWT RS256 + refresh-token rotation. Client stores tokens in `TokenStorage` + platform `SecureStorage`. Admin SPA uses cookie sessions via `AdminSession` plugin (see `.claude/AdminPanelImpl.md`).
 - Presenters use plain Koin + `MutableStateFlow` (no Android ViewModel — KMP-friendly).
 - Navigation: manual back-stack in `AppNavigation.kt`, slide transitions via `AnimatedContent`.
 - Theme: Material 3 + Material You dynamic colors on Android 12+. Design tokens live in `ui/theme/Tokens.kt` (Spacing, Radius, Elevation, Motion).
@@ -26,26 +26,38 @@ Already done — **do not redo**:
 Game engine (`:shared`)
 - `engine/GameEngine.kt` — 3-layer FSM, 4-tier event priority queue, monthly tick simulation, monetary reform support, template substitution `{income}/{name}/…`.
 - `model/Models.kt` — `PlayerState` (10 metrics + flags + pendingScheduled + eventCooldowns), `GameEvent`, `GameOption`, `Effect`, `Condition` (Stat/HasFlag/NotFlag/InEra/ForCharacter), `EndingType` enum, `MonetaryReform`, `MonthlyReport`, `ChatMessage`, `GameState`.
-- `scenarios/EraDefinition.kt` — 3 registered eras (`MODERN_KZ_2024`, `KZ_90S`, `KZ_2015_DEVALUATION`) with global events + pool-weight modifiers.
-- `scenarios/characters/*ScenarioGraph.kt` — 5 character graphs: Aidar, Aidar90s, Asan, Dana, Erbolat.
+- `model/GameModels.kt` — `Era` (DB-row shape), `CharacterStats`, `Difficulty` (display metadata enum: EASY/MEDIUM/HARD/NIGHTMARE), `CharacterType`, `UnlockCondition` (see Codex note 2 and 6 — do not silently overload `Difficulty`).
+- `scenarios/EraDefinition.kt` — 4 eras registered in `EraRegistry` (`kz_90s`, `kz_2005`, `kz_2015`, `modern_kz_2024` / `kz_2024`) with global events + pool-weight modifiers.
+- `scenarios/characters/*ScenarioGraph.kt` — 4 character graphs: Aidar90s, Aidar (kz_2005), Asan, Dana. Dispatched by `ScenarioGraphFactory.buildGraph` / `forEra`; custom bundles fall back to era-based graph. **No Erbolat graph exists** (was on the backlog; remove if seen elsewhere).
 - `scenarios/Scenarios.kt`, `scenarios/ScamEventLibrary.kt`, `scenarios/EventPoolSelector.kt`, `scenarios/NarrativeDsl.kt`.
-- Tests: `ScenarioGraphFactoryTest`, `ScenarioGraphContentTest`, `RandomEventCooldownRegressionTest`, `ScenarioNarrativeRegressionTest`, `MoneyFormatTest`.
+- `:shared/admin/AdminDtos.kt` — admin DTOs moved here from `:server` so the wasm `:admin` module can use them (Step 1 of `AdminPanelImpl.md` is done).
+- Tests (`:shared` `commonTest`): `ScenarioGraphFactoryTest`, `ScenarioGraphContentTest`, `RandomEventCooldownRegressionTest`, `ScenarioNarrativeRegressionTest`, `MoneyFormatTest`, plus i18n suite (`StringsTest`, `LocaleRefreshRegressionTest`).
 
 Client (`:composeApp`)
-- Presenters: `AuthPresenter`, `MainMenuPresenter`, `NewGamePresenter`, `CharactersPresenter`, `GamePresenter`, `StatisticsPresenter`.
-- Screens (refs in `AppNavigation.kt`): Splash, Login, MainMenu, EraSelection, CharacterSelection, Characters, CharacterDetail, Statistics, Chat (Game).
+- Presenters: `AuthPresenter`, `MainMenuPresenter`, `NewGamePresenter`, `CharactersPresenter`, `GamePresenter`, `StatisticsPresenter`, `LocalePresenter`, `SettingsPresenter`.
+- Screens (refs in `AppNavigation.kt`): Splash, Login, MainMenu, EraSelection, CharacterSelection, Characters, CharacterDetail, Statistics, Chat (Game), Settings.
 - Theme: `Theme.kt`, `AppColors.kt`, `Tokens.kt` (Spacing/Radius/Elevation/Motion), `Shapes.kt`, `SystemTheme.kt`, `DynamicColorTheme.kt` (Android-side wired to `dynamicDarkColorScheme()` / `dynamicLightColorScheme()`).
 - Network: `HttpClientFactory.kt`, `NetworkConfig.kt`, `GameApiService.kt`, `TokenStorage.kt`, platform `SecureStorage`.
 - Repos: `AuthRepository.kt`, `GameSessionRepository.kt`.
+- i18n: `shared/.../i18n/Strings.kt` + `StringKeys.kt` + per-language maps (`ru.kt`, `kk.kt`, `en.kt` + content/hardcoded splits). Reactive switching is the remaining gap (Codex note 1); see `LocalePresenter.kt` for the current state.
 
 Server (`:server`)
-- Routes: `/auth` (login/register/refresh/logout), `/game` (start, event, choose/{optionId}, save, load, snapshots, restore/{id}, health, statistics, statistics/record), `/admin`.
-- Tables: `UsersTable`, `RefreshTokensTable`, `GameSessionsTable`, `GameStatesTable`, `CompletedSessionsTable`, `CharactersTable`, `ErasTable`.
-- Repos: `UserRepository`, `GameRepository`, `StatisticsRepository`, `CharactersRepository`, `ErasRepository`.
-- Plugins: `Security` (JWT), `RateLimiter`, `CORS`, `SecurityHeaders`, `Serialization`, `StatusPages`, `Logging`.
+- Routes (mounted under `/api/v1`):
+  - `/auth` — login/register/refresh/logout
+  - `/game` — start, event, choose/{optionId}, save, load, snapshots, restore/{id}, health, statistics, statistics/record
+  - `/admin` — characters CRUD (incl. deactivate/activate/cascade-delete), eras CRUD, user admin (list/detail/reset-password/cascade-delete), scenario viewer (list + fetch graph), session login/logout/me
+  - Source files: `AuthRoutes.kt`, `GameRoutes.kt`, `AdminRoutes.kt`, `AdminAuthRoutes.kt`, `AdminUserRoutes.kt`, `AdminScenarioRoutes.kt`
+- Tables: `UsersTable`, `RefreshTokensTable`, `GameSessionsTable`, `GameStatesTable`, `CompletedSessionsTable`, `CharactersTable`, `ErasTable`. Migrations in `server/database/migrations/versions/` (V001, V002).
+- Repos: `UserRepository` (and `DatabaseUserRepository`), `GameRepository`, `StatisticsRepository`, `CharactersRepository`, `ErasRepository`.
+- Plugins: `Security` (JWT provider `auth-jwt`), `RateLimiter`, `CORS`, `SecurityHeaders`, `Serialization`, `StatusPages`, `Logging`, **`AdminSession`** (HMAC-SHA256 signed httpOnly cookie `admin_session`).
+- `isAdminAuthorized()` helper accepts EITHER a valid `AdminSession` cookie OR `ADMIN_KEY` Bearer (constant-time compared via `MessageDigest.isEqual`). Applied across all admin handlers.
 - Per-user `Mutex` map serializing `/game/choose` to prevent state-write races.
 
-Strings — currently **hardcoded Russian** literals scattered across screens, scenarios, era definitions, and `MonthlyReport.toMessage()`.
+Admin SPA (`:admin`)
+- New Compose-wasmJs module modeled on `:landing`. See `.claude/AdminPanelImpl.md` for the full 6-step spec. Steps 1 (DTOs) and 2 (session auth) are done; Steps 3–6 (user admin endpoints, scenario viewer, hosting) are pending.
+- `admin/src/wasmJsMain/kotlin/kz/fearsom/financiallifev2/adminui/` — `Main.kt`, `AdminApp.kt`, `net/AdminApiClient.kt`, and screens `Login/Characters/Eras/Users/Scenarios`.
+
+Env vars (server): `PORT` (default 8082), `DATABASE_URL`, `JWT_PRIVATE_KEY_PATH`, `ADMIN_KEY` (default `dev-admin-key` — API Bearer), `ADMIN_USERNAME`/`ADMIN_PASSWORD` (default `admin`/`dev-admin-password` — browser login), `SESSION_SECRET` (default insecure dev key — must override in prod), `SESSION_SECURE=true` in prod, `ALLOWED_ORIGINS` (prod CORS).
 
 ---
 

@@ -6,6 +6,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.server.plugins.AdminSession
 
@@ -33,7 +34,16 @@ fun Route.adminAuthRoutes() {
             val adminUsername = System.getenv("ADMIN_USERNAME") ?: "admin"
             val adminPassword = System.getenv("ADMIN_PASSWORD") ?: "dev-admin-password"
 
-            if (req.username.trim() == adminUsername && req.password == adminPassword) {
+            // Constant-time compares on both fields — prevents timing-based credential enumeration
+            val usernameMatch = MessageDigest.isEqual(
+                req.username.trim().toByteArray(Charsets.UTF_8),
+                adminUsername.toByteArray(Charsets.UTF_8)
+            )
+            val passwordMatch = MessageDigest.isEqual(
+                req.password.toByteArray(Charsets.UTF_8),
+                adminPassword.toByteArray(Charsets.UTF_8)
+            )
+            if (usernameMatch && passwordMatch) {
                 call.sessions.set(AdminSession(username = req.username.trim(), issuedAt = System.currentTimeMillis()))
                 call.respond(HttpStatusCode.OK, mapOf("success" to true))
             } else {

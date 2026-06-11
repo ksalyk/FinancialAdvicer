@@ -6,6 +6,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import java.security.MessageDigest
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 import kz.fearsom.financiallifev2.server.plugins.AdminSession
@@ -25,7 +26,8 @@ internal fun ApplicationCall.isAdminAuthorized(): Boolean {
     val adminKey = System.getenv("ADMIN_KEY") ?: "dev-admin-key"
     val bearer = request.header(HttpHeaders.Authorization)
         ?.removePrefix("Bearer ")?.trim() ?: ""
-    return bearer == adminKey
+    // Constant-time compare — prevents timing-based key enumeration attacks
+    return MessageDigest.isEqual(bearer.toByteArray(Charsets.UTF_8), adminKey.toByteArray(Charsets.UTF_8))
 }
 
 /**

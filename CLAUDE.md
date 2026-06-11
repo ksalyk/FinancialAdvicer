@@ -36,11 +36,14 @@ docker compose down -v
 FinancialLifeV2/
 ├── composeApp/    # KMP client (Android + iOS) — UI, presenters, auth, network
 ├── shared/        # KMP shared game logic — engine, models, scenarios
-├── server/        # Ktor JVM server — PostgreSQL + Exposed ORM, JWT auth
-└── landing/       # Web landing page
+├── server/        # Ktor JVM server — PostgreSQL + Exposed ORM, JWT auth, admin API
+├── landing/       # Web landing page (Wasm)
+└── admin/         # Admin SPA (Compose Wasm) — login, edit Characters/Eras/Users, view Scenarios
 ```
 
 Key versions: Kotlin 2.3.20, Compose Multiplatform 1.10.3, Ktor 3.4.2, Koin 4.2.1, Android minSdk 26 / targetSdk 36.
+
+For full architecture, character/era roster, design tokens, and the admin panel spec see `.claude/PROJECT_OVERVIEW.md` and `.claude/AdminPanelImpl.md`. The task backlog lives in `.claude/EXECUTION_PLAN_DETAILED.md` (read the Codex review notes at the bottom before picking up any task).
 
 ## Architecture
 

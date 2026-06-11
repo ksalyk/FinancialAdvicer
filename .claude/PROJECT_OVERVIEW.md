@@ -19,12 +19,13 @@ Target: Android + iOS. Backend: Ktor/PostgreSQL. Currency: KZT (tenge). Culture:
 FinancialLifeV2/
 ├── composeApp/    # KMP client — UI, presenters, auth, network (Android + iOS)
 ├── shared/        # KMP shared game logic — engine, models, scenarios
-├── server/        # Ktor JVM server — PostgreSQL + Exposed ORM, JWT auth
+├── server/        # Ktor JVM server — PostgreSQL + Exposed ORM, JWT auth + admin
 ├── landing/       # Web landing page (Wasm/JS)
+├── admin/         # Admin SPA (Compose Wasm) — login, edit Characters/Eras/Users, view Scenarios
 └── iosApp/        # iOS entry point (Xcode project)
 ```
 
-Key versions: **Kotlin 2.3**, **Compose Multiplatform 1.10**, **Ktor 3.1.2**, **Koin 4.2.0-RC1**, Android minSdk 26 / targetSdk 36.
+Key versions: **Kotlin 2.3.20**, **Compose Multiplatform 1.10.3**, **Ktor 3.4.2**, **Koin 4.2.1**, Android minSdk 26 / targetSdk 36.
 
 ---
 
@@ -110,9 +111,9 @@ Key versions: **Kotlin 2.3**, **Compose Multiplatform 1.10**, **Ktor 3.1.2**, **
 
 ### Server (`server` module)
 
-- Routes: `/auth` (login/register/refresh/logout), `/game` (session CRUD + save/load state)
-- DB: PostgreSQL via Exposed ORM, tables in `server/database/tables/`
-- Plugins: rate limiting, CORS, security headers, JWT validation
+- Routes: `/auth` (login/register/refresh/logout), `/game` (session CRUD + save/load state), `/admin` (characters/eras CRUD, user admin, scenario viewer, login/logout/me) — mounted under `/api/v1`
+- DB: PostgreSQL via Exposed ORM, tables in `server/database/tables/`, versioned migrations under `server/database/migrations/versions/`
+- Plugins: rate limiting, CORS, security headers, JWT validation (`auth-jwt`), **AdminSession** (HMAC-SHA256 signed httpOnly cookie for browser admin UI)
 
 ---
 
@@ -129,11 +130,14 @@ Key versions: **Kotlin 2.3**, **Compose Multiplatform 1.10**, **Ktor 3.1.2**, **
 | Event pool selector | `shared/.../scenarios/EventPoolSelector.kt` |
 | All scenario graphs | `shared/.../scenarios/characters/` |
 | Game presenter | `composeApp/.../presentation/GamePresenter.kt` |
+| Locale / settings presenters | `composeApp/.../presentation/LocalePresenter.kt`, `SettingsPresenter.kt` |
 | Main chat UI | `composeApp/.../ui/screens/ChatScreen.kt` |
 | Koin DI setup | `composeApp/.../di/AppModule.kt` |
 | Navigation | `composeApp/.../ui/navigation/AppNavigation.kt` |
-| Auth + JWT server | `server/.../security/` |
-| Server routes | `server/.../routes/` |
+| Auth + JWT server | `server/.../auth/` |
+| Server routes | `server/.../routes/` (incl. `AdminRoutes.kt`, `AdminAuthRoutes.kt`, `AdminUserRoutes.kt`, `AdminScenarioRoutes.kt`) |
+| Admin SPA | `admin/src/wasmJsMain/.../adminui/` |
+| Admin DTOs (shared) | `shared/.../admin/AdminDtos.kt` |
 
 ---
 
@@ -142,13 +146,16 @@ Key versions: **Kotlin 2.3**, **Compose Multiplatform 1.10**, **Ktor 3.1.2**, **
 | Character | Era | File |
 |-----------|-----|------|
 | Aidar | 1990s Kazakhstan | `Aidar90sScenarioGraph.kt` |
-| Aidar | Modern | `AidarScenarioGraph.kt` |
-| Asan | Modern | `AsanScenarioGraph.kt` |
-| Dana | Modern | `DanaScenarioGraph.kt` |
-| Erbolat | Modern | `ErbolatScenarioGraph.kt` |
+| Aidar | 2000s (kz_2005) | `AidarScenarioGraph.kt` |
+| Asan | Modern (kz_2024) | `AsanScenarioGraph.kt` |
+| Dana | 2015 devaluation (kz_2015) | `DanaScenarioGraph.kt` |
 
-Character ID format: `"{name}_{era_short}"` e.g. `"aidar_90s"`, `"dana_modern"`
-Era ID format: `"kz_90s"`, `"kz_2015"`, `"modern_kz_2024"`
+Character ID format: `"{name}_{era_short}"` e.g. `"aidar_90s"`, `"aidar_2005"`, `"dana_2015"`, `"asan_2024"`
+Era ID format (used as `PlayerState.eraId` and dispatched by `ScenarioGraphFactory.forCharacter` / `forEra`):
+- `"kz_90s"` — 1990s KZ
+- `"kz_2005"` — 2000s KZ
+- `"kz_2015"` — 2015 devaluation
+- `"kz_2024"` / `"modern_kz_2024"` — modern KZ (both spellings accepted; see `ScenarioGraphFactory.forEra`)
 
 ---
 
@@ -191,7 +198,11 @@ Era ID format: `"kz_90s"`, `"kz_2015"`, `"modern_kz_2024"`
 | File | Purpose |
 |------|---------|
 | `PROJECT_OVERVIEW.md` | This file — architecture & quick reference |
-| `SCENARIO_GRAPH_GUIDE.md` | Complete manual for writing ScenarioGraph classes (667 lines) |
-| `GAME_SCENARIOS_RESEARCH.md` | Development memory, top-5 MVP scenarios, event templates |
-| `SCENARIO_REFERENCE.md` | Deep research on financial fraud schemes with real examples |
+| `EXECUTION_PLAN_DETAILED.md` | 953-line task backlog (6 options × 25+ tasks) with Codex review notes |
+| `SCENARIO_GRAPH_GUIDE.md` | Complete manual for writing ScenarioGraph classes (666 lines) |
+| `SCENARIO_REFERENCE.md` | Deep research on financial fraud schemes with real examples (Russian) |
 | `TEST_GUIDE.md` | Server test structure, how to run, add cases, mock repos |
+| `AdminPanelImpl.md` | Admin panel hand-off spec (Steps 1–6) |
+| `market_analysis_2026.md` | April 2026 competitive analysis (English) |
+| `settings.local.json` | Local Claude permissions |
+| `INDEX.md` | Folder index and cleanup rules |

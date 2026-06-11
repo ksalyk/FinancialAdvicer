@@ -125,8 +125,9 @@ PlayerState(
 | EraRegistry variable | `eraId` string to use |
 |---|---|
 | `EraRegistry.KZ_90S` | `"kz_90s"` |
+| `EraRegistry.KZ_2005` (Aidar 2000s arc) | `"kz_2005"` |
 | `EraRegistry.KZ_2015_DEVALUATION` | `"kz_2015"` |
-| `EraRegistry.MODERN_KZ_2024` | `"modern_kz_2024"` |
+| `EraRegistry.MODERN_KZ_2024` | `"kz_2024"` or `"modern_kz_2024"` (both accepted by `ScenarioGraphFactory.forEra`) |
 
 ---
 
