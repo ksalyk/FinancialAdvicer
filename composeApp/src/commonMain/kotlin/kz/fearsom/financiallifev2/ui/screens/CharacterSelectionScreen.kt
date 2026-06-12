@@ -37,8 +37,6 @@ fun CharacterSelectionScreen(
     val colors = LocalAppColors.current
     val selectedEra = uiState.eras.find { it.id == uiState.selectedEraId }
 
-    var activeTab by remember { mutableStateOf(0) }  // 0 = characters, 1 = bundles
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -62,111 +60,32 @@ fun CharacterSelectionScreen(
                 onBack = onBack
             )
 
-            Spacer(Modifier.height(12.dp))
-
-            // ── Tab switcher ──────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.backgroundCard)
-                    .padding(4.dp)
-            ) {
-                TabButton(
-                    label    = Strings.uiCharSelTabCharacters,
-                    selected = activeTab == 0,
-                    modifier = Modifier.weight(1f),
-                    onClick  = { activeTab = 0 }
-                )
-                TabButton(
-                    label    = Strings.uiCharSelTabBundles,
-                    selected = activeTab == 1,
-                    modifier = Modifier.weight(1f),
-                    onClick  = { activeTab = 1 }
-                )
-            }
-
             Spacer(Modifier.height(16.dp))
 
-            AnimatedContent(
-                targetState = activeTab,
-                transitionSpec = {
-                    fadeIn(tween(200)) togetherWith fadeOut(tween(150))
-                },
-                label = "tab_content"
-            ) { tab ->
-                LazyColumn(
-                    modifier            = Modifier.fillMaxSize(),
-                    contentPadding      = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    if (tab == 0) {
-                        itemsIndexed(uiState.availableCharacters) { index, char ->
-                            var visible by remember { mutableStateOf(false) }
-                            LaunchedEffect(Unit) {
-                                kotlinx.coroutines.delay(index * 60L)
-                                visible = true
-                            }
-                            AnimatedVisibility(
-                                visible = visible,
-                                enter   = fadeIn(tween(220)) + slideInVertically { it / 2 }
-                            ) {
-                                PredefinedCharacterCard(
-                                    character = char,
-                                    onClick   = { if (char.isUnlocked) onSelectPredefined(char.id) }
-                                )
-                            }
-                        }
-                    } else {
-                        itemsIndexed(uiState.availableBundles) { index, bundle ->
-                            var visible by remember { mutableStateOf(false) }
-                            LaunchedEffect(Unit) {
-                                kotlinx.coroutines.delay(index * 60L)
-                                visible = true
-                            }
-                            AnimatedVisibility(
-                                visible = visible,
-                                enter   = fadeIn(tween(220)) + slideInVertically { it / 2 }
-                            ) {
-                                BundleCard(
-                                    bundle  = bundle,
-                                    onClick = { if (!bundle.isLocked) onSelectBundle(bundle.id) }
-                                )
-                            }
-                        }
+            LazyColumn(
+                modifier            = Modifier.fillMaxSize(),
+                contentPadding      = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                itemsIndexed(uiState.availableCharacters) { index, char ->
+                    var visible by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(index * 60L)
+                        visible = true
                     }
-                    item { Spacer(Modifier.height(32.dp)) }
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter   = fadeIn(tween(220)) + slideInVertically { it / 2 }
+                    ) {
+                        PredefinedCharacterCard(
+                            character = char,
+                            onClick   = { if (char.isUnlocked) onSelectPredefined(char.id) }
+                        )
+                    }
                 }
+                item { Spacer(Modifier.height(32.dp)) }
             }
         }
-    }
-}
-
-// ── Tab Button ────────────────────────────────────────────────────────────────
-
-@Composable
-private fun TabButton(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    val colors = LocalAppColors.current
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) colors.backgroundElevated else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text       = label,
-            fontSize   = 13.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color      = if (selected) colors.textPrimary else colors.textSecondary
-        )
     }
 }
 

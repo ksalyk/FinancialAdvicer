@@ -7,6 +7,7 @@ import io.ktor.server.routing.*
 import kz.fearsom.financiallifev2.admin.ScenarioComboDto
 import kz.fearsom.financiallifev2.admin.toDto
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
+import kz.fearsom.financiallifev2.scenarios.ScenarioNotFoundException
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
 import org.slf4j.LoggerFactory
@@ -68,7 +69,7 @@ fun Route.adminScenarioRoutes(
 
             val graph = try {
                 ScenarioGraphFactory.forCharacter(characterId, eraId)
-            } catch (e: IllegalStateException) {
+            } catch (e: ScenarioNotFoundException) {
                 log.warn("No scenario graph for characterId={} eraId={}: {}", characterId, eraId, e.message)
                 return@get call.respond(
                     HttpStatusCode.NotFound,

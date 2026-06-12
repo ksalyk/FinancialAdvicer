@@ -28,6 +28,18 @@ fun ErasScreen(api: AdminApiClient) {
         }
     }
 
+    fun toggle(era: EraRow, onRevert: () -> Unit) {
+        scope.launch {
+            val ok = try {
+                if (era.isActive) api.deactivateEra(era.id)
+                else              api.activateEra(era.id)
+            } catch (e: Exception) {
+                error = e.message; false
+            }
+            if (ok) reload() else onRevert()
+        }
+    }
+
     LaunchedEffect(Unit) { reload() }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -40,18 +52,10 @@ fun ErasScreen(api: AdminApiClient) {
             }
             error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(eras) { era ->
+                items(eras, key = { it.id }) { era ->
                     EraCard(
                         era      = era,
-                        onToggle = {
-                            scope.launch {
-                                try {
-                                    if (era.isActive) api.deactivateEra(era.id)
-                                    else              api.activateEra(era.id)
-                                    reload()
-                                } catch (e: Exception) { error = e.message }
-                            }
-                        }
+                        onToggle = { onRevert -> toggle(era, onRevert) }
                     )
                 }
             }
@@ -60,11 +64,13 @@ fun ErasScreen(api: AdminApiClient) {
 }
 
 @Composable
-private fun EraCard(era: EraRow, onToggle: () -> Unit) {
+private fun EraCard(era: EraRow, onToggle: (onRevert: () -> Unit) -> Unit) {
+    var checked by remember(era.id, era.isActive) { mutableStateOf(era.isActive) }
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier            = Modifier.padding(12.dp),
-            verticalAlignment   = Alignment.CenterVertically,
+            modifier              = Modifier.padding(12.dp),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -72,7 +78,7 @@ private fun EraCard(era: EraRow, onToggle: () -> Unit) {
                     Text(era.emoji, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(8.dp))
                     Text(era.name, style = MaterialTheme.typography.bodyLarge)
-                    if (!era.isActive) {
+                    if (!checked) {
                         Spacer(Modifier.width(8.dp))
                         Badge { Text("inactive") }
                     }
@@ -95,8 +101,11 @@ private fun EraCard(era: EraRow, onToggle: () -> Unit) {
             }
 
             Switch(
-                checked         = era.isActive,
-                onCheckedChange = { onToggle() }
+                checked         = checked,
+                onCheckedChange = { newValue ->
+                    checked = newValue
+                    onToggle { checked = !newValue }
+                }
             )
         }
     }

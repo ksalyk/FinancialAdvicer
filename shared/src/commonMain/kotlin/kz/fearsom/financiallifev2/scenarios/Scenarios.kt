@@ -14,6 +14,10 @@ import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
 import kotlin.concurrent.Volatile
 
+/** Thrown when no scenario graph exists for a given characterId + eraId combination. */
+class ScenarioNotFoundException(characterId: String, eraId: String) :
+    NoSuchElementException("No scenario graph for characterId=$characterId eraId=$eraId")
+
 // ─── DSL helpers ─────────────────────────────────────────────────────────────
 
 internal fun event(
@@ -140,6 +144,6 @@ object ScenarioGraphFactory {
         "kz_2005" -> AidarScenarioGraph(eraId)
         "kz_2015" -> DanaScenarioGraph(eraId)
         "kz_2024", "modern_kz_2024" -> AsanScenarioGraph()
-        else      -> error("No scenario graph for eraId=$eraId")
+        else      -> throw ScenarioNotFoundException("bundle", eraId)
     }
 }

@@ -28,6 +28,18 @@ fun CharactersScreen(api: AdminApiClient) {
         }
     }
 
+    fun toggle(char: CharacterRow, onRevert: () -> Unit) {
+        scope.launch {
+            val ok = try {
+                if (char.isActive) api.deactivateCharacter(char.id)
+                else               api.activateCharacter(char.id)
+            } catch (e: Exception) {
+                error = e.message; false
+            }
+            if (ok) reload() else onRevert()
+        }
+    }
+
     LaunchedEffect(Unit) { reload() }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -40,18 +52,10 @@ fun CharactersScreen(api: AdminApiClient) {
             }
             error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(characters) { char ->
+                items(characters, key = { it.id }) { char ->
                     CharacterCard(
-                        character  = char,
-                        onToggle   = {
-                            scope.launch {
-                                try {
-                                    if (char.isActive) api.deactivateCharacter(char.id)
-                                    else               api.activateCharacter(char.id)
-                                    reload()
-                                } catch (e: Exception) { error = e.message }
-                            }
-                        }
+                        character = char,
+                        onToggle  = { onRevert -> toggle(char, onRevert) }
                     )
                 }
             }
@@ -60,11 +64,15 @@ fun CharactersScreen(api: AdminApiClient) {
 }
 
 @Composable
-private fun CharacterCard(character: CharacterRow, onToggle: () -> Unit) {
+private fun CharacterCard(character: CharacterRow, onToggle: (onRevert: () -> Unit) -> Unit) {
+    // Optimistic state: shows the toggled value immediately; reverts on server failure.
+    // remember key includes isActive so a reload resets it to the server's ground truth.
+    var checked by remember(character.id, character.isActive) { mutableStateOf(character.isActive) }
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier            = Modifier.padding(12.dp),
-            verticalAlignment   = Alignment.CenterVertically,
+            modifier              = Modifier.padding(12.dp),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -72,7 +80,7 @@ private fun CharacterCard(character: CharacterRow, onToggle: () -> Unit) {
                     Text(character.emoji, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(8.dp))
                     Text(character.name, style = MaterialTheme.typography.bodyLarge)
-                    if (!character.isActive) {
+                    if (!checked) {
                         Spacer(Modifier.width(8.dp))
                         Badge { Text("inactive") }
                     }
@@ -90,8 +98,11 @@ private fun CharacterCard(character: CharacterRow, onToggle: () -> Unit) {
             }
 
             Switch(
-                checked         = character.isActive,
-                onCheckedChange = { onToggle() }
+                checked         = checked,
+                onCheckedChange = { newValue ->
+                    checked = newValue          // immediate visual response
+                    onToggle { checked = !newValue }  // revert if server call fails
+                }
             )
         }
     }

@@ -204,8 +204,13 @@ object SeedData {
     )
 
     // ── Character Bundles ─────────────────────────────────────────────────────
+    // Bundles are removed — they lack their own story arcs and reuse predefined
+    // character narratives with mismatched text. Only predefined characters are playable.
 
-    val characterBundles: List<CharacterBundle> get() = listOf(
+    val characterBundles: List<CharacterBundle> get() = emptyList()
+
+    @Suppress("unused")
+    private val _removedBundles: List<CharacterBundle> get() = listOf(
         CharacterBundle(
             id = "bundle_entrepreneur",
             label = Strings["seed_bundle_entrepreneur_label"],
