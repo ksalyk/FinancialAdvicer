@@ -27,6 +27,14 @@ fun Application.configureRouting(
     routing {
         // Serve the :admin Compose/wasmJs SPA.
         // Bundle is copied to server/src/main/resources/admin-ui/ at build time.
+        //
+        // The exact-path redirect is required: at "/admin" (no trailing slash) the
+        // browser resolves the relative <script src="admin.js"> against "/" and
+        // requests "/admin.js" → 404 → blank dark page. "/admin/" resolves it
+        // correctly to "/admin/admin.js".
+        get("/admin") {
+            call.respondRedirect("/admin/", permanent = true)
+        }
         staticResources("/admin", "admin-ui") {
             default("index.html")
         }

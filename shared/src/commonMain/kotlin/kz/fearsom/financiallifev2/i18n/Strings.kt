@@ -240,6 +240,7 @@ import kz.fearsom.financiallifev2.i18n.translations.ruStrings
 object Strings {
 
     /** BCP-47 language tag. Set once at app init via AppModule. */
+    @kotlin.concurrent.Volatile
     var currentLocale: String = "ru"
 
     private val maps: Map<String, Map<String, String>> = mapOf(

@@ -8,11 +8,20 @@ private fun CurrencyCode.suffix() = when (this) {
     CurrencyCode.USD -> "$"
 }
 
-fun Long.moneyFormat(currency: CurrencyCode = CurrencyCode.KZT): String = when {
-    currency == CurrencyCode.USD && this >= 1_000_000L -> "${this / 1_000_000L}M ${currency.suffix()}"
-    currency == CurrencyCode.USD && this >= 1_000L -> "${this / 1_000L}k ${currency.suffix()}"
-    currency == CurrencyCode.USD -> "$this ${currency.suffix()}"
-    this >= 1_000_000L -> "${this / 1_000_000L}M ${currency.suffix()}"
-    this >= 1_000L -> "${this / 1_000L}k ${currency.suffix()}"
-    else -> "$this ${currency.suffix()}"
+private fun Long.compactStr(divisor: Long): String {
+    val whole = this / divisor
+    val dec   = (this % divisor) * 10 / divisor
+    return if (dec == 0L) "$whole" else "$whole.$dec"
+}
+
+fun Long.moneyFormat(currency: CurrencyCode = CurrencyCode.KZT): String {
+    val s = currency.suffix()
+    return when {
+        currency == CurrencyCode.USD && this >= 1_000_000L -> "${compactStr(1_000_000L)}M $s"
+        currency == CurrencyCode.USD && this >= 1_000L     -> "${compactStr(1_000L)}k $s"
+        currency == CurrencyCode.USD                       -> "$this $s"
+        this >= 1_000_000L                                 -> "${compactStr(1_000_000L)}M $s"
+        this >= 1_000L                                     -> "${compactStr(1_000L)}k $s"
+        else                                               -> "$this $s"
+    }
 }

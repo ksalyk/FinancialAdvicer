@@ -130,6 +130,8 @@ fun AppNavigation() {
 
     val currentScreen = backStack.lastOrNull() ?: AppScreen.Login
 
+    SystemBackHandler(enabled = backStack.size > 1, onBack = ::goBack)
+
     key(settingsUiState.currentLocale) {
         AnimatedContent(
             targetState  = currentScreen,

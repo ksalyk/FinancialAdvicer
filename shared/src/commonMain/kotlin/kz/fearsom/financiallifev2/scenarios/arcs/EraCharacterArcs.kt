@@ -898,8 +898,9 @@ fun storyConditionals(balance: StoryBalance): List<GameEvent> = listOf(
     event(
         id = "ending_bankruptcy_trigger",
         priority = 120,
+        unique = true,
         flavor = "🚨",
-        conditions = listOf(cond(CAPITAL, LTE, 0L), cond(STRESS, GTE, 85L)),
+        conditions = listOf(cond(CAPITAL, LTE, 0L)),
         message = "Денег не осталось, платежи давят, а стресс уже мешает принимать решения. Это точка, где игра честно фиксирует провал.",
         options = listOf(option("accept_bankruptcy", "Признать банкротство", "💀", "ending_bankruptcy"))
     ),

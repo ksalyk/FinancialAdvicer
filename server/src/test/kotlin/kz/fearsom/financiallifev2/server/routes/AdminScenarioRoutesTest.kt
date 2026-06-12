@@ -11,7 +11,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.parseToJsonElement
 import kz.fearsom.financiallifev2.admin.ScenarioComboDto
 import kz.fearsom.financiallifev2.admin.ScenarioGraphDto
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest

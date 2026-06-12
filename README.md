@@ -51,7 +51,13 @@ After changing `:admin` code, rebuild the bundle and restart:
 ./gradlew :admin:wasmJsBrowserDistribution :server:run
 ```
 
-Note: the SPA derives its API base URL from `window.location.origin`, so running `:admin:wasmJsBrowserDevelopmentRun` standalone will point API calls at the webpack dev server and fail. Always run it through the server.
+For fast iteration there is also a standalone dev mode with hot reload:
+
+```bash
+./gradlew :admin:wasmJsBrowserDevelopmentRun   # webpack dev server; /api is proxied to Ktor on :8082
+```
+
+The proxy is configured in `admin/webpack.config.d/devServer.js` — the Ktor server must be running on 8082.
 
 ### 3. Landing page
 

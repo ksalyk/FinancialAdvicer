@@ -25,8 +25,8 @@ import org.koin.dsl.module
  * via Koin's `get()`, not at declaration time.
  *
  * Platform modules can override [NetworkConfig.baseUrl] before Koin starts:
- *   NetworkConfig.baseUrl = "http://10.0.2.2:8080/api/v1"  // Android emulator
- *   NetworkConfig.baseUrl = "http://localhost:8080/api/v1"  // iOS simulator
+ *   NetworkConfig.baseUrl = "http://10.0.2.2:8082/api/v1"  // Android emulator
+ *   NetworkConfig.baseUrl = "http://localhost:8082/api/v1"  // iOS simulator
  *
  * Locale initialization:
  *   1. initDeviceLocaleCache() caches deviceLocale() once.

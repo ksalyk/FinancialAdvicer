@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.model
 
+import kotlin.math.roundToLong
 import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.i18n.Strings
 
@@ -241,7 +242,7 @@ data class PlayerState(
         income - expenses - debtPaymentMonthly + monthlyInvestmentReturn
 
     val monthlyInvestmentReturn: Long get() =
-        (investments * investmentReturnRate / 12).toLong()
+        (investments * investmentReturnRate / 12).roundToLong()
 
     val netWorth: Long get() = capital + investments - debt
 
