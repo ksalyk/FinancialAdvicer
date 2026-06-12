@@ -11,6 +11,7 @@ import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
 import kotlin.concurrent.Volatile
 
 // ─── DSL helpers ─────────────────────────────────────────────────────────────
@@ -129,6 +130,7 @@ object ScenarioGraphFactory {
         "aidar"     -> if (eraId == "kz_2005") AidarScenarioGraph(eraId) else forEra(eraId)
         "asan"      -> if (eraId == "kz_2024" || eraId == "modern_kz_2024") AsanScenarioGraph() else forEra(eraId)
         "dana"      -> if (eraId == "kz_2015") DanaScenarioGraph(eraId) else forEra(eraId)
+        "daniyar"   -> if (eraId == "kz_2005") DaniyarScenarioGraph(eraId) else forEra(eraId)
         else        -> forEra(eraId)  // bundles: fall back to era-specific graph
     }
 

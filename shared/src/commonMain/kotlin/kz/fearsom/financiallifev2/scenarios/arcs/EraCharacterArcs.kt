@@ -14,6 +14,7 @@ import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.MONTHLY_TICK
 import kz.fearsom.financiallifev2.model.PoolEntry
 import kz.fearsom.financiallifev2.model.ScheduledEvent
+import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.scenarios.ScamEventLibrary
 import kz.fearsom.financiallifev2.scenarios.cond
 import kz.fearsom.financiallifev2.scenarios.event
@@ -368,6 +369,251 @@ fun amir2024StoryArc(): EventArc = EventArc { map ->
             option("amir_rest_and_debt", "Закрыть часть долга и не выгорать", "🧘", MONTHLY_TICK,
                 Effect(capitalDelta = -80_000L, debtDelta = -80_000L, stressDelta = -12, knowledgeDelta = 6, scheduleEvent = ScheduledEvent("final_review", 6)))
         )
+    )
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  DANIYAR 2005 — механик в Шымкенте, кредитный бум 2005-2010
+//
+//  Темы арки:
+//   1. «Серый импорт» — друг зовёт в наличную схему, без бумаг
+//   2. Формализация бизнеса — клиенты просят договор, пора ли оформлять ИП?
+//   3. Давление ауыла — отец просит денег на крышу и учёбу сестры
+//   4. Долевое строительство — друг из Астаны привозит «квартиру мечты»
+//
+//  Все тексты читаются из i18n-карт (ru/kk/en) по ключам evt_daniyar_*_msg.
+// ═════════════════════════════════════════════════════════════════════════════
+
+fun daniyar2005StoryArc(): EventArc = EventArc { map ->
+
+    // Use `intro` as the entry-point id so it lines up with the standard contract
+    // (ScenarioGraphContentTest asserts every graph has an "intro" event).
+    map["intro"] = event(
+        id = "intro",
+        flavor = "🔧",
+        tags = setOf("family", "career", "scam"),
+        message = Strings["evt_daniyar_intro_msg"],
+        options = listOf(
+            option("daniyar_bolat_listen", Strings["evt_daniyar_intro_opt_bolat_listen"], "👂", "daniyar_bolat_import",
+                Effect(knowledgeDelta = 4, stressDelta = 4)),
+            option("daniyar_refuse_chat", Strings["evt_daniyar_intro_opt_refuse_chat"], "🚫", "daniyar_garage_formalize",
+                Effect(knowledgeDelta = 10, stressDelta = -4, setFlags = setOf("learned.scam.gray_import"))),
+            option("daniyar_ask_for_time", Strings["evt_daniyar_intro_opt_ask_for_time"], "⏳", "daniyar_village_call",
+                Effect(knowledgeDelta = 6, stressDelta = 2, scheduleEvent = ScheduledEvent("daniyar_bolat_import", 1)))
+        )
+    )
+
+    map["daniyar_bolat_import"] = event(
+        id = "daniyar_bolat_import",
+        flavor = "🚗",
+        tags = setOf("scam", "scam.gray_import", "career"),
+        schemeExplanation = Strings["evt_daniyar_bolat_import_scheme_explanation"],
+        message = Strings["evt_daniyar_bolat_import_msg"],
+        options = listOf(
+            option("daniyar_invest_full", Strings["evt_daniyar_bolat_import_opt_invest_full"], "💸", "daniyar_garage_formalize",
+                Effect(capitalDelta = -500_000L, stressDelta = 12, riskDelta = 22,
+                    scheduleEvent = ScheduledEvent("daniyar_gray_outcome_loss", 3))),
+            option("daniyar_invest_half", Strings["evt_daniyar_bolat_import_opt_invest_half"], "🤝", "daniyar_garage_formalize",
+                Effect(capitalDelta = -250_000L, stressDelta = 8, riskDelta = 14,
+                    scheduleEvent = ScheduledEvent("daniyar_gray_outcome_loss", 3))),
+            option("daniyar_refuse_gray", Strings["evt_daniyar_bolat_import_opt_refuse"], "🛡️", "daniyar_garage_formalize",
+                Effect(knowledgeDelta = 14, stressDelta = -4, setFlags = setOf("learned.scam.gray_import"),
+                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+        )
+    )
+
+    map["daniyar_gray_outcome_loss"] = event(
+        id = "daniyar_gray_outcome_loss",
+        flavor = "💀",
+        tags = setOf("consequence", "scam.gray_import"),
+        unique = true,
+        message = "Через три месяца от Болата приходит короткое сообщение: на границе задержали вагон, документов нет, фамилии в обходном листе, уголовное дело. Данияр сидит на верстаке и смотрит на свой телефон, как на чужой предмет.\n\nВ гараж приходят те, кто \"тоже скидывался\", и молча смотрят. Деньги — минус. Доверие — минус. Здоровье — минус. И ни одного документа, по которому можно что-то вернуть.",
+        options = listOf(
+            option("daniyar_accept_loss", "Признать ошибку и не усугублять", "📚", "daniyar_village_call",
+                Effect(knowledgeDelta = 22, stressDelta = 18, setFlags = setOf("learned.scam.gray_import", "lost_money_to_scam"),
+                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+        )
+    )
+
+    map["daniyar_garage_formalize"] = event(
+        id = "daniyar_garage_formalize",
+        flavor = "🧾",
+        tags = setOf("career", "investment"),
+        message = Strings["evt_daniyar_garage_formalize_msg"],
+        options = listOf(
+            option("daniyar_register_ip", Strings["evt_daniyar_garage_formalize_opt_register_ip"], "📋", "daniyar_village_call",
+                Effect(incomeDelta = -25_000L, expensesDelta = 8_000L, knowledgeDelta = 16, stressDelta = 4,
+                    setFlags = setOf("business.documented"), scheduleEvent = ScheduledEvent("daniyar_village_call", 1))),
+            option("daniyar_stay_cash", Strings["evt_daniyar_garage_formalize_opt_stay_cash"], "🌑", "daniyar_village_call",
+                Effect(stressDelta = -2, riskDelta = 12, knowledgeDelta = 2, scheduleEvent = ScheduledEvent("daniyar_village_call", 1))),
+            option("daniyar_half_formal", Strings["evt_daniyar_garage_formalize_opt_half_formal"], "⚖️", "daniyar_village_call",
+                Effect(incomeDelta = -10_000L, expensesDelta = 4_000L, stressDelta = 6, riskDelta = 6, knowledgeDelta = 8,
+                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+        )
+    )
+
+    map["daniyar_village_call"] = event(
+        id = "daniyar_village_call",
+        flavor = "📞",
+        tags = setOf("family"),
+        message = Strings["evt_daniyar_village_call_msg"],
+        options = listOf(
+            option("daniyar_send_big", Strings["evt_daniyar_village_call_opt_send_big"], "💸", "daniyar_presale_flat",
+                Effect(capitalDelta = -350_000L, stressDelta = 14, riskDelta = 6,
+                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1))),
+            option("daniyar_send_partial", Strings["evt_daniyar_village_call_opt_send_partial"], "🤲", "daniyar_presale_flat",
+                Effect(capitalDelta = -200_000L, stressDelta = 8,
+                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1))),
+            option("daniyar_send_plan", Strings["evt_daniyar_village_call_opt_send_plan"], "🧭", "daniyar_presale_flat",
+                Effect(capitalDelta = -50_000L, knowledgeDelta = 12, stressDelta = 6,
+                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1)))
+        )
+    )
+
+    map["daniyar_presale_flat"] = event(
+        id = "daniyar_presale_flat",
+        flavor = "🏗️",
+        tags = setOf("scam", "scam.presale", "mortgage"),
+        schemeExplanation = Strings["evt_daniyar_presale_flat_scheme_explanation"],
+        message = Strings["evt_daniyar_presale_flat_msg"],
+        options = listOf(
+            option("daniyar_pay_booking", Strings["evt_daniyar_presale_flat_opt_pay_booking"], "🔑", "daniyar_wedding_credit",
+                Effect(capitalDelta = -400_000L, riskDelta = 22, stressDelta = 10,
+                    scheduleEvent = ScheduledEvent("daniyar_presale_loss", 4))),
+            option("daniyar_check_builder", Strings["evt_daniyar_presale_flat_opt_check_builder"], "🧾", "daniyar_wedding_credit",
+                Effect(knowledgeDelta = 18, stressDelta = 2,
+                    setFlags = setOf("learned.scam.presale"), scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1))),
+            option("daniyar_skip_flat", Strings["evt_daniyar_presale_flat_opt_skip_flat"], "🛡️", "daniyar_wedding_credit",
+                Effect(knowledgeDelta = 12, stressDelta = -4,
+                    setFlags = setOf("learned.scam.presale"), scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1)))
+        )
+    )
+
+    map["daniyar_presale_loss"] = event(
+        id = "daniyar_presale_loss",
+        flavor = "💀",
+        tags = setOf("consequence", "scam.presale", "mortgage"),
+        unique = true,
+        message = "Стройка встала на этапе третьего этажа. На сайте застройщика — заглушка, офис закрыт, директор ТОО \"КазГрадИнвест\" оказался тем же человеком, что уже фигурирует в двух других замороженных проектах в Астане.\n\nСуд идёт, но юристы говорят честно: шансы вернуть хотя бы часть — низкие. Айгуль впервые за долгие месяцы молчит за ужином целую минуту. Потом говорит: \"Ладно, поехали дальше\". Данияр понимает, что \"поехали дальше\" — это её форма любви.",
+        options = listOf(
+            option("daniyar_accept_presale_loss", "Признать потерю и не усугублять долгом", "📚", "daniyar_wedding_credit",
+                Effect(knowledgeDelta = 20, stressDelta = 18,
+                    setFlags = setOf("learned.scam.presale", "lost_money_to_scam"),
+                    scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1)))
+        )
+    )
+
+    map["daniyar_wedding_credit"] = event(
+        id = "daniyar_wedding_credit",
+        flavor = "💍",
+        tags = setOf("family"),
+        message = Strings["evt_daniyar_wedding_credit_msg"],
+        options = listOf(
+            option("daniyar_give_full", Strings["evt_daniyar_wedding_credit_opt_give_full"], "🎁", "final_review",
+                Effect(capitalDelta = -250_000L, stressDelta = 4, setFlags = setOf("family.gave_full"),
+                    scheduleEvent = ScheduledEvent("final_review", 4))),
+            option("daniyar_give_partial", Strings["evt_daniyar_wedding_credit_opt_give_partial"], "🤝", "final_review",
+                Effect(capitalDelta = -120_000L, stressDelta = 6, setFlags = setOf("family.gave_partial"),
+                    scheduleEvent = ScheduledEvent("final_review", 4))),
+            option("daniyar_refuse_toi", Strings["evt_daniyar_wedding_credit_opt_refuse"], "🧊", "final_review",
+                Effect(stressDelta = 12, knowledgeDelta = 6, scheduleEvent = ScheduledEvent("final_review", 4)))
+        )
+    )
+
+    map["daniyar_normal_life"] = event(
+        id = "daniyar_normal_life",
+        flavor = "☕",
+        poolWeight = 22,
+        message = Strings["evt_daniyar_normal_life_msg"],
+        options = listOf(
+            option("daniyar_save_reserve", Strings["evt_daniyar_normal_life_opt_save"], "🐷", MONTHLY_TICK,
+                Effect(capitalDelta = -20_000L, stressDelta = -4, knowledgeDelta = 2)),
+            option("daniyar_study_term", Strings["evt_daniyar_normal_life_opt_study"], "📖", MONTHLY_TICK,
+                Effect(knowledgeDelta = 7, stressDelta = -1)),
+            option("daniyar_breathe", Strings["evt_daniyar_normal_life_opt_breathe"], "🍖", MONTHLY_TICK,
+                Effect(capitalDelta = -18_000L, stressDelta = -10))
+        )
+    )
+}
+
+fun daniyar2005Conditionals(balance: StoryBalance): List<GameEvent> = listOf(
+    event(
+        id = "daniyar_burnout",
+        priority = 30,
+        flavor = "😮‍💨",
+        cooldownMonths = 5,
+        conditions = listOf(cond(STRESS, GTE, 78L)),
+        tags = setOf("crisis", "family"),
+        message = Strings["evt_daniyar_burnout_msg"],
+        options = listOf(
+            option("daniyar_burnout_rest", Strings["evt_daniyar_burnout_opt_rest"], "🛏️", MONTHLY_TICK,
+                Effect(capitalDelta = -40_000L, incomeDelta = -15_000L, stressDelta = -28, knowledgeDelta = 3)),
+            option("daniyar_burnout_push", Strings["evt_daniyar_burnout_opt_push"], "😤", MONTHLY_TICK,
+                Effect(incomeDelta = 25_000L, stressDelta = 14, riskDelta = 6)),
+            option("daniyar_burnout_talk", Strings["evt_daniyar_burnout_opt_talk"], "🫂", MONTHLY_TICK,
+                Effect(stressDelta = -18, knowledgeDelta = 8, setFlags = setOf("family.opened_up")))
+        )
+    ),
+    event(
+        id = "daniyar_investment_unlock",
+        priority = 20,
+        flavor = "💡",
+        unique = true,
+        conditions = listOf(cond(KNOWLEDGE, GTE, 40L), cond(CAPITAL, GTE, balance.investmentTicket)),
+        tags = setOf("investment"),
+        message = Strings["evt_daniyar_investment_unlock_msg"],
+        options = listOf(
+            option("daniyar_open_deposit", Strings["evt_daniyar_investment_unlock_opt_open_deposit"], "🏦", MONTHLY_TICK,
+                Effect(capitalDelta = -balance.investmentTicket, investmentsDelta = balance.investmentTicket, knowledgeDelta = 8, stressDelta = -4)),
+            option("daniyar_skip_deposit", Strings["evt_daniyar_investment_unlock_opt_skip"], "🛡️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 4, stressDelta = -2))
+        )
+    )
+)
+
+/**
+ * Daniyar-specific endings, keyed by the standard IDs (`ending_wealth`, etc.)
+ * so the `storyConditionals` triggers route to them via [ScenarioGraph.findEvent].
+ * Build order in [DaniyarScenarioGraph] puts this arc AFTER [endingsArc], so
+ * these entries overwrite the standard ones and bring proper kk/ru/en text.
+ */
+fun daniyar2005Endings(): EventArc = EventArc { map ->
+    // These IDs MUST match the `next` field of `ending_*_trigger` events in
+    // `storyConditionals` (ending_wealth_trigger -> "ending_wealth", etc.).
+    map["ending_wealth"] = event(
+        id = "ending_wealth",
+        isEnding = true,
+        flavor = "🏆",
+        message = Strings["evt_daniyar_ending_wealth_msg"],
+        options = emptyList()
+    )
+    map["ending_stability"] = event(
+        id = "ending_stability",
+        isEnding = true,
+        flavor = "💼",
+        message = Strings["evt_daniyar_ending_stable_msg"],
+        options = emptyList()
+    )
+    map["ending_freedom"] = event(
+        id = "ending_freedom",
+        isEnding = true,
+        flavor = "🌅",
+        message = Strings["evt_daniyar_ending_freedom_msg"],
+        options = emptyList()
+    )
+    map["ending_regular"] = event(
+        id = "ending_regular",
+        isEnding = true,
+        flavor = "😐",
+        message = Strings["evt_daniyar_ending_paycheck_msg"],
+        options = emptyList()
+    )
+    map["ending_bankruptcy"] = event(
+        id = "ending_bankruptcy",
+        isEnding = true,
+        flavor = "💀",
+        message = Strings["evt_daniyar_ending_broke_msg"],
+        options = emptyList()
     )
 }
 

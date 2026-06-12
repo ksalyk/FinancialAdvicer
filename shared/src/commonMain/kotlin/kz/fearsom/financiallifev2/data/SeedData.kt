@@ -46,7 +46,7 @@ object SeedData {
             baseInflationRate = 8.5,
             baseSalaryMin = 80_000L,
             baseSalaryMax = 250_000L,
-            availableCharacterIds = listOf("aidar"),
+            availableCharacterIds = listOf("aidar", "daniyar"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_2005_event_1"],
                 Strings["seed_era_kz_2005_event_2"]
@@ -113,6 +113,27 @@ object SeedData {
                 riskLevel = 26
             ),
             uniqueEventIds = listOf("ruslan_presale_flat", "ruslan_wedding_credit", "era_mortgage_freeze_2008"),
+            difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "daniyar",
+            name = "Данияр Ахметов",
+            age = 31,
+            profession = "Автомеханик в гараже на окраине Шымкента",
+            emoji = "🔧",
+            backstory = "Шымкент, весна 2005. У Данияра золотые руки и привычка верить людям чуть больше, чем стоит. Старый друг зовёт в схему с «серым импортом» машин, постоянные клиенты просят договор, из аула давят с просьбами, а друг из Астаны привозит «квартиру мечты» на котловане. Его арка — про кредитный бум 2005-2010, формализацию бизнеса, семейное давление и соблазн быстрых денег.",
+            personality = "Надёжный и практичный, но привычка доверять «своим» и оставлять всё «на словах» регулярно толкает его к рискованным решениям.",
+            compatibleEraIds = listOf("kz_2005"),
+            initialStats = CharacterStats(
+                capital = 400_000L,
+                income = 200_000L,
+                debt = 0L,
+                monthlyExpenses = 130_000L,
+                stress = 38,
+                financialKnowledge = 18,
+                riskLevel = 30
+            ),
+            uniqueEventIds = listOf("daniyar_bolat_import", "daniyar_garage_formalize", "daniyar_presale_flat", "era_mortgage_freeze_2008"),
             difficulty = Difficulty.MEDIUM,
             isUnlocked = true
         ), PredefinedCharacter(

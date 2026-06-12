@@ -383,5 +383,5 @@ private fun ApplicationCall.jwtUserId(): String =
  * the case where BOTH are unknown — that's the only path that reaches `error()` in forEra.
  * Keep in sync with ScenarioGraphFactory whenever new characters or eras are added.
  */
-private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana")
+private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana", "daniyar")
 private val VALID_ERA_IDS       = setOf("kz_90s", "kz_2005", "kz_2015", "kz_2024")

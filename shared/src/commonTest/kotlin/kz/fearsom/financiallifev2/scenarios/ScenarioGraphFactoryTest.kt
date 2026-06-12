@@ -4,6 +4,7 @@ import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -15,6 +16,7 @@ class ScenarioGraphFactoryTest {
     fun `factory returns expected graph for each supported character`() {
         assertIs<Aidar90sScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s"))
         assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar", "kz_2005"))
+        assertIs<DaniyarScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2005"))
         assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("dana", "kz_2015"))
         assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("asan", "kz_2024"))
 
@@ -23,6 +25,9 @@ class ScenarioGraphFactoryTest {
         assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar_90s", "kz_2005"))
         assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("dana", "kz_2005"))
         assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("asan", "kz_2015"))
+        // Daniyar only has a graph for the 2005 era — other eras fall back to era graphs.
+        assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2015"))
+        assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2024"))
     }
 
     @Test
@@ -46,10 +51,10 @@ class ScenarioGraphFactoryTest {
     }
 
     @Test
-    fun `each era exposes exactly one predefined story character`() {
+    fun `each era exposes the right predefined story characters`() {
         val expected = mapOf(
             "kz_90s" to listOf("aidar_90s"),
-            "kz_2005" to listOf("aidar"),
+            "kz_2005" to listOf("aidar", "daniyar"),
             "kz_2015" to listOf("dana"),
             "kz_2024" to listOf("asan")
         )
