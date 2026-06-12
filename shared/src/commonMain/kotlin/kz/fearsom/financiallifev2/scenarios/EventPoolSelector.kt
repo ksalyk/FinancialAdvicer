@@ -24,7 +24,8 @@ object EventPoolSelector {
         pool: List<PoolEntry>,
         allEvents: (String) -> GameEvent?,
         state: PlayerState,
-        eraWeightModifiers: Map<String, Float> = emptyMap()
+        eraWeightModifiers: Map<String, Float> = emptyMap(),
+        random: Random = Random.Default
     ): String? {
         val candidates = pool
             .mapNotNull { entry ->
@@ -50,7 +51,7 @@ object EventPoolSelector {
         if (candidates.isEmpty()) return null
 
         val totalWeight = candidates.sumOf { it.second }
-        var roll = Random.nextInt(totalWeight)
+        var roll = random.nextInt(totalWeight)
         for ((id, weight) in candidates) {
             roll -= weight
             if (roll < 0) return id

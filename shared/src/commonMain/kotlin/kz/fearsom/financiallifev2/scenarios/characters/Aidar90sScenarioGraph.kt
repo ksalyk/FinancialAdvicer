@@ -26,7 +26,7 @@ class Aidar90sScenarioGraph : ScenarioGraph() {
         stress = 55,
         financialKnowledge = 18,
         riskLevel = 35,
-        month = 10,
+        month = 1,
         year = 1993,
         characterId = "aidar_90s",
         eraId = "kz_90s",

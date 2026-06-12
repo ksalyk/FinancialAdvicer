@@ -36,9 +36,9 @@ fun marat90sStoryArc(): EventArc = EventArc { map ->
         flavor = "📼",
         tags = setOf("family", "career"),
         message = story(
-            "Алматы, октябрь 1993. Марат Сатыбалдин чинит магнитофоны на барахолке, по вечерам перепаивает платы в общаге и копит на первый нормальный товар.",
+            "Алматы, январь 1993. Марат Сатыбалдин чинит магнитофоны на барахолке, по вечерам перепаивает платы в общаге и копит на первый нормальный товар.",
             "Отец принес домой бумажку: кооператив обещает «удвоить вклад до Нового года». Мама верит, потому что зарплату снова задержали. Младшая сестра хочет поступать в университет, а дома уже считают, что учебу придется отложить.",
-            "У Марата есть {capital}, доход {income}/мес и очень мало времени до введения тенге."
+            "У Марата есть {capital}, доход {income}/мес и меньше года до введения тенге."
         ),
         options = listOf(
             option("marat_stop_family", "Сесть с родителями и разобрать бумажку", "🛑", "marat_family_pyramid",
@@ -417,8 +417,7 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
                 Effect(capitalDelta = -250_000L, stressDelta = 8, riskDelta = 14,
                     scheduleEvent = ScheduledEvent("daniyar_gray_outcome_loss", 3))),
             option("daniyar_refuse_gray", Strings["evt_daniyar_bolat_import_opt_refuse"], "🛡️", "daniyar_garage_formalize",
-                Effect(knowledgeDelta = 14, stressDelta = -4, setFlags = setOf("learned.scam.gray_import"),
-                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+                Effect(knowledgeDelta = 14, stressDelta = -4, setFlags = setOf("learned.scam.gray_import")))
         )
     )
 
@@ -430,8 +429,7 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         message = "Через три месяца от Болата приходит короткое сообщение: на границе задержали вагон, документов нет, фамилии в обходном листе, уголовное дело. Данияр сидит на верстаке и смотрит на свой телефон, как на чужой предмет.\n\nВ гараж приходят те, кто \"тоже скидывался\", и молча смотрят. Деньги — минус. Доверие — минус. Здоровье — минус. И ни одного документа, по которому можно что-то вернуть.",
         options = listOf(
             option("daniyar_accept_loss", "Признать ошибку и не усугублять", "📚", "daniyar_village_call",
-                Effect(knowledgeDelta = 22, stressDelta = 18, setFlags = setOf("learned.scam.gray_import", "lost_money_to_scam"),
-                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+                Effect(knowledgeDelta = 22, stressDelta = 18, setFlags = setOf("learned.scam.gray_import", "lost_money_to_scam")))
         )
     )
 
@@ -443,12 +441,11 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         options = listOf(
             option("daniyar_register_ip", Strings["evt_daniyar_garage_formalize_opt_register_ip"], "📋", "daniyar_village_call",
                 Effect(incomeDelta = -25_000L, expensesDelta = 8_000L, knowledgeDelta = 16, stressDelta = 4,
-                    setFlags = setOf("business.documented"), scheduleEvent = ScheduledEvent("daniyar_village_call", 1))),
+                    setFlags = setOf("business.documented"))),
             option("daniyar_stay_cash", Strings["evt_daniyar_garage_formalize_opt_stay_cash"], "🌑", "daniyar_village_call",
-                Effect(stressDelta = -2, riskDelta = 12, knowledgeDelta = 2, scheduleEvent = ScheduledEvent("daniyar_village_call", 1))),
+                Effect(stressDelta = -2, riskDelta = 12, knowledgeDelta = 2)),
             option("daniyar_half_formal", Strings["evt_daniyar_garage_formalize_opt_half_formal"], "⚖️", "daniyar_village_call",
-                Effect(incomeDelta = -10_000L, expensesDelta = 4_000L, stressDelta = 6, riskDelta = 6, knowledgeDelta = 8,
-                    scheduleEvent = ScheduledEvent("daniyar_village_call", 1)))
+                Effect(incomeDelta = -10_000L, expensesDelta = 4_000L, stressDelta = 6, riskDelta = 6, knowledgeDelta = 8))
         )
     )
 
@@ -460,13 +457,13 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         options = listOf(
             option("daniyar_send_big", Strings["evt_daniyar_village_call_opt_send_big"], "💸", "daniyar_presale_flat",
                 Effect(capitalDelta = -350_000L, stressDelta = 14, riskDelta = 6,
-                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1))),
+                    setFlags = setOf("family.helped"))),
             option("daniyar_send_partial", Strings["evt_daniyar_village_call_opt_send_partial"], "🤲", "daniyar_presale_flat",
                 Effect(capitalDelta = -200_000L, stressDelta = 8,
-                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1))),
+                    setFlags = setOf("family.helped"))),
             option("daniyar_send_plan", Strings["evt_daniyar_village_call_opt_send_plan"], "🧭", "daniyar_presale_flat",
                 Effect(capitalDelta = -50_000L, knowledgeDelta = 12, stressDelta = 6,
-                    setFlags = setOf("family.helped"), scheduleEvent = ScheduledEvent("daniyar_presale_flat", 1)))
+                    setFlags = setOf("family.helped")))
         )
     )
 
@@ -482,10 +479,10 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
                     scheduleEvent = ScheduledEvent("daniyar_presale_loss", 4))),
             option("daniyar_check_builder", Strings["evt_daniyar_presale_flat_opt_check_builder"], "🧾", "daniyar_wedding_credit",
                 Effect(knowledgeDelta = 18, stressDelta = 2,
-                    setFlags = setOf("learned.scam.presale"), scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1))),
+                    setFlags = setOf("learned.scam.presale"))),
             option("daniyar_skip_flat", Strings["evt_daniyar_presale_flat_opt_skip_flat"], "🛡️", "daniyar_wedding_credit",
                 Effect(knowledgeDelta = 12, stressDelta = -4,
-                    setFlags = setOf("learned.scam.presale"), scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1)))
+                    setFlags = setOf("learned.scam.presale")))
         )
     )
 
@@ -498,8 +495,7 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         options = listOf(
             option("daniyar_accept_presale_loss", "Признать потерю и не усугублять долгом", "📚", "daniyar_wedding_credit",
                 Effect(knowledgeDelta = 20, stressDelta = 18,
-                    setFlags = setOf("learned.scam.presale", "lost_money_to_scam"),
-                    scheduleEvent = ScheduledEvent("daniyar_wedding_credit", 1)))
+                    setFlags = setOf("learned.scam.presale", "lost_money_to_scam")))
         )
     )
 
@@ -510,13 +506,11 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         message = Strings["evt_daniyar_wedding_credit_msg"],
         options = listOf(
             option("daniyar_give_full", Strings["evt_daniyar_wedding_credit_opt_give_full"], "🎁", "final_review",
-                Effect(capitalDelta = -250_000L, stressDelta = 4, setFlags = setOf("family.gave_full"),
-                    scheduleEvent = ScheduledEvent("final_review", 4))),
+                Effect(capitalDelta = -250_000L, stressDelta = 4, setFlags = setOf("family.gave_full"))),
             option("daniyar_give_partial", Strings["evt_daniyar_wedding_credit_opt_give_partial"], "🤝", "final_review",
-                Effect(capitalDelta = -120_000L, stressDelta = 6, setFlags = setOf("family.gave_partial"),
-                    scheduleEvent = ScheduledEvent("final_review", 4))),
+                Effect(capitalDelta = -120_000L, stressDelta = 6, setFlags = setOf("family.gave_partial"))),
             option("daniyar_refuse_toi", Strings["evt_daniyar_wedding_credit_opt_refuse"], "🧊", "final_review",
-                Effect(stressDelta = 12, knowledgeDelta = 6, scheduleEvent = ScheduledEvent("final_review", 4)))
+                Effect(stressDelta = 12, knowledgeDelta = 6))
         )
     )
 
@@ -536,7 +530,8 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
     )
 }
 
-fun daniyar2005Conditionals(balance: StoryBalance): List<GameEvent> = listOf(
+fun daniyar2005Conditionals(balance: StoryBalance): List<GameEvent> =
+    storyConditionals(balance).filterNot { it.id == "burnout_warning" || it.id == "investment_unlock" } + listOf(
     event(
         id = "daniyar_burnout",
         priority = 30,
@@ -583,6 +578,7 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     map["ending_wealth"] = event(
         id = "ending_wealth",
         isEnding = true,
+        endingType = EndingType.WEALTH,
         flavor = "🏆",
         message = Strings["evt_daniyar_ending_wealth_msg"],
         options = emptyList()
@@ -590,6 +586,7 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     map["ending_stability"] = event(
         id = "ending_stability",
         isEnding = true,
+        endingType = EndingType.FINANCIAL_STABILITY,
         flavor = "💼",
         message = Strings["evt_daniyar_ending_stable_msg"],
         options = emptyList()
@@ -597,6 +594,7 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     map["ending_freedom"] = event(
         id = "ending_freedom",
         isEnding = true,
+        endingType = EndingType.FINANCIAL_FREEDOM,
         flavor = "🌅",
         message = Strings["evt_daniyar_ending_freedom_msg"],
         options = emptyList()
@@ -604,6 +602,7 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     map["ending_regular"] = event(
         id = "ending_regular",
         isEnding = true,
+        endingType = EndingType.PAYCHECK_TO_PAYCHECK,
         flavor = "😐",
         message = Strings["evt_daniyar_ending_paycheck_msg"],
         options = emptyList()
@@ -611,6 +610,7 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     map["ending_bankruptcy"] = event(
         id = "ending_bankruptcy",
         isEnding = true,
+        endingType = EndingType.BANKRUPTCY,
         flavor = "💀",
         message = Strings["evt_daniyar_ending_broke_msg"],
         options = emptyList()

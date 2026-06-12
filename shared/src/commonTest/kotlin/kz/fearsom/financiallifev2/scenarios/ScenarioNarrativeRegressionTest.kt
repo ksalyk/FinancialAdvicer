@@ -3,8 +3,13 @@ package kz.fearsom.financiallifev2.scenarios
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.ChatMessage
 import kz.fearsom.financiallifev2.model.CurrencyCode
+import kz.fearsom.financiallifev2.model.EndingType
+import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.MessageSender
+import kz.fearsom.financiallifev2.model.PendingEvent
+import kz.fearsom.financiallifev2.model.PlayerState
+import kz.fearsom.financiallifev2.model.PoolEntry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -18,7 +23,7 @@ class ScenarioNarrativeRegressionTest {
         val ps = graph.initialPlayerState
 
         assertEquals(1993, ps.year)
-        assertEquals(10, ps.month)
+        assertEquals(1, ps.month)
         assertEquals(CurrencyCode.RUB, ps.currency)
     }
 
@@ -38,6 +43,32 @@ class ScenarioNarrativeRegressionTest {
 
         val next = engine.makeChoice("save_cash")
         assertEquals("era_devaluation_2015", next.currentEventId)
+    }
+
+    @Test
+    fun `2015 devaluation does not delete due zhanar story event`() {
+        val engine = GameEngine.forCharacterAndEra("dana", "kz_2015")
+        val graph = ScenarioGraphFactory.forCharacter("dana", "kz_2015")
+        engine.loadState(
+            GameState(
+                playerState = graph.initialPlayerState.copy(
+                    month = 7,
+                    year = 2015,
+                    pendingScheduled = listOf(PendingEvent("zhanar_forex_relative", 2015, 8))
+                ),
+                currentEventId = "normal_life",
+                messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
+                isWaitingForChoice = true
+            ),
+            characterName = "Жанар"
+        )
+
+        val devaluation = engine.makeChoice("save_cash")
+        assertEquals("era_devaluation_2015", devaluation.currentEventId)
+        assertTrue(devaluation.playerState.pendingScheduled.any { it.eventId == "zhanar_forex_relative" })
+
+        val story = engine.makeChoice("convert_to_dollar")
+        assertEquals("zhanar_forex_relative", story.currentEventId)
     }
 
     @Test
@@ -134,5 +165,96 @@ class ScenarioNarrativeRegressionTest {
 
         val second = reloaded.makeChoice("save_cash")
         assertNotEquals("investment_unlock", second.currentEventId)
+    }
+
+    @Test
+    fun `daniyar final review can reach terminal ending with type`() {
+        val engine = GameEngine.forCharacterAndEra("daniyar", "kz_2005")
+        val graph = ScenarioGraphFactory.forCharacter("daniyar", "kz_2005")
+        engine.loadState(
+            GameState(
+                playerState = graph.initialPlayerState.copy(month = 1, year = 2006),
+                currentEventId = "final_review",
+                messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
+                isWaitingForChoice = true
+            ),
+            characterName = "Данияр"
+        )
+
+        val trigger = engine.makeChoice("final_check")
+        assertEquals("ending_regular_trigger", trigger.currentEventId)
+
+        val ending = engine.makeChoice("claim_regular")
+        assertTrue(ending.gameOver)
+        assertEquals(EndingType.PAYCHECK_TO_PAYCHECK, ending.endingType)
+    }
+
+    @Test
+    fun `daniyar direct story navigation does not duplicate same scheduled event`() {
+        val engine = GameEngine.forCharacterAndEra("daniyar", "kz_2005")
+        val graph = ScenarioGraphFactory.forCharacter("daniyar", "kz_2005")
+        engine.loadState(
+            GameState(
+                playerState = graph.initialPlayerState,
+                currentEventId = "daniyar_garage_formalize",
+                messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
+                isWaitingForChoice = true
+            ),
+            characterName = "Данияр"
+        )
+
+        val next = engine.makeChoice("daniyar_register_ip")
+        assertEquals("daniyar_village_call", next.currentEventId)
+        assertTrue(next.playerState.pendingScheduled.none { it.eventId == "daniyar_village_call" })
+    }
+
+    @Test
+    fun `marat safe path survives tenge reform and reaches ending`() {
+        val graph = MaratStoryOnlyGraph()
+        val engine = GameEngine(graph = graph, eraDefinition = EraRegistry.findById("kz_90s"))
+        engine.startGame(characterName = "Марат")
+
+        assertEquals("marat_family_pyramid", engine.makeChoice("marat_stop_family").currentEventId)
+        assertEquals("marat_bazaar_counter", engine.makeChoice("marat_explain_pyramid").currentEventId)
+        assertEquals("investment_unlock", engine.makeChoice("marat_contract_notebook").currentEventId)
+        assertEquals("marat_supplier_prepay", engine.makeChoice("skip_investing").currentEventId)
+        assertEquals("scam_middleman_contract_refused", engine.makeChoice("marat_verify_supplier").currentEventId)
+        assertEquals("normal_life", engine.makeChoice("middleman_lesson").currentEventId)
+        assertEquals("marat_wedding", engine.makeChoice("save_cash").currentEventId)
+        assertEquals("normal_life", engine.makeChoice("marat_delay_wedding").currentEventId)
+
+        var state = engine.state.value ?: error("State missing")
+        repeat(4) {
+            state = engine.makeChoice("save_cash")
+        }
+
+        assertEquals("era_tenge_introduced", state.currentEventId)
+        assertTrue(state.playerState.pendingScheduled.any { it.eventId == "final_review" })
+
+        val review = engine.makeChoice("exchange_all")
+        assertEquals(CurrencyCode.KZT, review.playerState.currency)
+        assertEquals("final_review", review.currentEventId)
+
+        val trigger = engine.makeChoice("final_check")
+        assertTrue(trigger.currentEventId in setOf(
+            "ending_wealth_trigger",
+            "ending_freedom_trigger",
+            "ending_stability_trigger",
+            "ending_paycheck_trigger",
+            "ending_regular_trigger"
+        ))
+
+        val ending = engine.makeChoice(engine.currentOptions().single().id)
+        assertTrue(ending.gameOver)
+        assertTrue(ending.endingType != null)
+    }
+
+    private class MaratStoryOnlyGraph : ScenarioGraph() {
+        private val delegate = Aidar90sScenarioGraph()
+
+        override val initialPlayerState: PlayerState = delegate.initialPlayerState
+        override val events: Map<String, GameEvent> = delegate.events
+        override val conditionalEvents: List<GameEvent> = delegate.conditionalEvents
+        override val eventPool: List<PoolEntry> = emptyList()
     }
 }

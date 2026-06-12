@@ -36,7 +36,8 @@ import kotlin.random.Random
  */
 class GameEngine(
     private var graph: ScenarioGraph = AsanScenarioGraph(),
-    private var eraDefinition: EraDefinition? = null
+    private var eraDefinition: EraDefinition? = null,
+    private val random: Random = Random.Default
 ) {
 
     private val _state = MutableStateFlow<GameState?>(null)
@@ -119,12 +120,12 @@ class GameEngine(
             // PRIORITY 1: Era-scheduled global event (world crisis on this date)
             val eraEvent = findEraEvent(ps)
 
-            // PRIORITY 2: Deferred consequence scheduled by a previous choice
-            val scheduled = findScheduledEvent(ps)
-                ?.also { ps = removeScheduledEvent(ps, it) }
+            // PRIORITY 2: Deferred consequence scheduled by a previous choice.
+            // Only dequeue it when it actually wins; era events have higher priority.
+            val scheduled = if (eraEvent == null) findScheduledEvent(ps) else null
 
             // PRIORITY 3: Conditional event (debt crisis, burnout, mortgage unlock…)
-            val conditional = if (eraEvent == null && scheduled == null)
+            val conditional = if (scheduled == null && eraEvent == null)
                 findConditionalEvent(ps, current.currentEventId)
             else null
 
@@ -134,11 +135,12 @@ class GameEngine(
                     pool                = graph.eventPool,
                     allEvents           = graph::findEvent,
                     state               = ps,
-                    eraWeightModifiers  = eraDefinition?.poolWeightModifiers ?: emptyMap()
+                    eraWeightModifiers  = eraDefinition?.poolWeightModifiers ?: emptyMap(),
+                    random              = random
                 )
             else null
 
-            val nextEvent = eraEvent ?: scheduled ?: conditional
+            val nextEvent = eraEvent ?: scheduled?.event ?: conditional
             nextEventId   = nextEvent?.id ?: poolPick ?: "normal_life"
             val selectedFromPool = nextEvent == null && poolPick != null
 
@@ -148,6 +150,10 @@ class GameEngine(
             // Pool events are one-shot by default unless they declare a cooldown.
             if (winner?.unique == true || singleUsePoolEvent) {
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
+            }
+
+            if (scheduled?.event?.id == nextEventId) {
+                ps = removeScheduledEvent(ps, scheduled.pending)
             }
 
             if (winner != null && winner.cooldownMonths > 0) {
@@ -220,11 +226,17 @@ class GameEngine(
 
     private fun monthlyTick(ps: PlayerState): Pair<PlayerState, MonthlyReport> {
         val investGain  = ps.monthlyInvestmentReturn
-        val netFlow     = ps.income - ps.expenses - ps.debtPaymentMonthly + investGain
+        val scheduledPrincipal = (ps.debtPaymentMonthly * 0.30).toLong()
+        val principalPaid = minOf(scheduledPrincipal, ps.debt)
+        val effectiveDebtPayment = when {
+            ps.debt <= 0L -> 0L
+            principalPaid == ps.debt -> ps.debt
+            else -> ps.debtPaymentMonthly
+        }
+        val netFlow     = ps.income - ps.expenses - effectiveDebtPayment + investGain
         val capitalAfter = (ps.capital + netFlow).coerceAtLeast(0L)
 
-        // 30% of monthly payment reduces principal
-        val principalPaid = (ps.debtPaymentMonthly * 0.30).toLong()
+        // 30% of monthly payment reduces principal until the final payoff month.
         val debtAfter     = (ps.debt - principalPaid).coerceAtLeast(0L)
 
         // Stress dynamics
@@ -245,7 +257,7 @@ class GameEngine(
             currency       = ps.currency,
             incomeReceived = ps.income,
             expensesPaid   = ps.expenses,
-            debtPayment    = ps.debtPaymentMonthly,
+            debtPayment    = effectiveDebtPayment,
             investmentGain = investGain,
             netFlow        = netFlow,
             capitalBefore  = ps.capital,
@@ -257,9 +269,11 @@ class GameEngine(
         val next = ps.copy(
             capital  = capitalAfter,
             debt     = debtAfter,
+            debtPaymentMonthly = if (debtAfter == 0L) 0L else ps.debtPaymentMonthly,
             stress   = (ps.stress + stressDelta).coerceIn(0, 100),
             month    = if (ps.month == 12) 1 else ps.month + 1,
-            year     = if (ps.month == 12) ps.year + 1 else ps.year
+            year     = if (ps.month == 12) ps.year + 1 else ps.year,
+            eventCooldowns = ps.eventCooldowns.filterValues { it > ps.absoluteMonth + 1 }
         )
 
         return next to report
@@ -272,16 +286,21 @@ class GameEngine(
         return era.globalEvents
             .filter { it.year == ps.year && it.month == ps.month }
             .filter { it.eventId !in ps.triggeredUniqueEvents }
-            .filter { it.probability >= 1.0f || Random.nextFloat() < it.probability }
+            .filter { it.probability >= 1.0f || random.nextFloat() < it.probability }
             .firstNotNullOfOrNull { graph.findEvent(it.eventId) }
     }
 
     // ── Priority 2: Deferred scheduled events ────────────────────────────────
 
-    private fun findScheduledEvent(ps: PlayerState): GameEvent? =
+    private data class ScheduledPick(val pending: PendingEvent, val event: GameEvent)
+
+    private fun findScheduledEvent(ps: PlayerState): ScheduledPick? =
         ps.pendingScheduled
-            .filter { it.fireAtYear == ps.year && it.fireAtMonth == ps.month }
-            .firstNotNullOfOrNull { graph.findEvent(it.eventId) }
+            .filter { it.absoluteMonth <= ps.absoluteMonth }
+            .sortedBy { it.absoluteMonth }
+            .firstNotNullOfOrNull { pending ->
+                graph.findEvent(pending.eventId)?.let { ScheduledPick(pending, it) }
+            }
 
     private fun addScheduledEvent(ps: PlayerState, scheduled: ScheduledEvent): PlayerState {
         val totalMonths = ps.year * 12 + ps.month + scheduled.afterMonths
@@ -296,12 +315,23 @@ class GameEngine(
         )
     }
 
-    private fun removeScheduledEvent(ps: PlayerState, event: GameEvent): PlayerState =
-        ps.copy(
-            pendingScheduled = ps.pendingScheduled.filter {
-                !(it.fireAtYear == ps.year && it.fireAtMonth == ps.month && it.eventId == event.id)
+    private fun removeScheduledEvent(ps: PlayerState, selected: PendingEvent): PlayerState {
+        var removed = false
+        return ps.copy(
+            pendingScheduled = ps.pendingScheduled.filter { pending ->
+                if (!removed &&
+                    pending.eventId == selected.eventId &&
+                    pending.fireAtYear == selected.fireAtYear &&
+                    pending.fireAtMonth == selected.fireAtMonth
+                ) {
+                    removed = true
+                    false
+                } else {
+                    true
+                }
             }
         )
+    }
 
     // ── Priority 3: Conditional event injection ──────────────────────────────
 
@@ -309,10 +339,13 @@ class GameEngine(
         graph.conditionalEvents
             .filter { it.id != excludeId && it.conditions.isNotEmpty() }
             .filter { it.id !in ps.triggeredUniqueEvents || !it.unique }
+            .filter { (ps.eventCooldowns[it.id] ?: 0) <= ps.absoluteMonth }
             .sortedByDescending { it.priority }
             .firstOrNull { event -> event.conditions.all { it.check(ps) } }
 
     // ── Effect application ────────────────────────────────────────────────────
+
+    private val PendingEvent.absoluteMonth: Int get() = fireAtYear * 12 + fireAtMonth
 
     private fun applyEffects(ps: PlayerState, e: Effect): PlayerState {
         val newFlags = (ps.flags + e.setFlags) - e.clearFlags
