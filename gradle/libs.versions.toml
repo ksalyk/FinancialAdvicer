@@ -70,7 +70,11 @@ ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "kto
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages-jvm", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
 ktor-server-sessions = { module = "io.ktor:ktor-server-sessions-jvm", version.ref = "ktor" }
-ktor-server-static = { module = "io.ktor:ktor-server-static-content-jvm", version.ref = "ktor" }
+# NOTE: In Ktor 3.x, static content APIs (staticResources/staticFiles/staticZip) live in
+# `io.ktor.server.http.content` which is part of `ktor-server-core` (no separate artifact).
+# Do NOT add `ktor-server-static-content` back — that artifact does not exist on Maven Central
+# for 3.x; the `-static-content` plugin module was retired. The Routing.kt `staticResources(...)`
+# call is satisfied transitively via the existing `ktor-server-core` dependency.
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 

@@ -49,7 +49,8 @@ dependencies {
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.sessions)
-    implementation(libs.ktor.server.static)
+    // staticResources(...) is provided by ktor-server-core (io.ktor.server.http.content) in 3.x —
+    // no separate ktor-server-static artifact exists anymore.
     implementation(libs.logback.classic)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

@@ -114,9 +114,9 @@ private fun ScenarioGraphDetail(graph: ScenarioGraphDto) {
                 StatLine("income", s.income)
                 StatLine("expenses", s.expenses)
                 StatLine("debt", s.debt)
-                StatLine("stress", s.stress)
-                StatLine("financial_knowledge", s.financialKnowledge)
-                StatLine("risk_level", s.riskLevel)
+                StatLine("stress", s.stress.toLong())
+                StatLine("financial_knowledge", s.financialKnowledge.toLong())
+                StatLine("risk_level", s.riskLevel.toLong())
             }
         }
 

@@ -225,9 +225,15 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
-private fun formatTs(ms: Long): String {
-    // Simple epoch → date string via JS Date (good enough for an admin panel)
-    return js("new Date(ms).toLocaleDateString()").toString()
-}
+@OptIn(ExperimentalWasmJsInterop::class)
+private fun jsDateToLocaleString(ms: Double): String =
+    js("new Date(ms).toLocaleDateString()")
+
+// Simple epoch → date string via JS Date (good enough for an admin panel).
+// Kotlin/Wasm requires `js("…")` to be a single constant string literal with no
+// Kotlin-side interpolation, so we can't inline `$ms` directly. Instead we use a
+// helper function with a typed parameter; the compiler passes `ms` as a proper
+// JS Number and the JS snippet just references the parameter name.
+private fun formatTs(ms: Long): String = jsDateToLocaleString(ms.toDouble())
 
 private fun formatMoney(tg: Long): String = "${tg / 1000}k ₸"
