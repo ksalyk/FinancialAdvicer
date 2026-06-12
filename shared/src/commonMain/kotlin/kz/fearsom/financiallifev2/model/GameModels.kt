@@ -36,7 +36,8 @@ data class CharacterStats(
     val monthlyExpenses: Long,
     val stress: Int,
     val financialKnowledge: Int,
-    val riskLevel: Int
+    val riskLevel: Int,
+    val investments: Long = 0L
 )
 
 /** Convert CharacterStats into a PlayerState for the game engine. */
@@ -54,7 +55,7 @@ fun CharacterStats.toPlayerState(
         expenses           = monthlyExpenses,
         debt               = debt,
         debtPaymentMonthly = debtPayment,
-        investments        = 0L,
+        investments        = investments,
         stress             = stress,
         financialKnowledge = financialKnowledge,
         riskLevel          = riskLevel,

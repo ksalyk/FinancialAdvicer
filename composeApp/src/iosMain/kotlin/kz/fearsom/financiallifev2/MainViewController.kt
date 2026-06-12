@@ -4,8 +4,8 @@ import androidx.compose.ui.window.ComposeUIViewController
 import kz.fearsom.financiallifev2.di.commonModule
 import kz.fearsom.financiallifev2.di.iosModule
 import kz.fearsom.financiallifev2.network.NetworkConfig
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import org.koin.mp.KoinPlatform
 
 /**
  * iOS entry point. Called from Swift like:
@@ -35,7 +35,7 @@ fun MainViewController() = ComposeUIViewController(
         // unlike Android emulator which requires the 10.0.2.2 alias.
         NetworkConfig.baseUrl = "http://localhost:8082/api/v1"
         // Guard against double-start if SwiftUI recreates the view controller.
-        if (GlobalContext.getOrNull() == null) {
+        if (KoinPlatform.getKoinOrNull() == null) {
             startKoin { modules(commonModule, iosModule) }
         }
     }

@@ -74,7 +74,7 @@ class GameSessionRepository(
         }
 
         try {
-            val statesJson = secureStorage?.get(KEY_SAVED_STATES)
+            val statesJson = secureStorage.get(KEY_SAVED_STATES)
             if (!statesJson.isNullOrBlank()) {
                 val restored = json.decodeFromString<Map<String, GameState>>(statesJson)
                 savedStates.putAll(restored)
@@ -168,6 +168,7 @@ class GameSessionRepository(
                         currentGameMonth = ps.month,
                         currentStats     = CharacterStats(
                             capital            = ps.capital,
+                            investments        = ps.investments,
                             income             = ps.income,
                             debt               = ps.debt,
                             monthlyExpenses    = ps.expenses,
@@ -217,7 +218,7 @@ class GameSessionRepository(
         val completed = all.filter { it.status == SessionStatus.COMPLETED }
         val bestEnding = completed.mapNotNull { it.ending }.maxByOrNull { it.ordinal }
         val avgCapital = if (completed.isNotEmpty())
-            completed.sumOf { it.currentStats.capital } / completed.size
+            completed.sumOf { it.currentStats.capital + it.currentStats.investments } / completed.size
         else 0L
         val endingDist = GameEnding.entries.associateWith { ending ->
             completed.count { it.ending == ending }
@@ -231,7 +232,7 @@ class GameSessionRepository(
                 timesPlayed    = sessions.size,
                 bestEnding     = sessions.mapNotNull { it.ending }.maxByOrNull { it.ordinal },
                 averageCapital = if (sessions.isNotEmpty())
-                    sessions.sumOf { it.currentStats.capital } / sessions.size
+                    sessions.sumOf { it.currentStats.capital + it.currentStats.investments } / sessions.size
                 else 0L
             )
         }

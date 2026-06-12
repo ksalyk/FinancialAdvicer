@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.PlayerState
@@ -147,10 +148,10 @@ fun Route.gameRoutes(
             val characterId = call.request.queryParameters["characterId"] ?: "asan"
             val eraId       = call.request.queryParameters["eraId"]       ?: "kz_2024"
 
-            if (characterId !in VALID_CHARACTER_IDS && eraId !in VALID_ERA_IDS) {
+            validateScenarioSelection(characterId, eraId)?.let { error ->
                 return@get call.respond(
                     HttpStatusCode.BadRequest,
-                    mapOf("error" to "Unknown characterId='$characterId' and eraId='$eraId'")
+                    mapOf("error" to error)
                 )
             }
 
@@ -178,10 +179,10 @@ fun Route.gameRoutes(
                 StartGameRequest()
             }
 
-            if (req.characterId !in VALID_CHARACTER_IDS && req.eraId !in VALID_ERA_IDS) {
+            validateScenarioSelection(req.characterId, req.eraId)?.let { error ->
                 return@post call.respond(
                     HttpStatusCode.BadRequest,
-                    mapOf("error" to "Unknown characterId='${req.characterId}' and eraId='${req.eraId}'")
+                    mapOf("error" to error)
                 )
             }
 
@@ -376,12 +377,25 @@ fun Route.gameRoutes(
 private fun ApplicationCall.jwtUserId(): String =
     principal<JWTPrincipal>()!!.payload.getClaim("userId").asString()
 
-/**
- * Allowlists mirroring [ScenarioGraphFactory.buildGraph] / [ScenarioGraphFactory.forEra].
- *
- * Unknown characterId falls back to era-based graph, so the server only needs to reject
- * the case where BOTH are unknown — that's the only path that reaches `error()` in forEra.
- * Keep in sync with ScenarioGraphFactory whenever new characters or eras are added.
- */
-private val VALID_CHARACTER_IDS = setOf("aidar_90s", "aidar", "asan", "dana", "daniyar")
-private val VALID_ERA_IDS       = setOf("kz_90s", "kz_2005", "kz_2015", "kz_2024")
+private val VALID_ERA_IDS: Set<String> =
+    SeedData.eras.map { it.id }.toSet()
+
+private val VALID_CHARACTER_ERA_IDS: Map<String, Set<String>> =
+    SeedData.predefinedCharacters.associate { character ->
+        character.id to character.compatibleEraIds.toSet()
+    }
+
+private fun validateScenarioSelection(characterId: String, eraId: String): String? {
+    val compatibleEraIds = VALID_CHARACTER_ERA_IDS[characterId]
+        ?: return "Unsupported characterId='$characterId'"
+
+    if (eraId !in VALID_ERA_IDS) {
+        return "Unsupported eraId='$eraId'"
+    }
+
+    if (eraId !in compatibleEraIds) {
+        return "Unsupported characterId='$characterId' for eraId='$eraId'"
+    }
+
+    return null
+}

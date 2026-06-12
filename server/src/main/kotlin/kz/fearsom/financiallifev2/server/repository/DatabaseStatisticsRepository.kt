@@ -72,7 +72,7 @@ class DatabaseStatisticsRepository(private val db: Database) : StatisticsReposit
             val bestEnding = validEndings.maxByOrNull { it.ordinal }?.name
 
             val avgCapital = if (rows.isNotEmpty())
-                rows.sumOf { it[CompletedSessionsTable.finalCapital] } / rows.size
+                rows.sumOf { it[CompletedSessionsTable.finalCapital] + it[CompletedSessionsTable.finalInvestments] } / rows.size
             else 0L
 
             val endingDistribution = GameEnding.entries.associate { ending ->
@@ -96,7 +96,9 @@ class DatabaseStatisticsRepository(private val db: Database) : StatisticsReposit
                         characterEmoji = sessions.first()[CompletedSessionsTable.characterEmoji],
                         timesPlayed    = sessions.size,
                         bestEnding     = charEndings.maxByOrNull { it.ordinal }?.name,
-                        averageCapital = sessions.sumOf { it[CompletedSessionsTable.finalCapital] } / sessions.size
+                        averageCapital = sessions.sumOf {
+                            it[CompletedSessionsTable.finalCapital] + it[CompletedSessionsTable.finalInvestments]
+                        } / sessions.size
                     )
                 }
 

@@ -94,7 +94,7 @@ class GameApiService(
                         eraName          = session.eraName,
                         ending           = ending.name,
                         finalCapital     = stats.capital,
-                        finalInvestments = 0L,
+                        finalInvestments = stats.investments,
                         finalDebt        = stats.debt,
                         finalStress      = stats.stress,
                         finalKnowledge   = stats.financialKnowledge,

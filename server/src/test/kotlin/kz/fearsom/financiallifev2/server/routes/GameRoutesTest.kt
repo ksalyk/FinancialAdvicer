@@ -89,15 +89,29 @@ class GameRoutesTest {
     }
 
     @Test
-    fun `GET game_character - rejects unknown character and era`() = testApplication {
+    fun `GET game_character - rejects unknown character`() = testApplication {
         setupApp(MockGameRepository())
         val client = testClient()
 
-        val response = client.get("/api/v1/game/character?characterId=unknown&eraId=unknown") {
+        val response = client.get("/api/v1/game/character?characterId=unknown&eraId=kz_2024") {
             authHeader()
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(response.bodyAsText().contains("Unsupported characterId='unknown'"))
+    }
+
+    @Test
+    fun `GET game_character - rejects unsupported character era pair`() = testApplication {
+        setupApp(MockGameRepository())
+        val client = testClient()
+
+        val response = client.get("/api/v1/game/character?characterId=asan&eraId=kz_2005") {
+            authHeader()
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(response.bodyAsText().contains("Unsupported characterId='asan' for eraId='kz_2005'"))
     }
 
     // ── POST /game/start ──────────────────────────────────────────────────────
@@ -130,6 +144,21 @@ class GameRoutesTest {
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `POST game_start - rejects unknown era`() = testApplication {
+        setupApp(MockGameRepository())
+        val client = testClient()
+
+        val response = client.post("/api/v1/game/start") {
+            authHeader()
+            contentType(ContentType.Application.Json)
+            setBody("""{"characterId":"asan","eraId":"kz_9999","characterName":"Asan"}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(response.bodyAsText().contains("Unsupported eraId='kz_9999'"))
     }
 
     // ── GET /game/event ───────────────────────────────────────────────────────

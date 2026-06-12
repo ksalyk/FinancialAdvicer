@@ -253,6 +253,7 @@ val kkStrings: Map<String, String> = mapOf(
     // ── Era names ────────────────────────────────────────────────────
     "era_modern_kz_2024_name"        to "Қазіргі Қазақстан",
     "era_kz_90s_name"                to "Қазақстан 90-шы жж.",
+    "era_kz_2005_name"               to "2005–2010 несие бумы",
     "era_kz_2015_name"               to "Қазақстан 2015",
 
     // ── Seed era display strings ─────────────────────────────────────

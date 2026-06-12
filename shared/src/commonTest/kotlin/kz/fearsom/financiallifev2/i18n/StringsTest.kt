@@ -120,6 +120,7 @@ class StringsTest {
             "currency_rub",
             "era_modern_kz_2024_name",
             "era_kz_90s_name",
+            "era_kz_2005_name",
             "era_kz_2015_name",
             "sys_monthly_title",
             "sys_monthly_income",
@@ -140,6 +141,7 @@ class StringsTest {
         assertTrue(Strings.currencyRub.isNotEmpty())
         assertTrue(Strings.eraModernKz2024Name.isNotEmpty())
         assertTrue(Strings.eraKz90sName.isNotEmpty())
+        assertTrue(Strings.eraKz2005Name.isNotEmpty())
         assertTrue(Strings.eraKz2015Name.isNotEmpty())
         assertTrue(Strings.sysMonthlyTitle.isNotEmpty())
         assertTrue(Strings.uiSettingsTitle.isNotEmpty())

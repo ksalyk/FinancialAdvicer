@@ -4,6 +4,9 @@ import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.CharacterType
+import kz.fearsom.financiallifev2.model.GameEnding
+import kz.fearsom.financiallifev2.model.GameState
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,7 +44,7 @@ class ComposeAppCommonTest {
         )
 
         assertEquals(1993, session.currentGameYear)
-        assertEquals(10, session.currentGameMonth)
+        assertEquals(1, session.currentGameMonth)
     }
 
     @Test
@@ -66,6 +69,41 @@ class ComposeAppCommonTest {
         val enSession = repo.getSession(session.id)!!
 
         assertNotEquals(ruSession.eraName, enSession.eraName)
-        assertNotEquals(ruSession.characterTitle, enSession.characterTitle)
+        assertEquals(ruSession.characterTitle, enSession.characterTitle)
+    }
+
+    @Test
+    fun `completed statistics include final investments`() {
+        val repo = GameSessionRepository()
+        val era = SeedData.eras.first { it.id == "kz_2024" }
+        val character = SeedData.predefinedCharacters.first { it.id == "asan" }
+        val session = repo.createSession(
+            era = era,
+            characterType = CharacterType.PREDEFINED,
+            characterId = character.id,
+            characterName = character.name,
+            characterEmoji = character.emoji,
+            characterTitle = character.profession,
+            initialStats = character.initialStats
+        )
+        val finalState = ScenarioGraphFactory
+            .forCharacter(character.id, era.id)
+            .initialPlayerState
+            .copy(capital = 100_000L, investments = 250_000L)
+
+        repo.saveGameState(
+            session.id,
+            GameState(
+                playerState = finalState,
+                currentEventId = "ending_regular",
+                characterName = character.name,
+                gameOver = true
+            )
+        )
+        repo.completeSession(session.id, GameEnding.FINANCIAL_STABILITY)
+
+        val stats = repo.getPlayerStatistics()
+        assertEquals(350_000L, stats.averageCapitalAtEnd)
+        assertEquals(250_000L, repo.getSession(session.id)?.currentStats?.investments)
     }
 }

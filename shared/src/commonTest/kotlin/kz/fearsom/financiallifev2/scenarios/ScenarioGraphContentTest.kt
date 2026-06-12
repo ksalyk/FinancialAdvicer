@@ -63,6 +63,21 @@ class ScenarioGraphContentTest {
         }
     }
 
+    @Test
+    fun `normal life pool weight stays above individual scam events`() {
+        graphs.forEach { graph ->
+            val normalLifeWeight = graph.eventPool.first { it.eventId == "normal_life" }.baseWeight
+            val maxScamWeight = graph.eventPool
+                .filter { entry -> graph.findEvent(entry.eventId)?.tags?.contains("scam") == true }
+                .maxOfOrNull { it.baseWeight } ?: 0
+
+            assertTrue(
+                normalLifeWeight > maxScamWeight,
+                "normal_life weight should exceed any single scam event in ${graph.initialPlayerState.characterId}/${graph.initialPlayerState.eraId}"
+            )
+        }
+    }
+
     private fun allGraphEvents(graph: ScenarioGraph): List<GameEvent> =
         graph.events.values + graph.conditionalEvents
 }

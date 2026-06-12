@@ -10,6 +10,8 @@ import kz.fearsom.financiallifev2.model.MessageSender
 import kz.fearsom.financiallifev2.model.PendingEvent
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
+import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -209,6 +211,69 @@ class ScenarioNarrativeRegressionTest {
     }
 
     @Test
+    fun `ruslan 2005 story naturally reaches mortgage freeze before final review`() {
+        val engine = GameEngine(graph = Ruslan2005StoryOnlyGraph(), eraDefinition = EraRegistry.findById("kz_2005"))
+        engine.startGame(characterName = "Руслан")
+
+        assertEquals("ruslan_bank_offer", engine.makeChoice("ruslan_build_reserve").currentEventId)
+        assertEquals("investment_unlock", engine.makeChoice("ruslan_sell_clean").currentEventId)
+        assertEquals("ruslan_presale_flat", engine.makeChoice("skip_investing").currentEventId)
+        assertEquals("scam_presale_checked", engine.makeChoice("ruslan_check_builder").currentEventId)
+        assertEquals("normal_life", engine.makeChoice("presale_lesson").currentEventId)
+        assertEquals("ruslan_wedding_credit", engine.makeChoice("save_cash").currentEventId)
+        assertEquals("normal_life", engine.makeChoice("ruslan_delay_wedding").currentEventId)
+
+        val freeze = advanceUntil(engine, "era_mortgage_freeze_2008")
+        assertTrue(freeze.playerState.pendingScheduled.any { it.eventId == "final_review" })
+
+        val review = engine.makeChoice("freeze_restructure")
+        assertEquals("final_review", review.currentEventId)
+    }
+
+    @Test
+    fun `daniyar 2005 story naturally reaches mortgage freeze before final review`() {
+        val engine = GameEngine(graph = Daniyar2005StoryOnlyGraph(), eraDefinition = EraRegistry.findById("kz_2005"))
+        engine.startGame(characterName = "Данияр")
+
+        assertEquals("daniyar_garage_formalize", engine.makeChoice("daniyar_refuse_chat").currentEventId)
+        assertEquals("daniyar_village_call", engine.makeChoice("daniyar_register_ip").currentEventId)
+        assertEquals("daniyar_presale_flat", engine.makeChoice("daniyar_send_plan").currentEventId)
+        assertEquals("daniyar_wedding_credit", engine.makeChoice("daniyar_check_builder").currentEventId)
+        assertEquals("daniyar_investment_unlock", engine.makeChoice("daniyar_refuse_toi").currentEventId)
+
+        val freeze = advanceUntil(engine, "era_mortgage_freeze_2008", firstOption = "daniyar_skip_deposit")
+        assertTrue(freeze.playerState.pendingScheduled.any { it.eventId == "final_review" })
+
+        val review = engine.makeChoice("freeze_restructure")
+        assertEquals("final_review", review.currentEventId)
+    }
+
+    @Test
+    fun `low cash high stress gets escape hatch before burnout`() {
+        val graph = Ruslan2005StoryOnlyGraph()
+        val engine = GameEngine(graph = graph, eraDefinition = EraRegistry.findById("kz_2005"))
+        engine.loadState(
+            GameState(
+                playerState = graph.initialPlayerState.copy(
+                    capital = 100_000L,
+                    debt = 0L,
+                    debtPaymentMonthly = 0L,
+                    stress = 90,
+                    month = 1,
+                    year = 2006
+                ),
+                currentEventId = "normal_life",
+                messages = listOf(ChatMessage(sender = MessageSender.SYSTEM, text = "seed")),
+                isWaitingForChoice = true
+            ),
+            characterName = "Руслан"
+        )
+
+        val next = engine.makeChoice("save_cash")
+        assertEquals("stress_escape_hatch", next.currentEventId)
+    }
+
+    @Test
     fun `marat safe path survives tenge reform and reaches ending`() {
         val graph = MaratStoryOnlyGraph()
         val engine = GameEngine(graph = graph, eraDefinition = EraRegistry.findById("kz_90s"))
@@ -256,5 +321,48 @@ class ScenarioNarrativeRegressionTest {
         override val events: Map<String, GameEvent> = delegate.events
         override val conditionalEvents: List<GameEvent> = delegate.conditionalEvents
         override val eventPool: List<PoolEntry> = emptyList()
+    }
+
+    private class Ruslan2005StoryOnlyGraph : ScenarioGraph() {
+        private val delegate = AidarScenarioGraph()
+
+        override val initialPlayerState: PlayerState = delegate.initialPlayerState
+        override val events: Map<String, GameEvent> = delegate.events
+        override val conditionalEvents: List<GameEvent> = delegate.conditionalEvents
+        override val eventPool: List<PoolEntry> = emptyList()
+    }
+
+    private class Daniyar2005StoryOnlyGraph : ScenarioGraph() {
+        private val delegate = DaniyarScenarioGraph()
+
+        override val initialPlayerState: PlayerState = delegate.initialPlayerState
+        override val events: Map<String, GameEvent> = delegate.events
+        override val conditionalEvents: List<GameEvent> = delegate.conditionalEvents
+        override val eventPool: List<PoolEntry> = emptyList()
+    }
+
+    private fun advanceUntil(
+        engine: GameEngine,
+        targetEventId: String,
+        firstOption: String? = null
+    ): GameState {
+        var state = engine.state.value ?: error("State missing")
+        var pendingFirstOption = firstOption
+        repeat(60) {
+            if (state.currentEventId == targetEventId) return state
+            val optionId = pendingFirstOption ?: when (state.currentEventId) {
+                "normal_life" -> "save_cash"
+                "investment_unlock" -> "skip_investing"
+                "daniyar_investment_unlock" -> "daniyar_skip_deposit"
+                "burnout_warning" -> "burnout_rules"
+                "daniyar_burnout" -> "daniyar_burnout_talk"
+                "debt_crisis" -> "debt_restructure"
+                "stress_escape_hatch" -> "escape_minimize_month"
+                else -> error("Unexpected event while advancing: ${state.currentEventId}")
+            }
+            pendingFirstOption = null
+            state = engine.makeChoice(optionId)
+        }
+        error("Did not reach $targetEventId; stopped at ${state.currentEventId}")
     }
 }

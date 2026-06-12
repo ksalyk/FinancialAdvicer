@@ -17,6 +17,7 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_SERVER_UNAVAILABLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_EXISTS
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_NOT_FOUND
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_WRONG_PASSWORD
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_2005_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_2015_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_90S_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_MODERN_KZ_2024_NAME
@@ -471,6 +472,7 @@ object Strings {
     // ── Era names ────────────────────────────────────────────────────
     val eraModernKz2024Name        get() = get(ERA_MODERN_KZ_2024_NAME)
     val eraKz90sName               get() = get(ERA_KZ_90S_NAME)
+    val eraKz2005Name              get() = get(ERA_KZ_2005_NAME)
     val eraKz2015Name              get() = get(ERA_KZ_2015_NAME)
 
     // ── Auth errors ──────────────────────────────────────────────────

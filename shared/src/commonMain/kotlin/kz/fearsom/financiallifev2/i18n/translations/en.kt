@@ -253,6 +253,7 @@ val enStrings: Map<String, String> = mapOf(
     // ── Era names ────────────────────────────────────────────────────
     "era_modern_kz_2024_name"        to "Modern Kazakhstan",
     "era_kz_90s_name"                to "Kazakhstan 1990s",
+    "era_kz_2005_name"               to "Credit Boom 2005–2010",
     "era_kz_2015_name"               to "Kazakhstan 2015",
 
     // ── Seed era display strings ─────────────────────────────────────

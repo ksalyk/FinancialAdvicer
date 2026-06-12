@@ -201,11 +201,11 @@ fun ruslan2005StoryArc(): EventArc = EventArc { map ->
         ),
         options = listOf(
             option("ruslan_small_wedding", "Сделать теплую свадьбу без кредита", "🍽️", MONTHLY_TICK,
-                Effect(capitalDelta = -250_000L, expensesDelta = 45_000L, stressDelta = -10, knowledgeDelta = 8, setFlags = setOf("married"), scheduleEvent = ScheduledEvent("final_review", 6))),
+                Effect(capitalDelta = -250_000L, expensesDelta = 45_000L, stressDelta = -10, knowledgeDelta = 8, setFlags = setOf("married"), scheduleEvent = ScheduledEvent("final_review", 40))),
             option("ruslan_credit_wedding", "Взять кредит и не спорить с родней", "🎉", MONTHLY_TICK,
-                Effect(capitalDelta = 400_000L, debtDelta = 900_000L, debtPaymentDelta = 35_000L, expensesDelta = 55_000L, stressDelta = 16, setFlags = setOf("married"), scheduleEvent = ScheduledEvent("final_review", 6))),
+                Effect(capitalDelta = 400_000L, debtDelta = 900_000L, debtPaymentDelta = 35_000L, expensesDelta = 55_000L, stressDelta = 16, setFlags = setOf("married"), scheduleEvent = ScheduledEvent("final_review", 40))),
             option("ruslan_delay_wedding", "Отложить свадьбу на год и накопить", "📅", MONTHLY_TICK,
-                Effect(knowledgeDelta = 8, stressDelta = 8, scheduleEvent = ScheduledEvent("final_review", 6)))
+                Effect(knowledgeDelta = 8, stressDelta = 8, scheduleEvent = ScheduledEvent("final_review", 40)))
         )
     )
 }
@@ -505,12 +505,12 @@ fun daniyar2005StoryArc(): EventArc = EventArc { map ->
         tags = setOf("family"),
         message = Strings["evt_daniyar_wedding_credit_msg"],
         options = listOf(
-            option("daniyar_give_full", Strings["evt_daniyar_wedding_credit_opt_give_full"], "🎁", "final_review",
-                Effect(capitalDelta = -250_000L, stressDelta = 4, setFlags = setOf("family.gave_full"))),
-            option("daniyar_give_partial", Strings["evt_daniyar_wedding_credit_opt_give_partial"], "🤝", "final_review",
-                Effect(capitalDelta = -120_000L, stressDelta = 6, setFlags = setOf("family.gave_partial"))),
-            option("daniyar_refuse_toi", Strings["evt_daniyar_wedding_credit_opt_refuse"], "🧊", "final_review",
-                Effect(stressDelta = 12, knowledgeDelta = 6))
+            option("daniyar_give_full", Strings["evt_daniyar_wedding_credit_opt_give_full"], "🎁", MONTHLY_TICK,
+                Effect(capitalDelta = -250_000L, stressDelta = 4, setFlags = setOf("family.gave_full"), scheduleEvent = ScheduledEvent("final_review", 42))),
+            option("daniyar_give_partial", Strings["evt_daniyar_wedding_credit_opt_give_partial"], "🤝", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, stressDelta = 6, setFlags = setOf("family.gave_partial"), scheduleEvent = ScheduledEvent("final_review", 42))),
+            option("daniyar_refuse_toi", Strings["evt_daniyar_wedding_credit_opt_refuse"], "🧊", MONTHLY_TICK,
+                Effect(stressDelta = 12, knowledgeDelta = 6, scheduleEvent = ScheduledEvent("final_review", 42)))
         )
     )
 
@@ -981,6 +981,27 @@ fun storyConditionals(balance: StoryBalance): List<GameEvent> = listOf(
         )
     ),
     event(
+        id = "stress_escape_hatch",
+        priority = 34,
+        flavor = "🧯",
+        cooldownMonths = 6,
+        conditions = listOf(
+            cond(CAPITAL, GT, 0L),
+            cond(CAPITAL, LTE, balance.debtCrisisCapital),
+            cond(STRESS, GTE, 85L)
+        ),
+        tags = setOf("crisis"),
+        message = "Денег мало, стресс уже мешает считать, и любое новое решение тянет к панике. Сейчас важна не победа, а месяц, в котором можно снова начать думать.",
+        options = listOf(
+            option("escape_minimize_month", "Отменить всё необязательное на месяц", "🧾", MONTHLY_TICK,
+                Effect(expensesDelta = -25_000L, stressDelta = -18, knowledgeDelta = 4)),
+            option("escape_ask_extension", "Попросить отсрочку и зафиксировать новый график", "📞", MONTHLY_TICK,
+                Effect(debtPaymentDelta = -20_000L, stressDelta = -12, knowledgeDelta = 8)),
+            option("escape_sell_unused", "Продать лишнее и закрыть самый срочный разрыв", "📦", MONTHLY_TICK,
+                Effect(capitalDelta = 50_000L, stressDelta = -10, knowledgeDelta = 3))
+        )
+    ),
+    event(
         id = "burnout_warning",
         priority = 30,
         flavor = "😮‍💨",
@@ -1015,16 +1036,18 @@ fun storyConditionals(balance: StoryBalance): List<GameEvent> = listOf(
 )
 
 fun storyEventPool(eraId: String): List<PoolEntry> = buildList {
-    add(PoolEntry("normal_life", 24))
-    add(PoolEntry("new_year_event", 6))
-    add(PoolEntry("birthday_event", 6))
-    add(PoolEntry("dating_event", 6))
-    add(PoolEntry("breakup_event", 3))
-    add(PoolEntry("wedding_event", 4))
-    add(PoolEntry("child_birth_event", 3))
-    add(PoolEntry("school_event", 3))
-    add(PoolEntry("university_event", 4))
-    add(PoolEntry("bar_club_event", 5))
-    add(PoolEntry("gaming_tv_event", 5))
-    addAll(ScamEventLibrary.poolEntries)
+    add(PoolEntry("normal_life", 42))
+    add(PoolEntry("new_year_event", 8))
+    add(PoolEntry("birthday_event", 8))
+    add(PoolEntry("dating_event", 8))
+    add(PoolEntry("breakup_event", 4))
+    add(PoolEntry("wedding_event", 5))
+    add(PoolEntry("child_birth_event", 4))
+    add(PoolEntry("school_event", 5))
+    add(PoolEntry("university_event", 5))
+    add(PoolEntry("bar_club_event", 6))
+    add(PoolEntry("gaming_tv_event", 6))
+    addAll(ScamEventLibrary.poolEntries.map { entry ->
+        entry.copy(baseWeight = (entry.baseWeight / 2).coerceAtLeast(1))
+    })
 }

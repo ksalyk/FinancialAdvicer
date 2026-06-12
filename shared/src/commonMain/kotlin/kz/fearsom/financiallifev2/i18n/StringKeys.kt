@@ -263,6 +263,7 @@ object StringKeys {
     // ── Era names (EraRegistry) ──────────────────────────────────────
     const val ERA_MODERN_KZ_2024_NAME         = "era_modern_kz_2024_name"
     const val ERA_KZ_90S_NAME                 = "era_kz_90s_name"
+    const val ERA_KZ_2005_NAME                = "era_kz_2005_name"
     const val ERA_KZ_2015_NAME                = "era_kz_2015_name"
 
     // ── Auth errors ──────────────────────────────────────────────────

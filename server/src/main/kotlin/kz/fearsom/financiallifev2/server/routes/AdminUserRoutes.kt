@@ -17,6 +17,9 @@ private val log = LoggerFactory.getLogger("AdminUserRoutes")
 @Serializable
 private data class ResetPasswordRequest(val password: String)
 
+@Serializable
+private data class DeleteUserResponse(val deleted: Boolean, val userId: String)
+
 /**
  * Admin user management endpoints.  All are guarded by [isAdminAuthorized].
  * passwordHash is NEVER included in any response.
@@ -105,7 +108,7 @@ fun Route.adminUserRoutes(
                 return@delete call.respond(HttpStatusCode.NotFound, mapOf("error" to "User not found"))
             }
             log.info("Admin deleted userId={} (cascade)", id)
-            call.respond(mapOf("deleted" to true, "userId" to id))
+            call.respond(DeleteUserResponse(deleted = true, userId = id))
         }
     }
 }

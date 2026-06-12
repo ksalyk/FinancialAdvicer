@@ -335,7 +335,7 @@ object EraRegistry {
 
     val KZ_2005_CREDIT_BOOM get() = EraDefinition(
         id = "kz_2005",
-        name = "Кредитный бум 2005-2010",
+        name = Strings.eraKz2005Name,
         startYear = 2005,
         endYear = 2010,
         globalEvents = listOf(
