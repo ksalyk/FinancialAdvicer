@@ -3,12 +3,12 @@ package kz.fearsom.financiallifev2.ui.components.core
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -21,9 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kz.fearsom.financiallifev2.i18n.Strings
+import kz.fearsom.financiallifev2.ui.theme.Elevation
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 import kz.fearsom.financiallifev2.ui.theme.Spacing
-import kz.fearsom.financiallifev2.ui.theme.Elevation
 
 /**
  * Reusable back button using Material Symbols.

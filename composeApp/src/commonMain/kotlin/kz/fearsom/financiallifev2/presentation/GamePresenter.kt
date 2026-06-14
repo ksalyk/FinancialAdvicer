@@ -1,17 +1,21 @@
 package kz.fearsom.financiallifev2.presentation
 
-import kz.fearsom.financiallifev2.data.GameSessionRepository
-import kz.fearsom.financiallifev2.engine.GameEngine
-import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.network.GameApiService
-import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.engine.GameEngine
+import kz.fearsom.financiallifev2.i18n.Strings
+import kz.fearsom.financiallifev2.model.EndingType
+import kz.fearsom.financiallifev2.model.GameOption
+import kz.fearsom.financiallifev2.model.GameState
+import kz.fearsom.financiallifev2.model.toGameEnding
+import kz.fearsom.financiallifev2.model.toPlayerState
+import kz.fearsom.financiallifev2.network.GameApiService
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 
 data class GameUiState(
     val gameState: GameState? = null,

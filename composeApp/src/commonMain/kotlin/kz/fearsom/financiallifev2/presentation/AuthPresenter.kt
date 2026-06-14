@@ -1,13 +1,13 @@
 package kz.fearsom.financiallifev2.presentation
 
-import kz.fearsom.financiallifev2.auth.AuthRepository
-import kz.fearsom.financiallifev2.auth.AuthState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.auth.AuthState
 
 data class AuthUiState(
     val authState: AuthState = AuthState(),

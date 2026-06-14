@@ -1,14 +1,14 @@
 package kz.fearsom.financiallifev2.presentation
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kz.fearsom.financiallifev2.data.FeatureFlag
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.i18n.Strings
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 data class SettingsUiState(
     val currentLocale: String        = LocaleRepository.DEFAULT_LOCALE,

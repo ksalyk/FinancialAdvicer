@@ -1,8 +1,20 @@
 package kz.fearsom.financiallifev2.ui.navigation
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
@@ -11,8 +23,23 @@ import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
-import kz.fearsom.financiallifev2.presentation.*
-import kz.fearsom.financiallifev2.ui.screens.*
+import kz.fearsom.financiallifev2.presentation.AuthPresenter
+import kz.fearsom.financiallifev2.presentation.CharactersPresenter
+import kz.fearsom.financiallifev2.presentation.GamePresenter
+import kz.fearsom.financiallifev2.presentation.MainMenuPresenter
+import kz.fearsom.financiallifev2.presentation.NewGamePresenter
+import kz.fearsom.financiallifev2.presentation.SettingsPresenter
+import kz.fearsom.financiallifev2.presentation.StatisticsPresenter
+import kz.fearsom.financiallifev2.ui.screens.CharacterDetailScreen
+import kz.fearsom.financiallifev2.ui.screens.CharacterSelectionScreen
+import kz.fearsom.financiallifev2.ui.screens.CharactersScreen
+import kz.fearsom.financiallifev2.ui.screens.ChatScreen
+import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
+import kz.fearsom.financiallifev2.ui.screens.LoginScreen
+import kz.fearsom.financiallifev2.ui.screens.MainMenuScreen
+import kz.fearsom.financiallifev2.ui.screens.SettingsScreen
+import kz.fearsom.financiallifev2.ui.screens.SplashScreen
+import kz.fearsom.financiallifev2.ui.screens.StatisticsScreen
 import org.koin.compose.koinInject
 
 // ── Screen definitions ────────────────────────────────────────────────────────

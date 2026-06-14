@@ -2,14 +2,26 @@ package kz.fearsom.financiallifev2.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,10 +32,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.model.*
+import kz.fearsom.financiallifev2.model.CharacterStatistics
+import kz.fearsom.financiallifev2.model.EraStatistics
+import kz.fearsom.financiallifev2.model.GameEnding
+import kz.fearsom.financiallifev2.model.emoji
+import kz.fearsom.financiallifev2.model.label
 import kz.fearsom.financiallifev2.presentation.StatisticsUiState
 import kz.fearsom.financiallifev2.ui.components.core.AppTopBar
-import kz.fearsom.financiallifev2.ui.theme.*
+import kz.fearsom.financiallifev2.ui.theme.BlueAccent
+import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
+import kz.fearsom.financiallifev2.ui.theme.GreenSuccess
+import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
+import kz.fearsom.financiallifev2.ui.theme.PurpleAccent
+import kz.fearsom.financiallifev2.ui.theme.RedDanger
+import kz.fearsom.financiallifev2.ui.theme.StatStress
 
 @Composable
 fun StatisticsScreen(

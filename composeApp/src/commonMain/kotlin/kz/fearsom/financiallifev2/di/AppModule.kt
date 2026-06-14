@@ -1,8 +1,8 @@
 package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
-import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
+import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
@@ -14,6 +14,7 @@ import kz.fearsom.financiallifev2.network.NetworkConfig
 import kz.fearsom.financiallifev2.network.TokenStorage
 import kz.fearsom.financiallifev2.network.buildHttpClient
 import org.koin.dsl.module
+
 /**
  * Common Koin module — shared by Android and iOS.
  *

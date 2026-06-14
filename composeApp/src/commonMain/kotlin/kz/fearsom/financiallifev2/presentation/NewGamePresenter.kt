@@ -1,15 +1,18 @@
 package kz.fearsom.financiallifev2.presentation
 
-import kz.fearsom.financiallifev2.data.CatalogRepository
-import kz.fearsom.financiallifev2.data.GameSessionRepository
-import kz.fearsom.financiallifev2.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kz.fearsom.financiallifev2.data.CatalogRepository
+import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.model.CharacterBundle
+import kz.fearsom.financiallifev2.model.CharacterType
+import kz.fearsom.financiallifev2.model.Era
+import kz.fearsom.financiallifev2.model.GameSession
+import kz.fearsom.financiallifev2.model.PredefinedCharacter
 
 data class NewGameUiState(
     val eras: List<Era>                            = emptyList(),

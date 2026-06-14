@@ -1,6 +1,6 @@
 package kz.fearsom.financiallifev2.network
 
-import io.ktor.client.engine.*
+import io.ktor.client.engine.HttpClientEngine
 
 /**
  * Returns a platform-specific [HttpClientEngine].

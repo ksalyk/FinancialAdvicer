@@ -1,5 +1,8 @@
 package kz.fearsom.financiallifev2.network
 
+import kz.fearsom.financiallifev2.network.NetworkConfig.baseUrl
+
+
 /**
  * Central config for server base URL.
  *

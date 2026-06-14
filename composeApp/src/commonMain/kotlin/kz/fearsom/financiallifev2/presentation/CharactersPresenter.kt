@@ -1,15 +1,14 @@
 package kz.fearsom.financiallifev2.presentation
 
-import kz.fearsom.financiallifev2.data.CatalogRepository
-import kz.fearsom.financiallifev2.data.GameSessionRepository
-import kz.fearsom.financiallifev2.model.PredefinedCharacter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kz.fearsom.financiallifev2.data.CatalogRepository
+import kz.fearsom.financiallifev2.data.GameSessionRepository
+import kz.fearsom.financiallifev2.model.PredefinedCharacter
 
 data class CharactersUiState(
     val characters: List<PredefinedCharacter> = emptyList(),

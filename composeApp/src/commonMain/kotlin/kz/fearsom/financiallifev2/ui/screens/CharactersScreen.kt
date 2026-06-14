@@ -1,30 +1,39 @@
 package kz.fearsom.financiallifev2.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.CharactersUiState
+import kz.fearsom.financiallifev2.ui.components.character.CharacterRosterCard
 import kz.fearsom.financiallifev2.ui.components.core.AppTopBar
-import kz.fearsom.financiallifev2.ui.theme.*
+import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
+import kz.fearsom.financiallifev2.ui.theme.PurpleAccent
 
 @Composable
 fun CharactersScreen(
@@ -82,93 +91,6 @@ fun CharactersScreen(
                 }
                 item { Spacer(Modifier.height(32.dp)) }
             }
-        }
-    }
-}
-
-@Composable
-private fun CharacterRosterCard(character: PredefinedCharacter, onClick: () -> Unit) {
-    val colors      = LocalAppColors.current
-    val accentColor = when (character.difficulty) {
-        Difficulty.EASY      -> GreenSuccess
-        Difficulty.MEDIUM    -> GoldPrimary
-        Difficulty.HARD      -> RedDanger
-        Difficulty.NIGHTMARE -> PurpleAccent
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(accentColor.copy(0.08f), colors.backgroundCard)
-                )
-            )
-            .border(1.dp, accentColor.copy(0.35f), RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Avatar circle
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(
-                    Brush.radialGradient(listOf(accentColor.copy(0.20f), Color.Transparent)),
-                    CircleShape
-                )
-                .border(1.5.dp, accentColor.copy(0.45f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(character.emoji, fontSize = 26.sp)
-        }
-
-        Spacer(Modifier.width(14.dp))
-
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text       = character.name,
-                    fontSize   = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text     = "${character.age} ${Strings.uiCharsAge}",
-                    fontSize = 11.sp,
-                    color    = colors.textHint,
-                    modifier = Modifier
-                        .background(colors.backgroundElevated, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-            }
-            Text(
-                text     = character.profession,
-                fontSize = 12.sp,
-                color    = accentColor
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text       = character.personality,
-                fontSize   = 12.sp,
-                color      = colors.textSecondary,
-                maxLines   = 1
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.End) {
-            Text("›", fontSize = 20.sp, color = accentColor)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text     = character.difficulty.label(),
-                fontSize = 9.sp,
-                color    = accentColor,
-                modifier = Modifier
-                    .background(accentColor.copy(0.12f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
-            )
         }
     }
 }

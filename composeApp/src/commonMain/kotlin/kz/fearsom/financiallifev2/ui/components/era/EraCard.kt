@@ -1,7 +1,5 @@
 package kz.fearsom.financiallifev2.ui.components.era
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,14 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -40,13 +33,6 @@ import kz.fearsom.financiallifev2.ui.theme.RedDanger
 @Composable
 fun EraCard(era: Era, onClick: () -> Unit) {
     val colors = LocalAppColors.current
-    var pressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue   = if (pressed) 0.97f else 1f,
-        animationSpec = tween(100),
-        label         = "era_card_scale"
-    )
-
     val borderColor = if (era.isLocked) colors.textHint.copy(alpha = 0.3f)
     else GoldPrimary.copy(alpha = 0.4f)
     val bgGradient  = if (era.isLocked)
@@ -57,12 +43,10 @@ fun EraCard(era: Era, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .scale(scale)
             .clip(RoundedCornerShape(16.dp))
             .background(Brush.horizontalGradient(bgGradient))
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(enabled = !era.isLocked) {
-                pressed = true
                 onClick()
             }
             .padding(18.dp)
