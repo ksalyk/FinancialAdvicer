@@ -5,7 +5,8 @@ import org.jetbrains.exposed.v1.core.Table
 /**
  * Stores all playable eras.
  *
- * Eras are seeded from SeedData on server startup via ErasRepository.upsertAll().
+ * Eras are seeded from SeedData on server startup via ErasRepository.seedMissing()
+ * (insert-only-when-missing, so admin edits persist across restarts).
  * Admin API can create, update, or soft-delete eras.
  *
  * Deleting an era from this table cascades to all [CompletedSessionsTable] rows

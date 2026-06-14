@@ -23,11 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kz.fearsom.financiallifev2.data.SeedData
+import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.ui.components.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
+import org.koin.compose.koinInject
 
 @Composable
 fun CharacterDetailScreen(
@@ -35,8 +36,9 @@ fun CharacterDetailScreen(
     onBack: () -> Unit,
     onStartGame: (characterId: String) -> Unit   // quick-start with this character
 ) {
-    val colors    = LocalAppColors.current
-    val character = SeedData.predefinedCharacters.find { it.id == characterId }
+    val colors      = LocalAppColors.current
+    val catalogRepo : CatalogRepository = koinInject()
+    val character   = catalogRepo.predefinedCharacters().find { it.id == characterId }
 
     if (character == null) {
         Box(Modifier.fillMaxSize().background(colors.backgroundDeep), Alignment.Center) {
@@ -154,7 +156,7 @@ fun CharacterDetailScreen(
                 SectionCard(title = Strings.uiCharDetailEras, accentColor = accentColor) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         character.compatibleEraIds.forEach { eraId ->
-                            val era = SeedData.eras.find { it.id == eraId }
+                            val era = catalogRepo.eras().find { it.id == eraId }
                             if (era != null) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(era.emoji, fontSize = 18.sp)

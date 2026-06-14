@@ -90,9 +90,33 @@ class ErasRepository(private val db: Database) {
         return findById(req.id)!!
     }
 
-    /** Bulk upsert — used on startup to sync hardcoded SeedData to the DB. */
-    suspend fun upsertAll(eras: List<UpsertEraRequest>) {
-        eras.forEach { upsert(it) }
+    /**
+     * Startup seed: inserts only eras whose id is NOT already present.
+     *
+     * Existing rows are left untouched so admin edits (rename, deactivate, lock,
+     * character membership) persist across server restarts. New SeedData ids are
+     * still added. Use [upsert] for the admin write path where overwriting is intended.
+     */
+    suspend fun seedMissing(eras: List<UpsertEraRequest>) {
+        newSuspendedTransaction(db = db) {
+            val existing = ErasTable.selectAll().map { it[ErasTable.id] }.toSet()
+            val now = System.currentTimeMillis()
+            eras.filter { it.id !in existing }.forEach { req ->
+                ErasTable.insert {
+                    it[id]                    = req.id
+                    it[name]                  = req.name
+                    it[description]           = req.description
+                    it[emoji]                 = req.emoji
+                    it[startYear]             = req.startYear
+                    it[endYear]               = req.endYear
+                    it[availableCharacterIds] = json.encodeToString(req.availableCharacterIds)
+                    it[isActive]              = req.isActive
+                    it[isLocked]              = req.isLocked
+                    it[createdAt]             = now
+                    it[updatedAt]             = now
+                }
+            }
+        }
     }
 
     // ── Soft delete ───────────────────────────────────────────────────────────

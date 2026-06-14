@@ -85,6 +85,22 @@ data class AdminUserDetailRow(
     val endingDistribution: Map<String, Int>
 )
 
+// ── Game catalog DTO ──────────────────────────────────────────────────────────
+
+/**
+ * Active-only character + era catalog served to the game client at `/game/catalog`.
+ *
+ * Reuses [CharacterRow]/[EraRow] (already shared + serializable). The client overlays
+ * this onto its in-code [kz.fearsom.financiallifev2.data.SeedData] so admin toggles
+ * (active/name/emoji/era-membership) take effect, while gameplay-only data
+ * (initialStats, profession, localized era text, scenario graphs) stays in code.
+ */
+@Serializable
+data class GameCatalogResponse(
+    val characters: List<CharacterRow>,
+    val eras: List<EraRow>
+)
+
 // ── Scenario DTOs ─────────────────────────────────────────────────────────────
 
 @Serializable

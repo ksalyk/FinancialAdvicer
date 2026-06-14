@@ -5,7 +5,8 @@ import org.jetbrains.exposed.v1.core.Table
 /**
  * Stores all playable characters (predefined + bundles).
  *
- * Characters are seeded from SeedData on server startup via CharactersRepository.upsertAll().
+ * Characters are seeded from SeedData on server startup via CharactersRepository.seedMissing()
+ * (insert-only-when-missing, so admin edits persist across restarts).
  * Admin API can create, update, or soft-delete characters.
  *
  * Deleting a character from this table will cascade-delete all rows in

@@ -15,6 +15,7 @@ import kz.fearsom.financiallifev2.server.routes.adminRoutes
 import kz.fearsom.financiallifev2.server.routes.adminScenarioRoutes
 import kz.fearsom.financiallifev2.server.routes.adminUserRoutes
 import kz.fearsom.financiallifev2.server.routes.authRoutes
+import kz.fearsom.financiallifev2.server.routes.catalogRoutes
 import kz.fearsom.financiallifev2.server.routes.gameRoutes
 
 fun Application.configureRouting(
@@ -50,6 +51,9 @@ fun Application.configureRouting(
         route("/api/v1") {
             // Public: login, register, refresh, me
             authRoutes(userRepository)
+
+            // Public: active character + era catalog (client overlays onto SeedData).
+            catalogRoutes(charactersRepository, erasRepository)
 
             // Protected: all game endpoints require a valid access token.
             authenticate("auth-jwt") {

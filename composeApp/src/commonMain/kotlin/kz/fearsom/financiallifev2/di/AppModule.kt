@@ -2,6 +2,7 @@ package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
+import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
@@ -86,4 +87,7 @@ val commonModule = module {
 
     // ── Game API service (statistics persistence) ─────────────────────────────
     single { GameApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl) }
+
+    // ── Catalog (admin-managed characters/eras, overlaid onto SeedData) ────────
+    single { CatalogRepository(api = get()) }
 }

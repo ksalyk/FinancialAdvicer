@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.browser.window
@@ -16,6 +17,8 @@ import kz.fearsom.financiallifev2.admin.CharacterRow
 import kz.fearsom.financiallifev2.admin.EraRow
 import kz.fearsom.financiallifev2.admin.ScenarioComboDto
 import kz.fearsom.financiallifev2.admin.ScenarioGraphDto
+import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
+import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 
 // ── Request bodies ────────────────────────────────────────────────────────────
 
@@ -106,6 +109,25 @@ class AdminApiClient {
     suspend fun listCharacters(): List<CharacterRow> =
         client.get("$baseUrl/admin/characters").body()
 
+    suspend fun getCharacter(id: String): CharacterRow =
+        client.get("$baseUrl/admin/characters/$id").body()
+
+    /** Create or update a character (server upserts by id). Returns the persisted row. */
+    suspend fun upsertCharacter(req: UpsertCharacterRequest): CharacterRow {
+        val res = client.post("$baseUrl/admin/characters") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    /** Hard-delete a character + cascade its stats across all users. */
+    suspend fun deleteCharacter(id: String): Boolean {
+        val res = client.delete("$baseUrl/admin/characters/$id")
+        return res.status.isSuccess()
+    }
+
     suspend fun activateCharacter(id: String): Boolean {
         val res = client.post("$baseUrl/admin/characters/$id/activate")
         return res.status.isSuccess()
@@ -120,6 +142,25 @@ class AdminApiClient {
 
     suspend fun listEras(): List<EraRow> =
         client.get("$baseUrl/admin/eras").body()
+
+    suspend fun getEra(id: String): EraRow =
+        client.get("$baseUrl/admin/eras/$id").body()
+
+    /** Create or update an era (server upserts by id). Returns the persisted row. */
+    suspend fun upsertEra(req: UpsertEraRequest): EraRow {
+        val res = client.post("$baseUrl/admin/eras") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    /** Hard-delete an era + cascade its stats across all users. */
+    suspend fun deleteEra(id: String): Boolean {
+        val res = client.delete("$baseUrl/admin/eras/$id")
+        return res.status.isSuccess()
+    }
 
     suspend fun activateEra(id: String): Boolean {
         val res = client.post("$baseUrl/admin/eras/$id/activate")
@@ -138,4 +179,17 @@ class AdminApiClient {
 
     suspend fun getScenarioGraph(characterId: String, eraId: String): ScenarioGraphDto =
         client.get("$baseUrl/admin/scenarios/$characterId/$eraId").body()
+
+    // ── Internals ───────────────────────────────────────────────────────────────
+
+    /**
+     * Raises an [IllegalStateException] carrying the server's error payload.
+     * We read the raw text (not a typed body) so a non-2xx response with an
+     * unexpected shape never triggers a secondary deserialization failure that
+     * would mask the real error.
+     */
+    private suspend fun HttpResponse.failure(): Nothing {
+        val text = runCatching { bodyAsText() }.getOrDefault("")
+        error("HTTP ${status.value}: ${text.ifBlank { status.description }}")
+    }
 }

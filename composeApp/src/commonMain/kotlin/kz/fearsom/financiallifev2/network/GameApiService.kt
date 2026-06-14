@@ -4,8 +4,10 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
+import kz.fearsom.financiallifev2.admin.GameCatalogResponse
 import kz.fearsom.financiallifev2.model.GameEnding
 import kz.fearsom.financiallifev2.model.GameSession
 
@@ -120,4 +122,36 @@ class GameApiService(
         }.onFailure { e ->
             Napier.w("Failed to fetch statistics from server: ${e.message}", tag = TAG)
         }
+
+    /**
+     * Conditional fetch of the active character + era catalog.
+     *
+     * Pass the last [ifNoneMatch] ETag; if the server replies `304 Not Modified`
+     * the result is [CatalogFetch.notModified] with no body. On failure the caller
+     * falls back to in-code SeedData, so the game always works offline.
+     */
+    suspend fun getCatalog(ifNoneMatch: String?): Result<CatalogFetch> =
+        runCatching {
+            val resp = httpClient.get("$baseUrl/game/catalog") {
+                if (!ifNoneMatch.isNullOrBlank()) header(HttpHeaders.IfNoneMatch, "\"$ifNoneMatch\"")
+            }
+            if (resp.status == HttpStatusCode.NotModified) {
+                CatalogFetch(catalog = null, etag = ifNoneMatch, notModified = true)
+            } else {
+                CatalogFetch(
+                    catalog     = resp.body<GameCatalogResponse>(),
+                    etag        = resp.headers[HttpHeaders.ETag]?.removeSurrounding("\""),
+                    notModified = false
+                )
+            }
+        }.onFailure { e ->
+            Napier.w("Failed to fetch catalog from server: ${e.message}", tag = TAG)
+        }
 }
+
+/** Result of a conditional catalog fetch. [catalog] is null when [notModified]. */
+data class CatalogFetch(
+    val catalog: GameCatalogResponse?,
+    val etag: String?,
+    val notModified: Boolean
+)

@@ -64,6 +64,8 @@ private fun MainScaffold(
 ) {
     var selectedTab by remember { mutableStateOf(AdminTab.USERS) }
     val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val onMessage: (String) -> Unit = { msg -> scope.launch { snackbar.showSnackbar(msg) } }
 
     Scaffold(
         topBar = {
@@ -86,14 +88,15 @@ private fun MainScaffold(
                     )
                 }
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (selectedTab) {
                 AdminTab.USERS      -> UsersScreen(api)
-                AdminTab.CHARACTERS -> CharactersScreen(api)
-                AdminTab.ERAS       -> ErasScreen(api)
-                AdminTab.SCENARIOS  -> ScenariosScreen(api)
+                AdminTab.CHARACTERS -> CharactersScreen(api, onMessage)
+                AdminTab.ERAS       -> ErasScreen(api, onMessage)
+                AdminTab.SCENARIOS  -> ScenariosScreen(api, onMessage)
             }
         }
     }

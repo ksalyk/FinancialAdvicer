@@ -64,7 +64,9 @@ fun Application.module() {
     val charactersRepository = CharactersRepository(database)
     val erasRepository       = ErasRepository(database)
 
-    // 4. Seed hardcoded characters/eras into DB (upsert — safe on every restart)
+    // 4. Seed hardcoded characters/eras into DB.
+    //    insert-only-when-missing: admin edits (rename, deactivate, era membership)
+    //    persist across restarts; only brand-new SeedData ids are added.
     runBlocking {
         val seedRequests = buildList {
             SeedData.predefinedCharacters.forEach { c ->
@@ -88,9 +90,9 @@ fun Application.module() {
                 ))
             }
         }
-        charactersRepository.upsertAll(seedRequests)
+        charactersRepository.seedMissing(seedRequests)
 
-        erasRepository.upsertAll(SeedData.eras.map { e ->
+        erasRepository.seedMissing(SeedData.eras.map { e ->
             UpsertEraRequest(
                 id                    = e.id,
                 name                  = e.name,

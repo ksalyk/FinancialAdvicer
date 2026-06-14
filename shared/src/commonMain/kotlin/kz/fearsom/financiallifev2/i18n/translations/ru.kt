@@ -235,6 +235,7 @@ val ruStrings: Map<String, String> = mapOf(
     // ── System / GameEngine ──────────────────────────────────────────
     "sys_game_start"                 to "🎮 Финансовое приключение началось! Помогай %s строить финансовое будущее.",
     "sys_default_character_name"     to "Амир Нурланов",
+    "sys_time_advanced"              to "⏳ Прошло %s мес. без крупных событий.",
 
     // ── MonthlyReport ────────────────────────────────────────────────
     "sys_monthly_title"              to "📊 %s %d — Итоги месяца",

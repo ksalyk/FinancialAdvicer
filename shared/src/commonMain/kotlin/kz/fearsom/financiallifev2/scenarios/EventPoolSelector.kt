@@ -35,6 +35,11 @@ object EventPoolSelector {
                 val singleUsePoolEvent = event.unique || event.cooldownMonths <= 0
                 if (singleUsePoolEvent && entry.eventId in state.triggeredUniqueEvents) return@mapNotNull null
 
+                // Per-game occurrence cap. Retires filler that has already appeared its
+                // allotted number of times, even when it has a cooldown (repeatable).
+                val cap = event.occurrenceCap()
+                if (cap != null && (state.eventOccurrences[entry.eventId] ?: 0) >= cap) return@mapNotNull null
+
                 // Skip events in cooldown
                 val coolsOffAt = state.eventCooldowns[entry.eventId] ?: 0
                 if (coolsOffAt > state.absoluteMonth) return@mapNotNull null
@@ -92,5 +97,19 @@ object EventPoolSelector {
         }
 
         return weight.toInt().coerceAtLeast(0)
+    }
+
+    /**
+     * Maximum number of times this event may be drawn from the pool in one game,
+     * or `null` for "unlimited" (cooldown-gated repeatable events).
+     *
+     *  - explicit [GameEvent.maxOccurrences] > 0  → that cap
+     *  - unique OR no cooldown                      → 1 (legacy single-use)
+     *  - otherwise                                  → null (repeatable, cooldown only)
+     */
+    private fun GameEvent.occurrenceCap(): Int? = when {
+        maxOccurrences > 0 -> maxOccurrences
+        unique || cooldownMonths <= 0 -> 1
+        else -> null
     }
 }

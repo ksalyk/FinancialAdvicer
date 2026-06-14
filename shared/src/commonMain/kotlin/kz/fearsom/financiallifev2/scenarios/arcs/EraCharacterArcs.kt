@@ -839,6 +839,8 @@ fun regularLifeArc(eraId: String): EventArc = EventArc { map ->
         id = "normal_life",
         flavor = "☕",
         poolWeight = 24,
+        cooldownMonths = 2,
+        maxOccurrences = 3,
         message = story(
             "Обычный месяц без большой драмы. Деньги пришли, часть уже ушла на еду, транспорт и обязательства.",
             "Такие месяцы и решают игру: не один великий ход, а повторяемая привычка."
@@ -961,6 +963,7 @@ fun regularLifeArc(eraId: String): EventArc = EventArc { map ->
         tags = setOf("family"),
         conditions = listOf(Condition.HasFlag("has_child")),
         cooldownMonths = 10,
+        maxOccurrences = 3,
         message = "Вопрос школы появляется раньше, чем хотелось: кружки, форма, подготовка, взносы. Образование легко продают через страх отстать.",
         options = listOf(
             option("school_plan", "Выбрать школу по качеству и бюджету", "📚", MONTHLY_TICK,
@@ -993,6 +996,7 @@ fun regularLifeArc(eraId: String): EventArc = EventArc { map ->
         flavor = "🍸",
         tags = setOf("family"),
         cooldownMonths = 5,
+        maxOccurrences = 3,
         message = "Друзья зовут в бар/клуб. Ничего плохого в отдыхе нет, пока отдых не маскирует усталость и не съедает платежи.",
         options = listOf(
             option("bar_budget", "Пойти с лимитом", "💳", MONTHLY_TICK,
@@ -1009,6 +1013,7 @@ fun regularLifeArc(eraId: String): EventArc = EventArc { map ->
         flavor = "🎮",
         tags = setOf("family"),
         cooldownMonths = 4,
+        maxOccurrences = 3,
         message = "Вечер тянет в $tv. Отдых нужен, но еще один импульсный платеж легко становится подпиской, техникой или ставкой «для интереса».",
         options = listOf(
             option("gaming_limit", "Поставить лимит времени и денег", "⏱️", MONTHLY_TICK,

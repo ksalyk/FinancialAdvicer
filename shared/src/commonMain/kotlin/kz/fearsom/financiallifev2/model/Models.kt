@@ -158,6 +158,10 @@ data class GameOption(
  * [poolWeight]     — relative weight in random pool selection (higher = more likely).
  * [unique]         — if true, can only fire once per game session.
  * [cooldownMonths] — minimum months before this event can fire again (0 = no cooldown).
+ * [maxOccurrences] — hard per-game cap on how many times this event may be drawn from
+ *                    the pool. 0 = legacy behaviour: single-use unless [cooldownMonths] > 0.
+ *                    Use a small value (e.g. 3) to keep low-stakes filler events
+ *                    ("Ordinary month", "watch DVD") from dominating a long playthrough.
  * [isEnding]       — leaf node that terminates the game.
  */
 @Serializable
@@ -174,7 +178,8 @@ data class GameEvent(
     val poolWeight: Int = 10,
     val unique: Boolean = false,
     val cooldownMonths: Int = 0,
-    val schemeExplanation: String? = null
+    val schemeExplanation: String? = null,
+    val maxOccurrences: Int = 0
 )
 
 /** Entry in a weighted event pool. */
@@ -233,7 +238,9 @@ data class PlayerState(
     /** Deferred events queued by previous choices. */
     val pendingScheduled: List<PendingEvent> = emptyList(),
     /** eventId → absoluteMonth when cooldown expires. */
-    val eventCooldowns: Map<String, Int> = emptyMap()
+    val eventCooldowns: Map<String, Int> = emptyMap(),
+    /** eventId → times it has been drawn this game. Drives [GameEvent.maxOccurrences] caps. */
+    val eventOccurrences: Map<String, Int> = emptyMap()
 ) {
     val monthLabel: String get() = "$year / ${"$month".padStart(2, '0')}"
 

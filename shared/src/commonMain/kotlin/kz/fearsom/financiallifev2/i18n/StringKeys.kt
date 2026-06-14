@@ -234,6 +234,7 @@ object StringKeys {
     // ── System / GameEngine ──────────────────────────────────────────
     const val SYS_GAME_START                  = "sys_game_start"
     const val SYS_DEFAULT_CHARACTER_NAME      = "sys_default_character_name"
+    const val SYS_TIME_ADVANCED               = "sys_time_advanced"
 
     // ── MonthlyReport ────────────────────────────────────────────────
     const val SYS_MONTHLY_TITLE               = "sys_monthly_title"

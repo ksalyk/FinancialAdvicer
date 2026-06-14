@@ -1,13 +1,15 @@
 package kz.fearsom.financiallifev2.presentation
 
+import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
-import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class NewGameUiState(
     val eras: List<Era>                            = emptyList(),
@@ -22,11 +24,16 @@ data class NewGameUiState(
  *  Step 1 — EraSelectionScreen: user picks an era
  *  Step 2 — CharacterSelectionScreen: user picks a predefined character or bundle
  *
+ * Eras/characters/bundles come from [CatalogRepository], which overlays the
+ * admin-managed catalog (active rows + metadata) onto in-code SeedData. So an
+ * admin deactivating/renaming/re-assigning a character or era is reflected here.
+ *
  * [startWithPredefined] / [startWithBundle] return the new [GameSession.id] so the
  * Composable can trigger navigation to ChatScreen.
  */
 class NewGamePresenter(
     private val sessionRepo: GameSessionRepository,
+    private val catalogRepo: CatalogRepository,
     private val scope: CoroutineScope
 ) {
     private val _uiState = MutableStateFlow(NewGameUiState())
@@ -34,18 +41,29 @@ class NewGamePresenter(
 
     init {
         refreshLocalizedData()
+        scope.launch { catalogRepo.refresh() }
+        scope.launch { catalogRepo.catalog.collect { refreshLocalizedData() } }
+    }
+
+    /**
+     * Re-pulls the catalog so admin changes appear without an app relaunch.
+     * Call when entering the New Game flow. The catalog collector recomputes UI
+     * state if anything changed; an unchanged catalog is a no-op (StateFlow dedups).
+     */
+    fun refresh() {
+        scope.launch { catalogRepo.refresh() }
     }
 
     fun refreshLocalizedData() {
         val selectedEraId = _uiState.value.selectedEraId
         _uiState.update {
             it.copy(
-                eras = SeedData.eras,
+                eras = catalogRepo.eras(),
                 availableCharacters = selectedEraId
-                    ?.let { eraId -> SeedData.predefinedCharacters.filter { character -> eraId in character.compatibleEraIds } }
+                    ?.let { eraId -> catalogRepo.predefinedCharacters().filter { c -> eraId in c.compatibleEraIds } }
                     ?: it.availableCharacters,
                 availableBundles = selectedEraId
-                    ?.let { eraId -> SeedData.characterBundles.filter { bundle -> eraId in bundle.compatibleEraIds } }
+                    ?.let { eraId -> catalogRepo.characterBundles().filter { b -> eraId in b.compatibleEraIds } }
                     ?: it.availableBundles
             )
         }
@@ -53,8 +71,8 @@ class NewGamePresenter(
 
     /** Called from EraSelectionScreen. Loads characters/bundles for that era. */
     fun selectEra(eraId: String) {
-        val characters = SeedData.predefinedCharacters.filter { eraId in it.compatibleEraIds }
-        val bundles    = SeedData.characterBundles.filter { eraId in it.compatibleEraIds }
+        val characters = catalogRepo.predefinedCharacters().filter { eraId in it.compatibleEraIds }
+        val bundles    = catalogRepo.characterBundles().filter { eraId in it.compatibleEraIds }
         _uiState.update {
             it.copy(
                 selectedEraId       = eraId,
@@ -67,8 +85,8 @@ class NewGamePresenter(
     /** Starts a new game from CharacterSelectionScreen with a predefined character. */
     fun startWithPredefined(characterId: String): String? {
         val eraId     = _uiState.value.selectedEraId ?: return null
-        val era       = SeedData.eras.find { it.id == eraId } ?: return null
-        val character = SeedData.predefinedCharacters.find { it.id == characterId } ?: return null
+        val era       = catalogRepo.eras().find { it.id == eraId } ?: return null
+        val character = catalogRepo.predefinedCharacters().find { it.id == characterId } ?: return null
 
         val session = sessionRepo.createSession(
             era            = era,
@@ -85,8 +103,8 @@ class NewGamePresenter(
     /** Starts a new game from CharacterSelectionScreen with a bundle. */
     fun startWithBundle(bundleId: String): String? {
         val eraId  = _uiState.value.selectedEraId ?: return null
-        val era    = SeedData.eras.find { it.id == eraId } ?: return null
-        val bundle = SeedData.characterBundles.find { it.id == bundleId } ?: return null
+        val era    = catalogRepo.eras().find { it.id == eraId } ?: return null
+        val bundle = catalogRepo.characterBundles().find { it.id == bundleId } ?: return null
 
         val session = sessionRepo.createSession(
             era            = era,
@@ -102,7 +120,7 @@ class NewGamePresenter(
 
     /** Quick-start from CharactersScreen — skips era selection, uses first compatible era. */
     fun quickStartWithCharacter(characterId: String): String? {
-        val character = SeedData.predefinedCharacters.find { it.id == characterId } ?: return null
+        val character = catalogRepo.predefinedCharacters().find { it.id == characterId } ?: return null
         val eraId     = character.compatibleEraIds.firstOrNull() ?: return null
         selectEra(eraId)
         return startWithPredefined(characterId)

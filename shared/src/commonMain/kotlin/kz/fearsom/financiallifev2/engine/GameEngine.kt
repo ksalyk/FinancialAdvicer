@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.random.Random
 
+/** Safety bound on how many uneventful months a single choice may fast-forward. */
+private const val MAX_FAST_FORWARD_MONTHS = 600
+
 /**
  * Core game FSM — 3-layer architecture:
  *
@@ -109,40 +112,33 @@ class GameEngine(
         val nextEventId: String
 
         if (option.next == MONTHLY_TICK) {
-            // ── Layer 3: monthly economic simulation ─────────────────────
-            val (updatedPs, report) = monthlyTick(ps)
-            ps = updatedPs
+            // ── Layer 3: monthly economic simulation + fast-forward ──────────
+            // Run the first tick, then skip over "empty" months so the player is
+            // never stuck watching the same filler ("Ordinary month", "watch DVD")
+            // repeat for years. We only fast-forward while a concrete FUTURE beat
+            // exists (a queued consequence or a dated era crisis); the loop stops
+            // the moment ANY tier — including a conditional or a fresh pool draw —
+            // becomes eligible, so capped filler still appears, just not forever.
+            val firstTick = monthlyTick(ps)
+            ps = firstTick.first
+            var report = firstTick.second
+            var beat = resolveTickBeat(ps, current.currentEventId)
+            var monthsAdvanced = 1
+            while (!beat.hasAny && monthsAdvanced < MAX_FAST_FORWARD_MONTHS && hasFutureDatedBeat(ps)) {
+                val nextTick = monthlyTick(ps)
+                ps = nextTick.first
+                report = nextTick.second
+                beat = resolveTickBeat(ps, current.currentEventId)
+                monthsAdvanced++
+            }
+
+            // Condense any skipped months into a single "time passed" note.
+            if (monthsAdvanced > 1) newMessages += timeAdvancedMsg(monthsAdvanced)
             newMessages += monthlyReportMsg(report)
 
-
-            // ── 4-tier event priority queue ───────────────────────────────
-
-            // PRIORITY 1: Era-scheduled global event (world crisis on this date)
-            val eraEvent = findEraEvent(ps)
-
-            // PRIORITY 2: Deferred consequence scheduled by a previous choice.
-            // Only dequeue it when it actually wins; era events have higher priority.
-            val scheduled = if (eraEvent == null) findScheduledEvent(ps) else null
-
-            // PRIORITY 3: Conditional event (debt crisis, burnout, mortgage unlock…)
-            val conditional = if (scheduled == null && eraEvent == null)
-                findConditionalEvent(ps, current.currentEventId)
-            else null
-
-            // PRIORITY 4: Weighted pool (scam events, career, normal life)
-            val poolPick = if (eraEvent == null && scheduled == null && conditional == null)
-                EventPoolSelector.selectNext(
-                    pool                = graph.eventPool,
-                    allEvents           = graph::findEvent,
-                    state               = ps,
-                    eraWeightModifiers  = eraDefinition?.poolWeightModifiers ?: emptyMap(),
-                    random              = random
-                )
-            else null
-
-            val nextEvent = eraEvent ?: scheduled?.event ?: conditional
-            nextEventId   = nextEvent?.id ?: poolPick ?: "normal_life"
-            val selectedFromPool = nextEvent == null && poolPick != null
+            val nextEvent = beat.winnerEvent
+            nextEventId   = nextEvent?.id ?: beat.poolPick ?: "normal_life"
+            val selectedFromPool = nextEvent == null && beat.poolPick != null
 
             val winner = graph.findEvent(nextEventId)
             val singleUsePoolEvent = selectedFromPool && winner != null && winner.cooldownMonths <= 0
@@ -152,8 +148,8 @@ class GameEngine(
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
             }
 
-            if (scheduled?.event?.id == nextEventId) {
-                ps = removeScheduledEvent(ps, scheduled.pending)
+            if (beat.scheduled?.event?.id == nextEventId) {
+                ps = removeScheduledEvent(ps, beat.scheduled.pending)
             }
 
             if (winner != null && winner.cooldownMonths > 0) {
@@ -164,8 +160,16 @@ class GameEngine(
             }
 
             // Mark era event triggered so it doesn't fire again
-            if (eraEvent != null) {
+            if (beat.eraEvent != null) {
                 ps = ps.copy(triggeredUniqueEvents = ps.triggeredUniqueEvents + nextEventId)
+            }
+
+            // Count pool draws so per-game occurrence caps can retire over-used filler.
+            if (selectedFromPool) {
+                ps = ps.copy(
+                    eventOccurrences = ps.eventOccurrences +
+                        (nextEventId to (ps.eventOccurrences[nextEventId] ?: 0) + 1)
+                )
             }
 
             graph.findEvent(nextEventId)?.let { newMessages += characterMsg(it, ps) }
@@ -343,6 +347,58 @@ class GameEngine(
             .sortedByDescending { it.priority }
             .firstOrNull { event -> event.conditions.all { it.check(ps) } }
 
+    // ── Fast-forward over uneventful months ───────────────────────────────────
+
+    /** Snapshot of the 4-tier priority queue for one month (no state mutation). */
+    private data class TickBeat(
+        val eraEvent: GameEvent?,
+        val scheduled: ScheduledPick?,
+        val conditional: GameEvent?,
+        val poolPick: String?
+    ) {
+        val hasAny: Boolean
+            get() = eraEvent != null || scheduled != null || conditional != null || poolPick != null
+
+        /** Event that wins outright (era → scheduled → conditional). Pool is resolved separately. */
+        val winnerEvent: GameEvent?
+            get() = eraEvent ?: scheduled?.event ?: conditional
+    }
+
+    /** Evaluates the priority queue for [ps] without consuming or mutating anything. */
+    private fun resolveTickBeat(ps: PlayerState, excludeConditionalId: String): TickBeat {
+        val eraEvent = findEraEvent(ps)
+        val scheduled = if (eraEvent == null) findScheduledEvent(ps) else null
+        val conditional = if (eraEvent == null && scheduled == null)
+            findConditionalEvent(ps, excludeConditionalId)
+        else null
+        val poolPick = if (eraEvent == null && scheduled == null && conditional == null)
+            EventPoolSelector.selectNext(
+                pool               = graph.eventPool,
+                allEvents          = graph::findEvent,
+                state              = ps,
+                eraWeightModifiers = eraDefinition?.poolWeightModifiers ?: emptyMap(),
+                random             = random
+            )
+        else null
+        return TickBeat(eraEvent, scheduled, conditional, poolPick)
+    }
+
+    /**
+     * True when a concrete dated beat still lies ahead: a queued consequence or an
+     * era crisis with a future date. Conditionals and pool draws are intentionally
+     * NOT counted here — they are re-checked every skipped month inside the loop, so
+     * they end the skip the moment they become eligible. Without a future dated beat
+     * we do not fast-forward, preserving the `normal_life` last-resort behaviour.
+     */
+    private fun hasFutureDatedBeat(ps: PlayerState): Boolean {
+        val futureScheduled = ps.pendingScheduled.any { it.absoluteMonth > ps.absoluteMonth }
+        val futureEra = eraDefinition?.globalEvents?.any { g ->
+            (g.year > ps.year || (g.year == ps.year && g.month > ps.month)) &&
+                g.eventId !in ps.triggeredUniqueEvents
+        } ?: false
+        return futureScheduled || futureEra
+    }
+
     // ── Effect application ────────────────────────────────────────────────────
 
     private val PendingEvent.absoluteMonth: Int get() = fireAtYear * 12 + fireAtMonth
@@ -474,6 +530,13 @@ class GameEngine(
         text   = report.toMessage(),
         emoji  = "📊",
         monthlyReport = report
+    )
+
+    /** Note shown when the engine fast-forwards over [months] uneventful months. */
+    private fun timeAdvancedMsg(months: Int) = systemMsg(
+        text     = Strings[StringKeys.SYS_TIME_ADVANCED].replaceFirst("%s", months.toString()),
+        textKey  = StringKeys.SYS_TIME_ADVANCED,
+        textArgs = listOf(months.toString())
     )
 
     private fun localizeMessage(message: ChatMessage, ps: PlayerState): ChatMessage = when (message.sender) {

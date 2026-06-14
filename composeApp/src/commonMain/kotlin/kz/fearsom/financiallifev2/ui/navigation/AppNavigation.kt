@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
@@ -51,6 +52,7 @@ fun AppNavigation() {
     val gameEngine     : GameEngine             = koinInject()
     val sessionRepo    : GameSessionRepository  = koinInject()
     val gameApiService : GameApiService         = koinInject()
+    val catalogRepo    : CatalogRepository      = koinInject()
     val localeRepo     : LocaleRepository       = koinInject()
     val featureFlags   : FeatureFlagRepository  = koinInject()
 
@@ -60,8 +62,8 @@ fun AppNavigation() {
     val authPresenter     = remember { AuthPresenter(authRepository, scope) }
     val gamePresenter     = remember { GamePresenter(gameEngine, sessionRepo, scope, gameApiService) }
     val mainMenuPresenter = remember { MainMenuPresenter(sessionRepo, scope) }
-    val newGamePresenter  = remember { NewGamePresenter(sessionRepo, scope) }
-    val charsPresenter    = remember { CharactersPresenter(sessionRepo, scope) }
+    val newGamePresenter  = remember { NewGamePresenter(sessionRepo, catalogRepo, scope) }
+    val charsPresenter    = remember { CharactersPresenter(sessionRepo, catalogRepo, scope) }
     val statsPresenter    = remember { StatisticsPresenter(sessionRepo, scope, gameApiService) }
     val settingsPresenter = remember { SettingsPresenter(localeRepo, featureFlags, scope) }
 
@@ -129,6 +131,16 @@ fun AppNavigation() {
     }
 
     val currentScreen = backStack.lastOrNull() ?: AppScreen.Login
+
+    // Re-pull the admin catalog when entering a catalog-driven screen, so changes
+    // made in the admin panel show up without an app relaunch.
+    LaunchedEffect(currentScreen) {
+        when (currentScreen) {
+            AppScreen.EraSelection -> newGamePresenter.refresh()
+            AppScreen.Characters   -> charsPresenter.refresh()
+            else                   -> {}
+        }
+    }
 
     SystemBackHandler(enabled = backStack.size > 1, onBack = ::goBack)
 

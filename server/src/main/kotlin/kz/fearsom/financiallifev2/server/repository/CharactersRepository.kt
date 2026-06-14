@@ -83,9 +83,30 @@ class CharactersRepository(private val db: Database) {
         return findById(req.id)!!
     }
 
-    /** Bulk upsert — used on startup to sync hardcoded SeedData to the DB. */
-    suspend fun upsertAll(characters: List<UpsertCharacterRequest>) {
-        characters.forEach { upsert(it) }
+    /**
+     * Startup seed: inserts only characters whose id is NOT already present.
+     *
+     * Existing rows are left untouched so admin edits (rename, deactivate, era
+     * membership) persist across server restarts. New SeedData ids are still added.
+     * Use [upsert] for the admin write path where overwriting is intended.
+     */
+    suspend fun seedMissing(characters: List<UpsertCharacterRequest>) {
+        newSuspendedTransaction(db = db) {
+            val existing = CharactersTable.selectAll().map { it[CharactersTable.id] }.toSet()
+            val now = System.currentTimeMillis()
+            characters.filter { it.id !in existing }.forEach { req ->
+                CharactersTable.insert {
+                    it[id]        = req.id
+                    it[name]      = req.name
+                    it[emoji]     = req.emoji
+                    it[type]      = req.type
+                    it[eraIds]    = json.encodeToString(req.eraIds)
+                    it[isActive]  = req.isActive
+                    it[createdAt] = now
+                    it[updatedAt] = now
+                }
+            }
+        }
     }
 
     // ── Soft delete ───────────────────────────────────────────────────────────

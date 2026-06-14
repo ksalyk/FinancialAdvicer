@@ -31,13 +31,14 @@ internal fun event(
     poolWeight: Int = 10,
     unique: Boolean = false,
     cooldownMonths: Int = 0,
+    maxOccurrences: Int = 0,
     schemeExplanation: String? = null,
     isEnding: Boolean = false,
     endingType: EndingType? = null,
     options: List<GameOption>
 ) = GameEvent(
     id, message, flavor, options, conditions, priority, isEnding, endingType,
-    tags, poolWeight, unique, cooldownMonths, schemeExplanation
+    tags, poolWeight, unique, cooldownMonths, schemeExplanation, maxOccurrences
 )
 
 internal fun option(
