@@ -1,4 +1,4 @@
-package kz.fearsom.financiallifev2.ui.components
+package kz.fearsom.financiallifev2.ui.components.core
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -46,8 +47,8 @@ fun AccentCard(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     cornerRadius: RoundedCornerShape = RoundedCornerShape(Radius.md),
-    padding: androidx.compose.foundation.layout.PaddingValues =
-        androidx.compose.foundation.layout.PaddingValues(Spacing.lg),
+    padding: PaddingValues =
+        PaddingValues(Spacing.lg),
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -88,8 +89,8 @@ fun StaticCard(
     borderColor: Color,
     modifier: Modifier = Modifier,
     cornerRadius: RoundedCornerShape = RoundedCornerShape(Radius.md),
-    padding: androidx.compose.foundation.layout.PaddingValues =
-        androidx.compose.foundation.layout.PaddingValues(Spacing.lg),
+    padding: PaddingValues =
+        PaddingValues(Spacing.lg),
     content: @Composable () -> Unit
 ) {
     Box(

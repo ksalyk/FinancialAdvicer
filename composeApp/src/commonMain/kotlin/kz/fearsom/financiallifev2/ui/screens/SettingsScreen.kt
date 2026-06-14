@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.presentation.SettingsUiState
-import kz.fearsom.financiallifev2.ui.components.AppScreen
+import kz.fearsom.financiallifev2.ui.components.core.AppScreen
 import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 import kz.fearsom.financiallifev2.ui.theme.Spacing

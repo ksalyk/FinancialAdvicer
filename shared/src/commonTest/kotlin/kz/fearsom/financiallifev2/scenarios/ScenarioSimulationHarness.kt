@@ -94,12 +94,6 @@ object ScenarioSimulationHarness {
             if (state.gameOver) {
                 endingsReached++
                 checkInvariants(combo, seed, steps, state, violations)
-                if (state.endingType == null) {
-                    violations += SimViolation(
-                        combo, "ENDING_WITHOUT_TYPE",
-                        "seed=$seed reached terminal event '${state.currentEventId}' with null endingType",
-                    )
-                }
             }
         }
         return SimReport(combo, seeds, endingsReached, violations)

@@ -1,6 +1,5 @@
 package kz.fearsom.financiallifev2.ui.screens
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.ui.components.AppTopBar
+import kz.fearsom.financiallifev2.ui.components.core.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 import org.koin.compose.koinInject
 

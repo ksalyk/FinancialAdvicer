@@ -1,4 +1,4 @@
-package kz.fearsom.financiallifev2.ui.components
+package kz.fearsom.financiallifev2.ui.components.core
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState

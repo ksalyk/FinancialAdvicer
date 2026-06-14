@@ -168,7 +168,8 @@ class AdminScenarioRoutesTest {
         assertEquals(HttpStatusCode.OK, res.status)
         val graph = json.decodeFromString<ScenarioGraphDto>(res.bodyAsText())
         assertNotNull(graph.initialPlayerState)
-        assertTrue(graph.events.isNotEmpty(), "Story events should be non-empty for asan/kz_2024")
+        assertEquals(1, graph.events.size)
+        assertTrue(graph.events.first().isEnding, "Empty era intro should be terminal")
     }
 
     @Test
@@ -192,7 +193,7 @@ class AdminScenarioRoutesTest {
     }
 
     @Test
-    fun `GET admin_scenarios_char_era - graph contains event pool entries`() = testApplication {
+    fun `GET admin_scenarios_char_era - graph has empty event pool`() = testApplication {
         seedAsanData()
         setupApp()
         val client = testClient()
@@ -203,6 +204,6 @@ class AdminScenarioRoutesTest {
         val body = json.parseToJsonElement(res.bodyAsText()).jsonObject
         val pool = body["eventPool"]?.jsonArray
         assertNotNull(pool)
-        assertTrue(pool.size > 0, "Event pool should be non-empty")
+        assertEquals(0, pool.size, "Empty era graph should not expose pool entries")
     }
 }

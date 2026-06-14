@@ -6,6 +6,7 @@ import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class LocaleRefreshRegressionTest {
@@ -18,18 +19,19 @@ class LocaleRefreshRegressionTest {
     }
 
     @Test
-    fun `scenario graph returns Russian-first story content`() {
+    fun `scenario graph returns empty era intro`() {
         Strings.currentLocale = "ru"
         val intro = ScenarioGraphFactory
             .forCharacter("asan", "kz_2024")
             .findEvent("intro")
 
-        assertTrue(intro?.message?.contains("Амир") == true)
-        assertTrue(intro.options.first().text.isNotEmpty())
+        assertTrue(intro?.message?.contains("Сценарий эпохи") == true)
+        assertTrue(intro.isEnding)
+        assertTrue(intro.options.isEmpty())
     }
 
     @Test
-    fun `loaded game state keeps Russian scenario content until localization pass`() {
+    fun `loaded game state relocalizes empty era intro when character name is supplied`() {
         Strings.currentLocale = "ru"
         val engine = GameEngine.forCharacterAndEra("asan", "kz_2024")
         val ruState = engine.startGame(characterName = "Амир Нурланов")
@@ -39,7 +41,8 @@ class LocaleRefreshRegressionTest {
         engine.loadState(ruState, "Амир Нурланов")
         val enState = engine.state.value!!
 
-        assertEquals(ruIntro, enState.messages.last().text)
+        assertNotEquals(ruIntro, enState.messages.last().text)
+        assertTrue(enState.messages.last().text.contains(Strings.eraModernKz2024Name))
     }
 
     @Test

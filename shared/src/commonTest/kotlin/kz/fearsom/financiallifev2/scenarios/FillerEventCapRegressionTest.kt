@@ -11,7 +11,6 @@ import kz.fearsom.financiallifev2.model.MessageSender
 import kz.fearsom.financiallifev2.model.PendingEvent
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -50,35 +49,6 @@ class FillerEventCapRegressionTest {
             it.sender == MessageSender.SYSTEM && it.textKey == StringKeys.SYS_TIME_ADVANCED
         }
         assertTrue(skipNote, "empty months should be condensed into a single time-advanced note")
-    }
-
-    @Test
-    fun `serik never repeats a filler event more than three times`() {
-        val fillerIds = setOf("normal_life", "gaming_tv_event", "bar_club_event", "school_event")
-        val graph = ScenarioGraphFactory.forCharacter("serik", "kz_2005")
-        val era = EraRegistry.findById("kz_2005")
-
-        for (seed in 0 until 50) {
-            val rng = Random(seed)
-            val engine = GameEngine(graph, era, rng)
-            var state = engine.startGame(characterName = "Serik")
-
-            var steps = 0
-            while (!state.gameOver && steps < 2_000) {
-                val options = graph.findEvent(state.currentEventId)?.options.orEmpty()
-                if (options.isEmpty()) break
-                state = engine.makeChoice(options[rng.nextInt(options.size)].id)
-                steps++
-            }
-
-            state.messages
-                .filter { it.sender == MessageSender.CHARACTER && it.sourceEventId in fillerIds }
-                .groupingBy { it.sourceEventId!! }
-                .eachCount()
-                .forEach { (id, count) ->
-                    assertTrue(count <= 3, "seed=$seed: filler '$id' appeared $count times (cap is 3)")
-                }
-        }
     }
 
     /**

@@ -3,10 +3,10 @@ package kz.fearsom.financiallifev2.engine
 import kz.fearsom.financiallifev2.i18n.StringKeys
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
-import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.EraDefinition
 import kz.fearsom.financiallifev2.scenarios.EraRegistry
 import kz.fearsom.financiallifev2.scenarios.EventPoolSelector
+import kz.fearsom.financiallifev2.scenarios.Kz2024ScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +38,7 @@ private const val MAX_FAST_FORWARD_MONTHS = 600
  *     → emit new GameState via StateFlow
  */
 class GameEngine(
-    private var graph: ScenarioGraph = AsanScenarioGraph(),
+    private var graph: ScenarioGraph = Kz2024ScenarioGraph(),
     private var eraDefinition: EraDefinition? = null,
     private val random: Random = Random.Default
 ) {
@@ -75,7 +75,9 @@ class GameEngine(
                 systemMsg(Strings.sysGameStart.replace("%s", characterName), StringKeys.SYS_GAME_START, listOf(characterName)),
                 characterMsg(intro, ps)
             ),
-            isWaitingForChoice = true
+            isWaitingForChoice = intro.options.isNotEmpty() && !intro.isEnding,
+            gameOver           = intro.isEnding,
+            endingType         = intro.endingType
         ).also { _state.value = it }
     }
 

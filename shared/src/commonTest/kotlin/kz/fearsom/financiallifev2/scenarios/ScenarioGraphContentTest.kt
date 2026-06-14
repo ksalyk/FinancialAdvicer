@@ -3,6 +3,7 @@ package kz.fearsom.financiallifev2.scenarios
 import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.MONTHLY_TICK
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -16,6 +17,18 @@ class ScenarioGraphContentTest {
     fun `each graph exposes intro event`() {
         graphs.forEach { graph ->
             assertNotNull(graph.findEvent("intro"), "Missing intro for ${graph.initialPlayerState.characterId}/${graph.initialPlayerState.eraId}")
+        }
+    }
+
+    @Test
+    fun `empty era graphs contain only terminal intro`() {
+        graphs.forEach { graph ->
+            val intro = graph.findEvent("intro")!!
+            assertEquals(setOf("intro"), graph.events.keys)
+            assertTrue(intro.isEnding, "Intro should terminate empty scenario for ${graph.initialPlayerState.eraId}")
+            assertTrue(intro.options.isEmpty(), "Empty scenario intro must not expose choices for ${graph.initialPlayerState.eraId}")
+            assertTrue(graph.conditionalEvents.isEmpty(), "Empty scenario must not define conditionals for ${graph.initialPlayerState.eraId}")
+            assertTrue(graph.eventPool.isEmpty(), "Empty scenario must not define pool entries for ${graph.initialPlayerState.eraId}")
         }
     }
 
@@ -56,21 +69,6 @@ class ScenarioGraphContentTest {
                 .forEach { ending ->
                     assertTrue(ending.options.isEmpty(), "Ending '${ending.id}' must not expose choices")
                 }
-        }
-    }
-
-    @Test
-    fun `normal life pool weight stays above individual scam events`() {
-        graphs.forEach { graph ->
-            val normalLifeWeight = graph.eventPool.first { it.eventId == "normal_life" }.baseWeight
-            val maxScamWeight = graph.eventPool
-                .filter { entry -> graph.findEvent(entry.eventId)?.tags?.contains("scam") == true }
-                .maxOfOrNull { it.baseWeight } ?: 0
-
-            assertTrue(
-                normalLifeWeight > maxScamWeight,
-                "normal_life weight should exceed any single scam event in ${graph.initialPlayerState.characterId}/${graph.initialPlayerState.eraId}"
-            )
         }
     }
 

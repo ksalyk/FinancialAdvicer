@@ -1,152 +1,154 @@
 package kz.fearsom.financiallifev2.scenarios
 
-import kz.fearsom.financiallifev2.model.Condition
-import kz.fearsom.financiallifev2.model.Effect
-import kz.fearsom.financiallifev2.model.EndingType
+import kotlin.concurrent.Volatile
+import kz.fearsom.financiallifev2.i18n.Strings
+import kz.fearsom.financiallifev2.model.CurrencyCode
 import kz.fearsom.financiallifev2.model.GameEvent
-import kz.fearsom.financiallifev2.model.GameOption
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.model.PoolEntry
-import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.SerikScenarioGraph
-import kotlin.concurrent.Volatile
 
 /** Thrown when no scenario graph exists for a given characterId + eraId combination. */
 class ScenarioNotFoundException(characterId: String, eraId: String) :
     NoSuchElementException("No scenario graph for characterId=$characterId eraId=$eraId")
 
-// ─── DSL helpers ─────────────────────────────────────────────────────────────
-
-internal fun event(
-    id: String,
-    message: String,
-    flavor: String = "💬",
-    priority: Int = 0,
-    conditions: List<Condition> = emptyList(),
-    tags: Set<String> = emptySet(),
-    poolWeight: Int = 10,
-    unique: Boolean = false,
-    cooldownMonths: Int = 0,
-    maxOccurrences: Int = 0,
-    schemeExplanation: String? = null,
-    isEnding: Boolean = false,
-    endingType: EndingType? = null,
-    options: List<GameOption>
-) = GameEvent(
-    id, message, flavor, options, conditions, priority, isEnding, endingType,
-    tags, poolWeight, unique, cooldownMonths, schemeExplanation, maxOccurrences
-)
-
-internal fun option(
-    id: String,
-    text: String,
-    emoji: String,
-    next: String,
-    fx: Effect = Effect()
-) = GameOption(id, text, emoji, fx, next)
-
-internal fun cond(field: Condition.Stat.Field, op: Condition.Stat.Op, value: Long) =
-    Condition.Stat(field, op, value)
-
-// ─── Abstract ScenarioGraph ───────────────────────────────────────────────────
-
-/**
- * Base class for all character scenario graphs.
- *
- * Structure:
- *   [events]            — fixed narrative story events keyed by id
- *   [conditionalEvents] — injected by engine when PlayerState conditions match
- *   [eventPool]         — weighted pool entries drawn after a monthly tick
- *
- * [findEvent] checks story events → conditional events → scam library → era library.
- * Subclasses override [events], [conditionalEvents], and [eventPool].
- */
 abstract class ScenarioGraph {
 
     abstract val initialPlayerState: PlayerState
 
-    /** Fixed story events — narrative anchors and branches. */
+    /** Fixed story events keyed by id. */
     abstract val events: Map<String, GameEvent>
 
-    /** Priority-checked after each monthly tick (highest priority wins). */
+    /** Priority-checked after each monthly tick. */
     abstract val conditionalEvents: List<GameEvent>
 
-    /**
-     * Weighted pool entries for random event selection after a monthly tick.
-     * Include your character-specific events AND ScamEventLibrary.poolEntries.
-     */
+    /** Weighted pool entries drawn after a monthly tick. */
     abstract val eventPool: List<PoolEntry>
 
-    /**
-     * Unified event lookup. Checks (in order):
-     *   1. Character story events
-     *   2. Character conditional events
-     *   3. Scam event library
-     *   4. Era event library
-     */
     fun findEvent(id: String): GameEvent? =
-        events[id]
-            ?: conditionalEvents.find { it.id == id }
-            ?: ScamEventLibrary.findById(id)
-            ?: EraEventLibrary.findById(id)
+        events[id] ?: conditionalEvents.find { it.id == id }
 }
 
-// ─── Factory ──────────────────────────────────────────────────────────────────
+abstract class EmptyEraScenarioGraph(
+    eraName: String,
+    final override val initialPlayerState: PlayerState
+) : ScenarioGraph() {
+
+    final override val events: Map<String, GameEvent> = mapOf(
+        "intro" to GameEvent(
+            id = "intro",
+            message = "Сценарий эпохи $eraName пока пуст.",
+            flavor = "📝",
+            options = emptyList(),
+            isEnding = true
+        )
+    )
+
+    final override val conditionalEvents: List<GameEvent> = emptyList()
+    final override val eventPool: List<PoolEntry> = emptyList()
+}
+
+class Kz90sScenarioGraph : EmptyEraScenarioGraph(
+    eraName = Strings.eraKz90sName,
+    initialPlayerState = PlayerState(
+        capital = 25_000_000L,
+        income = 7_500_000L,
+        expenses = 6_000_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.05,
+        stress = 55,
+        financialKnowledge = 18,
+        riskLevel = 35,
+        month = 1,
+        year = 1993,
+        characterId = "era_kz_90s",
+        eraId = "kz_90s",
+        currency = CurrencyCode.RUB
+    )
+)
+
+class Kz2005ScenarioGraph : EmptyEraScenarioGraph(
+    eraName = Strings.eraKz2005Name,
+    initialPlayerState = PlayerState(
+        capital = 450_000L,
+        income = 170_000L,
+        expenses = 105_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.07,
+        stress = 34,
+        financialKnowledge = 24,
+        riskLevel = 26,
+        month = 1,
+        year = 2005,
+        characterId = "era_kz_2005",
+        eraId = "kz_2005"
+    )
+)
+
+class Kz2015ScenarioGraph : EmptyEraScenarioGraph(
+    eraName = Strings.eraKz2015Name,
+    initialPlayerState = PlayerState(
+        capital = 620_000L,
+        income = 260_000L,
+        expenses = 190_000L,
+        debt = 0L,
+        debtPaymentMonthly = 0L,
+        investments = 0L,
+        investmentReturnRate = 0.08,
+        stress = 42,
+        financialKnowledge = 28,
+        riskLevel = 18,
+        month = 6,
+        year = 2015,
+        characterId = "era_kz_2015",
+        eraId = "kz_2015"
+    )
+)
+
+class Kz2024ScenarioGraph : EmptyEraScenarioGraph(
+    eraName = Strings.eraModernKz2024Name,
+    initialPlayerState = PlayerState(
+        capital = 260_000L,
+        income = 520_000L,
+        expenses = 255_000L,
+        debt = 180_000L,
+        debtPaymentMonthly = 30_000L,
+        investments = 0L,
+        investmentReturnRate = 0.10,
+        stress = 38,
+        financialKnowledge = 24,
+        riskLevel = 22,
+        month = 1,
+        year = 2024,
+        characterId = "era_kz_2024",
+        eraId = "kz_2024"
+    )
+)
 
 object ScenarioGraphFactory {
 
-    /**
-     * Copy-on-write cache of immutable graph instances, keyed by "$characterId:$eraId".
-     *
-     * Why @Volatile + copy-on-write instead of a mutable map with a lock:
-     *   - kotlin.concurrent.locks.ReentrantLock lives in stdlib/jvm, not commonMain.
-     *   - @Volatile is available in commonMain since Kotlin 1.8.20 and guarantees that
-     *     every thread always reads the latest reference.
-     *   - Each write replaces the reference with a brand-new immutable map (+), so readers
-     *     always see either the old or the new snapshot — never a partially-modified one.
-     *   - Worst case under concurrent first-access: two threads both miss, both build the
-     *     same deterministic graph, and one write is lost. The next call re-populates it.
-     *     No data corruption, no infinite loops — just an extra build on cold start.
-     *   - After warmup (≤ 20 character+era combos) every call is a read-only map lookup.
-     */
     @Volatile
     private var cache: Map<String, ScenarioGraph> = emptyMap()
 
     /**
-     * Returns the ScenarioGraph for the given character + era.
-     * Result is cached — subsequent calls with the same arguments are O(1).
-     *
-     * Predefined characters → their own graph (era-aware via constructor param).
-     * Custom bundles (unknown characterId) → era-based generic graph so the
-     * correct historical narrative and event pool are used.
+     * Character IDs are accepted for API compatibility. Scenarios are currently
+     * empty era shells, so every character routes to the selected era graph.
      */
     fun forCharacter(characterId: String, eraId: String): ScenarioGraph {
         val key = "${Strings.currentLocale}:$characterId:$eraId"
-        return cache[key] ?: buildGraph(characterId, eraId).also { graph ->
+        return cache[key] ?: forEra(eraId).also { graph ->
             cache = cache + (key to graph)
         }
     }
 
-    private fun buildGraph(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
-        "aidar_90s" -> if (eraId == "kz_90s") Aidar90sScenarioGraph() else forEra(eraId)
-        "aidar"     -> if (eraId == "kz_2005") AidarScenarioGraph(eraId) else forEra(eraId)
-        "asan"      -> if (eraId == "kz_2024" || eraId == "modern_kz_2024") AsanScenarioGraph() else forEra(eraId)
-        "dana"      -> if (eraId == "kz_2015") DanaScenarioGraph(eraId) else forEra(eraId)
-        "daniyar"   -> if (eraId == "kz_2005") DaniyarScenarioGraph(eraId) else forEra(eraId)
-        "serik"     -> if (eraId == "kz_2005") SerikScenarioGraph(eraId) else forEra(eraId)
-        else        -> forEra(eraId)  // bundles: fall back to era-specific graph
-    }
-
-    /** Era-based graph used for custom bundle characters. */
     private fun forEra(eraId: String): ScenarioGraph = when (eraId) {
-        "kz_90s"  -> Aidar90sScenarioGraph()
-        "kz_2005" -> AidarScenarioGraph(eraId)
-        "kz_2015" -> DanaScenarioGraph(eraId)
-        "kz_2024", "modern_kz_2024" -> AsanScenarioGraph()
-        else      -> throw ScenarioNotFoundException("bundle", eraId)
+        "kz_90s" -> Kz90sScenarioGraph()
+        "kz_2005" -> Kz2005ScenarioGraph()
+        "kz_2015" -> Kz2015ScenarioGraph()
+        "kz_2024", "modern_kz_2024" -> Kz2024ScenarioGraph()
+        else -> throw ScenarioNotFoundException("bundle", eraId)
     }
 }

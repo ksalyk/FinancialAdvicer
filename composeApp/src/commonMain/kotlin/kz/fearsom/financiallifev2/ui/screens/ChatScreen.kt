@@ -109,7 +109,7 @@ import kz.fearsom.financiallifev2.model.GameOption
 import kz.fearsom.financiallifev2.model.MessageSender
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.presentation.GameUiState
-import kz.fearsom.financiallifev2.ui.components.StatsPanelOverlay
+import kz.fearsom.financiallifev2.ui.components.core.StatsPanelOverlay
 import kz.fearsom.financiallifev2.ui.theme.DiaryChoiceBorder
 import kz.fearsom.financiallifev2.ui.theme.DiaryHeaderStyle
 import kz.fearsom.financiallifev2.ui.theme.DiaryTextStyle

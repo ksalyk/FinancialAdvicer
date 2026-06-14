@@ -1,11 +1,6 @@
 package kz.fearsom.financiallifev2.scenarios
 
 import kz.fearsom.financiallifev2.data.SeedData
-import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
-import kz.fearsom.financiallifev2.scenarios.characters.SerikScenarioGraph
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -14,22 +9,12 @@ import kotlin.test.assertTrue
 class ScenarioGraphFactoryTest {
 
     @Test
-    fun `factory returns expected graph for each supported character`() {
-        assertIs<Aidar90sScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s"))
-        assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar", "kz_2005"))
-        assertIs<DaniyarScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2005"))
-        assertIs<SerikScenarioGraph>(ScenarioGraphFactory.forCharacter("serik", "kz_2005"))
-        assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("dana", "kz_2015"))
-        assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("asan", "kz_2024"))
-
-        assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar", "kz_2015"))
-        assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar", "kz_2024"))
-        assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar_90s", "kz_2005"))
-        assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("dana", "kz_2005"))
-        assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("asan", "kz_2015"))
-        // Daniyar only has a graph for the 2005 era — other eras fall back to era graphs.
-        assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2015"))
-        assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2024"))
+    fun `factory returns empty graph for each supported era`() {
+        assertIs<Kz90sScenarioGraph>(ScenarioGraphFactory.forCharacter("any", "kz_90s"))
+        assertIs<Kz2005ScenarioGraph>(ScenarioGraphFactory.forCharacter("any", "kz_2005"))
+        assertIs<Kz2015ScenarioGraph>(ScenarioGraphFactory.forCharacter("any", "kz_2015"))
+        assertIs<Kz2024ScenarioGraph>(ScenarioGraphFactory.forCharacter("any", "kz_2024"))
+        assertIs<Kz2024ScenarioGraph>(ScenarioGraphFactory.forCharacter("any", "modern_kz_2024"))
     }
 
     @Test
@@ -45,15 +30,7 @@ class ScenarioGraphFactoryTest {
     }
 
     @Test
-    fun `asan is available only in 2024 era`() {
-        val asan = SeedData.predefinedCharacters.first { it.id == "asan" }
-        assertEquals(listOf("kz_2024"), asan.compatibleEraIds)
-        val era2024 = SeedData.eras.first { it.id == "kz_2024" }
-        assertTrue("asan" in era2024.availableCharacterIds)
-    }
-
-    @Test
-    fun `each era exposes the right predefined story characters`() {
+    fun `each era exposes the current predefined characters`() {
         val expected = mapOf(
             "kz_90s" to listOf("aidar_90s"),
             "kz_2005" to listOf("aidar", "daniyar", "serik"),

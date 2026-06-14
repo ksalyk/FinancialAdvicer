@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.presentation.NewGameUiState
-import kz.fearsom.financiallifev2.ui.components.AppTopBar
+import kz.fearsom.financiallifev2.ui.components.core.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.*
 
 @Composable
