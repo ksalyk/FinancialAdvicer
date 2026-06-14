@@ -617,6 +617,210 @@ fun daniyar2005Endings(): EventArc = EventArc { map ->
     )
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+//  SERIK 2005 — учитель физики в Караганде, нефтяной/кредитный бум 2005-2010
+//
+//  Тема арки: «хорошие времена нужно использовать, а не проспать».
+//   1. Репетиторство → учебный центр (предпринимательство, актив вместо зарплаты)
+//   2. Долёвка/котлован — соблазн купить «воздух» со скидкой (scam.presale)
+//   3. Ипотека: скромная тенговая (актив) против большой долларовой (ловушка)
+//   4. Потребительский кредит на машину/той — «тратить, когда все тратят»
+//   5. 2008-2009: заморозка ипотеки (era_mortgage_freeze_2008) + девальвация по
+//      валютному кредиту — момент, когда «хорошие времена кончились».
+//
+//  Весь текст читается из i18n-карт (ru/kk/en) по ключам evt_serik_*.
+//  Серік переопределяет стандартные ending_* события локализованным текстом
+//  (см. [serik2005Endings]); триггеры из [storyConditionals] ведут к ним по
+//  стандартным id через [ScenarioGraph.findEvent].
+// ═════════════════════════════════════════════════════════════════════════════
+
+fun serik2005StoryArc(): EventArc = EventArc { map ->
+
+    map["intro"] = event(
+        id = "intro",
+        flavor = "📚",
+        tags = setOf("career", "family"),
+        message = Strings["evt_serik_intro_msg"],
+        options = listOf(
+            option("serik_take_boom_serious", Strings["evt_serik_intro_opt_take_boom_serious"], "📐", "serik_tutoring",
+                Effect(knowledgeDelta = 6, stressDelta = -2, setFlags = setOf("reserve.focus"))),
+            option("serik_chase_neighbors", Strings["evt_serik_intro_opt_chase_neighbors"], "🤑", "serik_tutoring",
+                Effect(riskDelta = 12, stressDelta = -2)),
+            option("serik_just_teach", Strings["evt_serik_intro_opt_just_teach"], "🏫", "serik_tutoring",
+                Effect(knowledgeDelta = 2, stressDelta = 2))
+        )
+    )
+
+    map["serik_tutoring"] = event(
+        id = "serik_tutoring",
+        flavor = "🎓",
+        tags = setOf("career", "investment"),
+        message = Strings["evt_serik_tutoring_msg"],
+        options = listOf(
+            option("serik_rent_class", Strings["evt_serik_tutoring_opt_rent_class"], "📈", "serik_presale_flat",
+                Effect(capitalDelta = -120_000L, incomeDelta = 70_000L, knowledgeDelta = 12, stressDelta = 10, riskDelta = 6,
+                    setFlags = setOf("business.started"))),
+            option("serik_home_groups", Strings["evt_serik_tutoring_opt_home_groups"], "🏠", "serik_presale_flat",
+                Effect(incomeDelta = 25_000L, knowledgeDelta = 6, stressDelta = 4)),
+            option("serik_stay_salary", Strings["evt_serik_tutoring_opt_stay_salary"], "💤", "serik_presale_flat",
+                Effect(knowledgeDelta = 2, stressDelta = -2))
+        )
+    )
+
+    map["serik_presale_flat"] = event(
+        id = "serik_presale_flat",
+        flavor = "🏢",
+        tags = setOf("scam", "scam.presale", "mortgage"),
+        schemeExplanation = Strings["evt_serik_presale_flat_scheme_explanation"],
+        message = Strings["evt_serik_presale_flat_msg"],
+        options = listOf(
+            option("serik_pay_booking", Strings["evt_serik_presale_flat_opt_pay_booking"], "🔑", "serik_buy_home",
+                Effect(capitalDelta = -100_000L, riskDelta = 18, stressDelta = 10,
+                    scheduleEvent = ScheduledEvent("serik_presale_loss", 4))),
+            option("serik_check_builder", Strings["evt_serik_presale_flat_opt_check_builder"], "🧾", "serik_buy_home",
+                Effect(knowledgeDelta = 15, stressDelta = 2, setFlags = setOf("learned.scam.presale"))),
+            option("serik_skip_presale", Strings["evt_serik_presale_flat_opt_skip_presale"], "🛡️", "serik_buy_home",
+                Effect(knowledgeDelta = 10, stressDelta = -4, setFlags = setOf("learned.scam.presale")))
+        )
+    )
+
+    map["serik_buy_home"] = event(
+        id = "serik_buy_home",
+        flavor = "🔑",
+        tags = setOf("mortgage", "investment"),
+        message = Strings["evt_serik_buy_home_msg"],
+        options = listOf(
+            option("serik_modest_tenge", Strings["evt_serik_buy_home_opt_modest_tenge"], "🗝️", "serik_consumer_credit",
+                Effect(capitalDelta = -80_000L, investmentsDelta = 900_000L, debtDelta = 800_000L, debtPaymentDelta = 14_000L,
+                    knowledgeDelta = 10, stressDelta = 4, setFlags = setOf("own_home"),
+                    scheduleEvent = ScheduledEvent("serik_home_appreciation", 18))),
+            option("serik_big_dollar", Strings["evt_serik_buy_home_opt_big_dollar"], "💵", "serik_consumer_credit",
+                Effect(capitalDelta = -120_000L, investmentsDelta = 1_500_000L, debtDelta = 1_500_000L, debtPaymentDelta = 30_000L,
+                    stressDelta = 16, riskDelta = 18, setFlags = setOf("own_home", "dollar_mortgage"),
+                    scheduleEvent = ScheduledEvent("serik_dollar_mortgage_hit", 40))),
+            option("serik_rent_save", Strings["evt_serik_buy_home_opt_rent_save"], "🏦", "serik_consumer_credit",
+                Effect(knowledgeDelta = 8, stressDelta = 2, setFlags = setOf("reserve.focus")))
+        )
+    )
+
+    map["serik_home_appreciation"] = event(
+        id = "serik_home_appreciation",
+        flavor = "📈",
+        tags = setOf("investment", "consequence"),
+        unique = true,
+        message = Strings["evt_serik_home_appreciation_msg"],
+        options = listOf(
+            option("serik_hold_home", Strings["evt_serik_home_appreciation_opt_hold"], "🏡", MONTHLY_TICK,
+                Effect(investmentsDelta = 400_000L, knowledgeDelta = 8, stressDelta = -6))
+        )
+    )
+
+    map["serik_consumer_credit"] = event(
+        id = "serik_consumer_credit",
+        flavor = "💳",
+        tags = setOf("family"),
+        message = Strings["evt_serik_consumer_credit_msg"],
+        options = listOf(
+            option("serik_credit_status", Strings["evt_serik_consumer_credit_opt_credit_status"], "🚗", "serik_scale_center",
+                Effect(capitalDelta = -100_000L, debtDelta = 700_000L, debtPaymentDelta = 25_000L, stressDelta = 14, riskDelta = 12)),
+            option("serik_only_needed", Strings["evt_serik_consumer_credit_opt_only_needed"], "🧾", "serik_scale_center",
+                Effect(capitalDelta = -40_000L, knowledgeDelta = 8, stressDelta = -4)),
+            option("serik_invest_instead", Strings["evt_serik_consumer_credit_opt_invest_instead"], "🌱", "serik_scale_center",
+                Effect(knowledgeDelta = 12, stressDelta = -2, setFlags = setOf("reserve.focus")))
+        )
+    )
+
+    map["serik_scale_center"] = event(
+        id = "serik_scale_center",
+        flavor = "📈",
+        tags = setOf("career", "investment"),
+        message = Strings["evt_serik_scale_center_msg"],
+        options = listOf(
+            option("serik_open_center", Strings["evt_serik_scale_center_opt_open_center"], "🏫", MONTHLY_TICK,
+                Effect(capitalDelta = -120_000L, incomeDelta = 150_000L, expensesDelta = 40_000L, knowledgeDelta = 14, stressDelta = 16,
+                    setFlags = setOf("business_scaled"), scheduleEvent = ScheduledEvent("final_review", 44))),
+            option("serik_keep_side", Strings["evt_serik_scale_center_opt_keep_side"], "⚖️", MONTHLY_TICK,
+                Effect(incomeDelta = 50_000L, knowledgeDelta = 8, stressDelta = 4, scheduleEvent = ScheduledEvent("final_review", 44))),
+            option("serik_close_rest", Strings["evt_serik_scale_center_opt_close_rest"], "🧘", MONTHLY_TICK,
+                Effect(incomeDelta = -30_000L, stressDelta = -14, knowledgeDelta = 4, scheduleEvent = ScheduledEvent("final_review", 44)))
+        )
+    )
+
+    map["serik_dollar_mortgage_hit"] = event(
+        id = "serik_dollar_mortgage_hit",
+        flavor = "💀",
+        tags = setOf("crisis", "mortgage", "consequence"),
+        unique = true,
+        message = Strings["evt_serik_dollar_mortgage_hit_msg"],
+        options = listOf(
+            option("serik_accept_currency_risk", Strings["evt_serik_dollar_mortgage_hit_opt_accept"], "📉", MONTHLY_TICK,
+                Effect(debtDelta = 300_000L, debtPaymentDelta = 10_000L, stressDelta = 18, knowledgeDelta = 20,
+                    setFlags = setOf("learned.currency_risk")))
+        )
+    )
+
+    map["serik_presale_loss"] = event(
+        id = "serik_presale_loss",
+        flavor = "💀",
+        tags = setOf("scam.presale", "mortgage", "consequence"),
+        unique = true,
+        message = Strings["evt_serik_presale_loss_msg"],
+        options = listOf(
+            option("serik_accept_presale_loss", Strings["evt_serik_presale_loss_opt_accept"], "📚", MONTHLY_TICK,
+                Effect(knowledgeDelta = 20, stressDelta = 18, setFlags = setOf("learned.scam.presale", "lost_money_to_scam")))
+        )
+    )
+}
+
+/**
+ * Serik-specific endings, keyed by the standard IDs so the [storyConditionals]
+ * triggers route to them via [ScenarioGraph.findEvent]. Build order in
+ * [SerikScenarioGraph] puts this arc AFTER [endingsArc], so these entries
+ * overwrite the standard Russian-only endings with localized kk/ru/en text.
+ */
+fun serik2005Endings(): EventArc = EventArc { map ->
+    map["ending_wealth"] = event(
+        id = "ending_wealth",
+        isEnding = true,
+        endingType = EndingType.WEALTH,
+        flavor = "🏆",
+        message = Strings["evt_serik_ending_wealth_msg"],
+        options = emptyList()
+    )
+    map["ending_stability"] = event(
+        id = "ending_stability",
+        isEnding = true,
+        endingType = EndingType.FINANCIAL_STABILITY,
+        flavor = "💼",
+        message = Strings["evt_serik_ending_stable_msg"],
+        options = emptyList()
+    )
+    map["ending_freedom"] = event(
+        id = "ending_freedom",
+        isEnding = true,
+        endingType = EndingType.FINANCIAL_FREEDOM,
+        flavor = "🌅",
+        message = Strings["evt_serik_ending_freedom_msg"],
+        options = emptyList()
+    )
+    map["ending_regular"] = event(
+        id = "ending_regular",
+        isEnding = true,
+        endingType = EndingType.PAYCHECK_TO_PAYCHECK,
+        flavor = "😐",
+        message = Strings["evt_serik_ending_paycheck_msg"],
+        options = emptyList()
+    )
+    map["ending_bankruptcy"] = event(
+        id = "ending_bankruptcy",
+        isEnding = true,
+        endingType = EndingType.BANKRUPTCY,
+        flavor = "💀",
+        message = Strings["evt_serik_ending_broke_msg"],
+        options = emptyList()
+    )
+}
+
 fun regularLifeArc(eraId: String): EventArc = EventArc { map ->
     val tv = when (eraId) {
         "kz_90s" -> "видеосалон и кассеты"

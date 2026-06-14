@@ -5,6 +5,7 @@ import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.SerikScenarioGraph
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -17,6 +18,7 @@ class ScenarioGraphFactoryTest {
         assertIs<Aidar90sScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar_90s", "kz_90s"))
         assertIs<AidarScenarioGraph>(ScenarioGraphFactory.forCharacter("aidar", "kz_2005"))
         assertIs<DaniyarScenarioGraph>(ScenarioGraphFactory.forCharacter("daniyar", "kz_2005"))
+        assertIs<SerikScenarioGraph>(ScenarioGraphFactory.forCharacter("serik", "kz_2005"))
         assertIs<DanaScenarioGraph>(ScenarioGraphFactory.forCharacter("dana", "kz_2015"))
         assertIs<AsanScenarioGraph>(ScenarioGraphFactory.forCharacter("asan", "kz_2024"))
 
@@ -54,7 +56,7 @@ class ScenarioGraphFactoryTest {
     fun `each era exposes the right predefined story characters`() {
         val expected = mapOf(
             "kz_90s" to listOf("aidar_90s"),
-            "kz_2005" to listOf("aidar", "daniyar"),
+            "kz_2005" to listOf("aidar", "daniyar", "serik"),
             "kz_2015" to listOf("dana"),
             "kz_2024" to listOf("asan")
         )

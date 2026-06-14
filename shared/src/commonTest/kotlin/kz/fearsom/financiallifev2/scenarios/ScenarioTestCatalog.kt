@@ -18,6 +18,7 @@ object ScenarioTestCatalog {
         "aidar_90s" to "kz_90s",
         "aidar" to "kz_2005",
         "daniyar" to "kz_2005",
+        "serik" to "kz_2005",
         "dana" to "kz_2015",
         "asan" to "kz_2024",
     )

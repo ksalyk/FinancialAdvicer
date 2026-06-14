@@ -46,7 +46,7 @@ object SeedData {
             baseInflationRate = 8.5,
             baseSalaryMin = 80_000L,
             baseSalaryMax = 250_000L,
-            availableCharacterIds = listOf("aidar", "daniyar"),
+            availableCharacterIds = listOf("aidar", "daniyar", "serik"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_2005_event_1"],
                 Strings["seed_era_kz_2005_event_2"]
@@ -135,6 +135,27 @@ object SeedData {
             ),
             uniqueEventIds = listOf("daniyar_bolat_import", "daniyar_garage_formalize", "daniyar_presale_flat", "era_mortgage_freeze_2008"),
             difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "serik",
+            name = "Серік Жұмабеков",
+            age = 35,
+            profession = "Учитель физики в школе",
+            emoji = "👨‍🏫",
+            backstory = "Караганда, 2005. Серік — обычный школьный учитель на маленькой зарплате, а вокруг ревёт нефтяной бум: соседи перепродают квартиры, берут машины в кредит, всюду краны. По вечерам он репетиторствует. Его арка — про то, как использовать хорошие времена: превратить подработку в учебный центр, купить актив, а не «воздух» на котловане, и не утонуть в долларовой ипотеке и понтах к кризису 2008-2009.",
+            personality = "Спокойный и методичный, привык считать. Но скромная зарплата на фоне всеобщего богатства давит на самолюбие и подталкивает догонять соседей в кредит.",
+            compatibleEraIds = listOf("kz_2005"),
+            initialStats = CharacterStats(
+                capital = 150_000L,
+                income = 50_000L,
+                debt = 0L,
+                monthlyExpenses = 32_000L,
+                stress = 44,
+                financialKnowledge = 16,
+                riskLevel = 18
+            ),
+            uniqueEventIds = listOf("serik_tutoring", "serik_presale_flat", "serik_buy_home", "era_mortgage_freeze_2008"),
+            difficulty = Difficulty.HARD,
             isUnlocked = true
         ), PredefinedCharacter(
             id = "asan",

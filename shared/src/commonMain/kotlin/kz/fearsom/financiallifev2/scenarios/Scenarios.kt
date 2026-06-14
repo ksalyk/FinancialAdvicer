@@ -12,6 +12,7 @@ import kz.fearsom.financiallifev2.scenarios.characters.AidarScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.AsanScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DanaScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.characters.DaniyarScenarioGraph
+import kz.fearsom.financiallifev2.scenarios.characters.SerikScenarioGraph
 import kotlin.concurrent.Volatile
 
 /** Thrown when no scenario graph exists for a given characterId + eraId combination. */
@@ -135,6 +136,7 @@ object ScenarioGraphFactory {
         "asan"      -> if (eraId == "kz_2024" || eraId == "modern_kz_2024") AsanScenarioGraph() else forEra(eraId)
         "dana"      -> if (eraId == "kz_2015") DanaScenarioGraph(eraId) else forEra(eraId)
         "daniyar"   -> if (eraId == "kz_2005") DaniyarScenarioGraph(eraId) else forEra(eraId)
+        "serik"     -> if (eraId == "kz_2005") SerikScenarioGraph(eraId) else forEra(eraId)
         else        -> forEra(eraId)  // bundles: fall back to era-specific graph
     }
 
