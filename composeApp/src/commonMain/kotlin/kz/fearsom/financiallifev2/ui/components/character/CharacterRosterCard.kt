@@ -3,6 +3,8 @@ package kz.fearsom.financiallifev2.ui.components.character
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,11 +39,11 @@ import kz.fearsom.financiallifev2.ui.theme.RedDanger
 
 @Composable
 fun CharacterRosterCard(character: PredefinedCharacter, onClick: () -> Unit) {
-    val colors      = LocalAppColors.current
+    val colors = LocalAppColors.current
     val accentColor = when (character.difficulty) {
-        Difficulty.EASY      -> GreenSuccess
-        Difficulty.MEDIUM    -> GoldPrimary
-        Difficulty.HARD      -> RedDanger
+        Difficulty.EASY -> GreenSuccess
+        Difficulty.MEDIUM -> GoldPrimary
+        Difficulty.HARD -> RedDanger
         Difficulty.NIGHTMARE -> PurpleAccent
     }
 
@@ -74,49 +77,43 @@ fun CharacterRosterCard(character: PredefinedCharacter, onClick: () -> Unit) {
 
         Spacer(Modifier.width(14.dp))
 
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text       = character.name,
-                    fontSize   = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = colors.textPrimary
+                    text = character.profession,
+                    fontSize = 12.sp,
+                    color = accentColor
                 )
-                Spacer(Modifier.width(8.dp))
+
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    text     = "${character.age} ${Strings.uiCharsAge}",
-                    fontSize = 11.sp,
-                    color    = colors.textHint,
-                    modifier = Modifier
-                        .background(colors.backgroundElevated, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                    text = character.personality,
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    maxLines = 2
                 )
             }
-            Text(
-                text     = character.profession,
-                fontSize = 12.sp,
-                color    = accentColor
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text       = character.personality,
-                fontSize   = 12.sp,
-                color      = colors.textSecondary,
-                maxLines   = 1
-            )
-        }
 
-        Column(horizontalAlignment = Alignment.End) {
-            Text("›", fontSize = 20.sp, color = accentColor)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text     = character.difficulty.label(),
-                fontSize = 9.sp,
-                color    = accentColor,
-                modifier = Modifier
-                    .background(accentColor.copy(0.12f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
-            )
+            Spacer(Modifier.width(8.dp))
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("›", fontSize = 20.sp, color = accentColor)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = character.difficulty.label(),
+                    fontSize = 9.sp,
+                    color = accentColor,
+                    modifier = Modifier
+                        .background(accentColor.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                )
+            }
         }
     }
 }

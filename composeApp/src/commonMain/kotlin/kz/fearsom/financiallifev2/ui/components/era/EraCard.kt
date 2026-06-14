@@ -3,6 +3,9 @@ package kz.fearsom.financiallifev2.ui.components.era
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +39,7 @@ fun EraCard(era: Era, onClick: () -> Unit) {
     val colors = LocalAppColors.current
     val borderColor = if (era.isLocked) colors.textHint.copy(alpha = 0.3f)
     else GoldPrimary.copy(alpha = 0.4f)
-    val bgGradient  = if (era.isLocked)
+    val bgGradient = if (era.isLocked)
         listOf(colors.backgroundCard, colors.backgroundCard)
     else
         listOf(GoldPrimary.copy(alpha = 0.08f), BlueAccent.copy(alpha = 0.04f))
@@ -53,21 +57,21 @@ fun EraCard(era: Era, onClick: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text     = if (era.isLocked) "🔒" else era.emoji,
+                text = if (era.isLocked) "🔒" else era.emoji,
                 fontSize = 28.sp
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text       = era.name,
-                    fontSize   = 16.sp,
+                    text = era.name,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color      = if (era.isLocked) colors.textHint else colors.textPrimary
+                    color = if (era.isLocked) colors.textHint else colors.textPrimary
                 )
                 Text(
-                    text     = "${era.startYear}–${era.endYear}",
+                    text = "${era.startYear}–${era.endYear}",
                     fontSize = 12.sp,
-                    color    = colors.textSecondary
+                    color = colors.textSecondary
                 )
             }
             if (!era.isLocked) {
@@ -78,28 +82,31 @@ fun EraCard(era: Era, onClick: () -> Unit) {
         if (era.isLocked) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text     = Strings.uiEraLockedHint,
+                text = Strings.uiEraLockedHint,
                 fontSize = 11.sp,
-                color    = colors.textHint
+                color = colors.textHint
             )
         } else {
             Spacer(Modifier.height(10.dp))
             Text(
-                text     = era.description,
+                text = era.description,
                 fontSize = 13.sp,
-                color    = colors.textSecondary,
+                color = colors.textSecondary,
                 lineHeight = 18.sp
             )
 
             Spacer(Modifier.height(10.dp))
 
             // Key events chips
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 era.keyEconomicEvents.take(3).forEach { event ->
                     Text(
-                        text     = event,
+                        text = event,
                         fontSize = 10.sp,
-                        color    = GoldPrimary,
+                        color = GoldPrimary,
                         modifier = Modifier
                             .background(GoldPrimary.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
@@ -111,7 +118,7 @@ fun EraCard(era: Era, onClick: () -> Unit) {
 
             // Inflation + salary range
             Row(
-                modifier            = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StatPill(
@@ -133,7 +140,7 @@ fun EraCard(era: Era, onClick: () -> Unit) {
 private fun StatPill(label: String, value: String, color: Color) {
     val colors = LocalAppColors.current
     Row(
-        modifier          = Modifier
+        modifier = Modifier
             .background(color.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
