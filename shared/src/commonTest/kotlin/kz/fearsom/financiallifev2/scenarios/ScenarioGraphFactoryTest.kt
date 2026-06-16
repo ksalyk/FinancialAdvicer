@@ -32,7 +32,7 @@ class ScenarioGraphFactoryTest {
     @Test
     fun `each era exposes the current predefined characters`() {
         val expected = mapOf(
-            "kz_90s" to listOf("aidar_90s"),
+            "kz_90s" to listOf("aidar_90s", "daniyar_90s"),
             "kz_2005" to listOf("aidar", "daniyar", "serik"),
             "kz_2015" to listOf("dana"),
             "kz_2024" to listOf("asan")

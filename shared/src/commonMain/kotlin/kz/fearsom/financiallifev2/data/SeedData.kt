@@ -27,7 +27,7 @@ object SeedData {
             baseInflationRate = 40.0,
             baseSalaryMin = 5_000L,
             baseSalaryMax = 50_000L,
-            availableCharacterIds = listOf("aidar_90s"),
+            availableCharacterIds = listOf("aidar_90s", "daniyar_90s"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_90s_event_1"],
                 Strings["seed_era_kz_90s_event_2"],
@@ -219,6 +219,27 @@ object SeedData {
             ),
             uniqueEventIds = listOf("marat_family_pyramid", "marat_supplier_prepay", "marat_wedding"),
             difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "daniyar_90s",
+            name = "Данияр",
+            age = 22,
+            profession = "Подсобник на стройке",
+            emoji = "🧱",
+            backstory = "Алматы, 1994. Данияр приехал из аула под Талдыкорганом с 3 000 тенге и нулём понимания, как в городе устроены деньги. Земляк Нурлан берёт его на стройку, сосед по общаге зовёт в «быстрые деньги», а по телевизору улыбается МММ. Его арка — про первую зарплату, подушку безопасности, тёплую куртку против понтов и первую финансовую пирамиду.",
+            personality = "Наивный и гордый, не хочет ударить в грязь лицом перед земляками. Учится считать деньги через последствия, а не лекции.",
+            compatibleEraIds = listOf("kz_90s"),
+            initialStats = CharacterStats(
+                capital = 3_000L,
+                income = 6_000L,
+                debt = 0L,
+                monthlyExpenses = 5_000L,
+                stress = 45,
+                financialKnowledge = 5,
+                riskLevel = 25
+            ),
+            uniqueEventIds = listOf("intro", "mmm_arrives", "winter_gear", "final_fork", "final_review"),
+            difficulty = Difficulty.HARD,
             isUnlocked = true
         )
 

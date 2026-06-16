@@ -134,14 +134,21 @@ object ScenarioGraphFactory {
     private var cache: Map<String, ScenarioGraph> = emptyMap()
 
     /**
-     * Character IDs are accepted for API compatibility. Scenarios are currently
-     * empty era shells, so every character routes to the selected era graph.
+     * Resolves the graph for a character + era. Authored character graphs take
+     * priority (matched by [characterId]); any other character falls back to the
+     * still-empty era shell. Results are cached per locale + character + era.
      */
     fun forCharacter(characterId: String, eraId: String): ScenarioGraph {
         val key = "${Strings.currentLocale}:$characterId:$eraId"
-        return cache[key] ?: forEra(eraId).also { graph ->
+        return cache[key] ?: buildGraph(characterId, eraId).also { graph ->
             cache = cache + (key to graph)
         }
+    }
+
+    /** Authored characters first; the reference graph is [DaniyarScenarioGraph]. */
+    private fun buildGraph(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
+        "daniyar_90s" -> DaniyarScenarioGraph()
+        else -> forEra(eraId)
     }
 
     private fun forEra(eraId: String): ScenarioGraph = when (eraId) {
