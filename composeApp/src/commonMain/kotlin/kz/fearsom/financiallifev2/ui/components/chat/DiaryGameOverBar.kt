@@ -25,11 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -38,7 +35,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.EndingType
 import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
@@ -59,19 +55,12 @@ fun DiaryGameOverBar(endingType: EndingType?, onRestart: () -> Unit) {
     )
 
     // VFX state management
-    var showVFX by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(2000)  // VFX duration: 2 seconds
-        showVFX = false
-    }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── VFX Layer (confetti + vignette + ink-bleed) ──
-        if (showVFX) {
-            GameOverConfetti(endingColor, modifier = Modifier.fillMaxSize())
-            GameOverVignette(modifier = Modifier.fillMaxSize())
-            GameOverInkBleed(endingColor, modifier = Modifier.fillMaxSize())
-        }
+        GameOverConfetti(endingColor, modifier = Modifier.fillMaxSize())
+        GameOverVignette(modifier = Modifier.fillMaxSize())
+        GameOverInkBleed(endingColor, modifier = Modifier.fillMaxSize())
 
         // ── Restart action bar (appears after VFX) ──
         Surface(
