@@ -1,4 +1,4 @@
-package kz.fearsom.financiallifev2.ui.screens
+package kz.fearsom.financiallifev2.ui.screens.character
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.presentation.CharactersUiState
 import kz.fearsom.financiallifev2.ui.components.character.CharacterRosterCard
@@ -76,7 +77,7 @@ fun CharactersScreen(
                 itemsIndexed(uiState.characters) { index, character ->
                     var visible by remember { mutableStateOf(false) }
                     LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(index * 80L)
+                        delay(index * 80L)
                         visible = true
                     }
                     AnimatedVisibility(

@@ -227,15 +227,15 @@ val kkStrings: Map<String, String> = mapOf(
     "sys_time_advanced"              to "⏳ Ірі оқиғасыз %s ай өтті.",
 
     // ── MonthlyReport ────────────────────────────────────────────────
-    "sys_monthly_title"              to "📊 %s %d — Ай нәтижелері",
-    "sys_monthly_income"             to "💰 Табыс:           +%s",
-    "sys_monthly_expenses"           to "🏠 Шығыс:           -%s",
-    "sys_monthly_debt_payment"       to "💳 Қарыз төлемі:    -%s",
-    "sys_monthly_investments"        to "📈 Инвестиция:       +%s",
-    "sys_monthly_net_positive"       to "✅ Барлығы: +%s",
-    "sys_monthly_net_negative"       to "⚠️ Барлығы: %s",
-    "sys_monthly_capital"            to "💼 Капитал: %s",
-    "sys_monthly_debt_remaining"     to "💳 Қарыз: %s",
+    "sys_monthly_title"              to "📊 Ай нәтижелері",
+    "sys_monthly_income"             to "💰 Табыс: ",
+    "sys_monthly_expenses"           to "🏠 Шығыс: ",
+    "sys_monthly_debt_payment"       to "💳 Қарыз төлемі: ",
+    "sys_monthly_investments"        to "📈 Инвестиция: ",
+    "sys_monthly_net_positive"       to "✅ Барлығы: ",
+    "sys_monthly_net_negative"       to "⚠️ Барлығы: ",
+    "sys_monthly_capital"            to "💼 Капитал: ",
+    "sys_monthly_debt_remaining"     to "💳 Қарыз: ",
 
     // ── Month names ──────────────────────────────────────────────────
     "month_1"                        to "Қаңтар",

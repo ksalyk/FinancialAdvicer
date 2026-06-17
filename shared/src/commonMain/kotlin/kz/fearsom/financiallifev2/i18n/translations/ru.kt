@@ -238,15 +238,15 @@ val ruStrings: Map<String, String> = mapOf(
     "sys_time_advanced"              to "⏳ Прошло %s мес. без крупных событий.",
 
     // ── MonthlyReport ────────────────────────────────────────────────
-    "sys_monthly_title"              to "📊 %s %d — Итоги месяца",
-    "sys_monthly_income"             to "💰 Доход:           +%s",
-    "sys_monthly_expenses"           to "🏠 Расходы:          -%s",
-    "sys_monthly_debt_payment"       to "💳 Выплата долга:    -%s",
-    "sys_monthly_investments"        to "📈 Инвестиции:       +%s",
-    "sys_monthly_net_positive"       to "✅ Итого: +%s",
-    "sys_monthly_net_negative"       to "⚠️ Итого: %s",
-    "sys_monthly_capital"            to "💼 Капитал: %s",
-    "sys_monthly_debt_remaining"     to "💳 Долг: %s",
+    "sys_monthly_title"              to "📊 Итоги месяца",
+    "sys_monthly_income"             to "💰 Доход: ",
+    "sys_monthly_expenses"           to "🏠 Расходы: ",
+    "sys_monthly_debt_payment"       to "💳 Выплата долга: ",
+    "sys_monthly_investments"        to "📈 Инвестиции: ",
+    "sys_monthly_net_positive"       to "✅ Итого: ",
+    "sys_monthly_net_negative"       to "⚠️ Итого: ",
+    "sys_monthly_capital"            to "💼 Капитал: ",
+    "sys_monthly_debt_remaining"     to "💳 Долг: ",
 
     // ── Month names (MonthlyReport, 1-indexed) ───────────────────────
     "month_1"                        to "Январь",

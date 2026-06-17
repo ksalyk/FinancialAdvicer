@@ -89,10 +89,19 @@ fun buildHttpClient(
             refreshTokens {
                 Napier.d("Access token expired, refreshing…", tag = "KtorAuth")
 
+                val refreshToken = oldTokens?.refreshToken
+                if (refreshToken.isNullOrBlank()) {
+                    // No refresh token yet — this is a race condition during cold-start
+                    // (e.g. a background request fired before restoreSession() completed).
+                    // Don't logout; just let the request fail with 401 and retry later.
+                    Napier.w("refreshTokens called with empty refresh token — skipping logout", tag = "KtorAuth")
+                    return@refreshTokens null
+                }
+
                 val resp = client.post("$baseUrl/auth/refresh") {
                     markAsRefreshTokenRequest()
                     contentType(ContentType.Application.Json)
-                    setBody(RefreshRequestDto(oldTokens?.refreshToken ?: ""))
+                    setBody(RefreshRequestDto(refreshToken))
                 }
 
                 if (resp.status == HttpStatusCode.OK) {

@@ -226,8 +226,9 @@ private fun DiaryEntryCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val dateText = if (playerState != null) {
-                        "${playerState.month} ${monthNameFull(playerState.month)} ${playerState.year}"
+                    val snapshotState = message.sourcePlayerState ?: playerState
+                    val dateText = if (snapshotState != null) {
+                        "${snapshotState.month} ${monthNameFull(snapshotState.month)} ${snapshotState.year}"
                     } else {
                         message.emoji.ifEmpty { "📅" }
                     }
@@ -238,7 +239,7 @@ private fun DiaryEntryCard(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 11.sp
                     )
-                    if (message.emoji.isNotEmpty() && playerState != null) {
+                    if (message.emoji.isNotEmpty() && snapshotState != null) {
                         Text(message.emoji, fontSize = 16.sp)
                     }
                 }
@@ -269,7 +270,7 @@ private fun DiaryEntryCard(
                 )
 
                 val explanation = message.schemeExplanation
-                if (explanation != null && displayedLength >= message.text.length) {
+                if (explanation != null && displayedLength >= message.text.length && !isLatestChar) {
                     Spacer(Modifier.height(12.dp))
                     FilledTonalButton(
                         onClick = { showExplanation = !showExplanation },

@@ -37,10 +37,10 @@ class StatisticsPresenter(
                 refreshLocal()
             }
         }
-        // Fetch from server on startup (authoritative source)
-        scope.launch {
-            fetchFromServer()
-        }
+        // Don't fire fetchFromServer() eagerly here — it races with restoreSession()
+        // (both start on Dispatchers.Main; fetchFromServer fires first with empty tokens,
+        // triggering refreshTokens with a blank refresh token → spurious logout).
+        // The Statistics screen calls refresh() explicitly when opened.
     }
 
     /**

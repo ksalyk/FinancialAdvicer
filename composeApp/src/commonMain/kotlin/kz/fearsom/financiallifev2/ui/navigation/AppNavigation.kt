@@ -30,9 +30,9 @@ import kz.fearsom.financiallifev2.presentation.MainMenuPresenter
 import kz.fearsom.financiallifev2.presentation.NewGamePresenter
 import kz.fearsom.financiallifev2.presentation.SettingsPresenter
 import kz.fearsom.financiallifev2.presentation.StatisticsPresenter
-import kz.fearsom.financiallifev2.ui.screens.CharacterDetailScreen
-import kz.fearsom.financiallifev2.ui.screens.CharacterSelectionScreen
-import kz.fearsom.financiallifev2.ui.screens.CharactersScreen
+import kz.fearsom.financiallifev2.ui.screens.character.CharacterDetailScreen
+import kz.fearsom.financiallifev2.ui.screens.character.CharacterSelectionScreen
+import kz.fearsom.financiallifev2.ui.screens.character.CharactersScreen
 import kz.fearsom.financiallifev2.ui.screens.ChatScreen
 import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
 import kz.fearsom.financiallifev2.ui.screens.LoginScreen
@@ -165,6 +165,7 @@ fun AppNavigation() {
         when (currentScreen) {
             AppScreen.EraSelection -> newGamePresenter.refresh()
             AppScreen.Characters   -> charsPresenter.refresh()
+            AppScreen.Statistics   -> statsPresenter.refresh()
             else                   -> {}
         }
     }

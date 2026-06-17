@@ -1,4 +1,4 @@
-package kz.fearsom.financiallifev2.ui.screens
+package kz.fearsom.financiallifev2.ui.screens.character
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode

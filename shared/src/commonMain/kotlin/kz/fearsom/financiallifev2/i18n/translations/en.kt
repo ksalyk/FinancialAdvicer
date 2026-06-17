@@ -227,15 +227,15 @@ val enStrings: Map<String, String> = mapOf(
     "sys_time_advanced"              to "⏳ %s months passed without major events.",
 
     // ── MonthlyReport ────────────────────────────────────────────────
-    "sys_monthly_title"              to "📊 %s %d — Monthly Summary",
-    "sys_monthly_income"             to "💰 Income:           +%s",
-    "sys_monthly_expenses"           to "🏠 Expenses:         -%s",
-    "sys_monthly_debt_payment"       to "💳 Debt payment:     -%s",
-    "sys_monthly_investments"        to "📈 Investments:      +%s",
-    "sys_monthly_net_positive"       to "✅ Total: +%s",
-    "sys_monthly_net_negative"       to "⚠️ Total: %s",
-    "sys_monthly_capital"            to "💼 Capital: %s",
-    "sys_monthly_debt_remaining"     to "💳 Debt: %s",
+    "sys_monthly_title"              to "📊 Monthly Summary",
+    "sys_monthly_income"             to "💰 Income: ",
+    "sys_monthly_expenses"           to "🏠 Expenses: ",
+    "sys_monthly_debt_payment"       to "💳 Debt payment: ",
+    "sys_monthly_investments"        to "📈 Investments: ",
+    "sys_monthly_net_positive"       to "✅ Total: ",
+    "sys_monthly_net_negative"       to "⚠️ Total: ",
+    "sys_monthly_capital"            to "💼 Capital: ",
+    "sys_monthly_debt_remaining"     to "💳 Debt: ",
 
     // ── Month names ──────────────────────────────────────────────────
     "month_1"                        to "January",
