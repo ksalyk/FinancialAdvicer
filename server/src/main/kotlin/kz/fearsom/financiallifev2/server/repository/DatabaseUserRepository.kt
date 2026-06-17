@@ -2,6 +2,8 @@ package kz.fearsom.financiallifev2.server.repository
 
 import kz.fearsom.financiallifev2.admin.AdminUserRow
 import kz.fearsom.financiallifev2.server.auth.JwtConfig
+import kz.fearsom.financiallifev2.server.auth.PasswordHasher
+import kz.fearsom.financiallifev2.server.auth.sha256Hex
 import kz.fearsom.financiallifev2.server.database.tables.CompletedSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameSessionsTable
 import kz.fearsom.financiallifev2.server.database.tables.GameStatesTable
@@ -19,7 +21,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import java.security.MessageDigest
 import java.util.UUID
 
 /** PostgreSQL-backed implementation of [UserRepository] via Exposed ORM. */
@@ -63,7 +64,7 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
     override suspend fun create(username: String, rawPassword: String): ServerUser {
         val id        = UUID.randomUUID().toString()
         val lowerName = username.lowercase().trim()
-        val hash      = sha256Hex(rawPassword)
+        val hash      = PasswordHasher.hash(rawPassword)
         val now       = System.currentTimeMillis()
 
         newSuspendedTransaction(db = db) {
@@ -81,13 +82,15 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
     // ── Auth helper ──────────────────────────────────────────────────────────
 
     override fun verifyPassword(rawPassword: String, storedHash: String): Boolean =
-        sha256Hex(rawPassword) == storedHash
+        PasswordHasher.verify(rawPassword, storedHash)
 
     // ── Refresh Tokens ───────────────────────────────────────────────────────
 
     /**
      * Persists a new refresh token and returns the raw UUID to send to the client.
-     * Tokens are stored as plain UUIDs (128-bit entropy = cryptographically safe).
+     * Only the SHA-256 hash is stored, so a leaked DB dump never exposes usable tokens.
+     * The raw UUID has ~122 bits of entropy, so a fast unsalted hash is sufficient here
+     * (unlike passwords, which are low-entropy and use bcrypt).
      */
     override suspend fun createRefreshToken(userId: String): String {
         val raw = UUID.randomUUID().toString()
@@ -95,7 +98,7 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
 
         newSuspendedTransaction(db = db) {
             RefreshTokensTable.insert {
-                it[RefreshTokensTable.token]     = raw
+                it[RefreshTokensTable.token]     = sha256Hex(raw)
                 it[RefreshTokensTable.userId]    = userId
                 it[RefreshTokensTable.expiresAt] = now + JwtConfig.REFRESH_TTL_MS
                 it[RefreshTokensTable.createdAt] = now
@@ -114,11 +117,12 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
      */
     override suspend fun consumeRefreshToken(rawToken: String): ServerUser? {
         val now = System.currentTimeMillis()
+        val tokenHash = sha256Hex(rawToken)
 
         return newSuspendedTransaction(db = db) {
             val row = RefreshTokensTable
                 .selectAll()
-                .where { RefreshTokensTable.token eq rawToken }
+                .where { RefreshTokensTable.token eq tokenHash }
                 .singleOrNull()
                 ?: return@newSuspendedTransaction null
 
@@ -129,11 +133,11 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
             // if the client retries after a network timeout, the token is already gone
             // and the server returns null → onTokenRefreshFailed → logout.
             if (expiresAt < now) {
-                RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq rawToken }
+                RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq tokenHash }
                 return@newSuspendedTransaction null
             }
 
-            RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq rawToken }
+            RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq tokenHash }
 
             UsersTable
                 .selectAll()
@@ -197,7 +201,7 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
         }
 
     override suspend fun updatePassword(userId: String, rawPassword: String): Boolean {
-        val hash = sha256Hex(rawPassword)
+        val hash = PasswordHasher.hash(rawPassword)
         return newSuspendedTransaction(db = db) {
             val updated = UsersTable.update({ UsersTable.id eq userId }) {
                 it[passwordHash] = hash
@@ -207,6 +211,19 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
                 RefreshTokensTable.deleteWhere { RefreshTokensTable.userId eq userId }
                 true
             } else false
+        }
+    }
+
+    /**
+     * Re-hashes the password under the current scheme WITHOUT revoking tokens.
+     * Used for transparent upgrade of legacy SHA-256 hashes on successful login.
+     */
+    override suspend fun rehashPassword(userId: String, rawPassword: String) {
+        val hash = PasswordHasher.hash(rawPassword)
+        newSuspendedTransaction(db = db) {
+            UsersTable.update({ UsersTable.id eq userId }) {
+                it[passwordHash] = hash
+            }
         }
     }
 
@@ -229,11 +246,4 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
         passwordHash = this[UsersTable.passwordHash],
         createdAt    = this[UsersTable.createdAt]
     )
-
-    // ── Crypto ───────────────────────────────────────────────────────────────
-
-    private fun sha256Hex(input: String): String =
-        MessageDigest.getInstance("SHA-256")
-            .digest(input.toByteArray(Charsets.UTF_8))
-            .joinToString("") { "%02x".format(it) }
 }

@@ -61,6 +61,9 @@ dependencies {
     implementation(libs.postgresql)
     implementation(libs.hikari)
 
+    // Password hashing (bcrypt). Pure-JVM, no native deps.
+    implementation(libs.bcrypt)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.testJunit)

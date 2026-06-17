@@ -9,7 +9,8 @@ package kz.fearsom.financiallifev2.server.database.migrations
  */
 enum class MigrationVersion(val version: Int) {
     V001_INITIAL_SCHEMA(1),
-    V002_ADD_STATISTICS_INDEX(2);
+    V002_ADD_STATISTICS_INDEX(2),
+    V003_HASH_REFRESH_TOKENS(3);
 
     companion object {
         /** Returns the highest registered version number. */

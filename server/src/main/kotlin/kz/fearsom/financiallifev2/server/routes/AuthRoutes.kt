@@ -10,6 +10,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kz.fearsom.financiallifev2.server.auth.JwtConfig
+import kz.fearsom.financiallifev2.server.auth.PasswordHasher
 import kz.fearsom.financiallifev2.server.models.AuthResponse
 import kz.fearsom.financiallifev2.server.models.LoginRequest
 import kz.fearsom.financiallifev2.server.models.RefreshRequest
@@ -29,7 +30,9 @@ private const val ERR_AUTH_PASSWORD_TOO_SHORT = "err_auth_password_too_short"
 private const val ERR_AUTH_USER_EXISTS = "err_auth_user_exists"
 private const val ERR_AUTH_FILL_FIELDS = "err_auth_fill_fields"
 private const val ERR_AUTH_USER_NOT_FOUND = "err_auth_user_not_found"
-private const val ERR_AUTH_WRONG_PASSWORD = "err_auth_wrong_password"
+// Single generic message for both "no such user" and "wrong password" — prevents
+// username enumeration via the response body.
+private const val ERR_AUTH_INVALID_CREDENTIALS = "err_auth_invalid_credentials"
 private const val ERR_AUTH_REFRESH_MISSING = "err_auth_refresh_missing"
 private const val ERR_AUTH_REFRESH_INVALID = "err_auth_refresh_invalid"
 
@@ -93,18 +96,28 @@ fun Route.authRoutes(
             }
 
             val user = userRepository.findByUsername(req.username)
-            if (user == null) {
-                log.warn("Login failed: user not found username={}", req.username)
+
+            // Verify against the real hash when the user exists; otherwise run a dummy
+            // verify so the missing-user path costs the same time as the wrong-password
+            // path. Both failures return the SAME generic message — no enumeration.
+            val passwordMatches = if (user != null) {
+                userRepository.verifyPassword(req.password, user.passwordHash)
+            } else {
+                PasswordHasher.verifyDummy(req.password)
+                false
+            }
+
+            if (user == null || !passwordMatches) {
+                log.warn("Login failed username={}", req.username)
                 call.respond(HttpStatusCode.Unauthorized,
-                    AuthResponse(success = false, message = ERR_AUTH_USER_NOT_FOUND))
+                    AuthResponse(success = false, message = ERR_AUTH_INVALID_CREDENTIALS))
                 return@post
             }
 
-            if (!userRepository.verifyPassword(req.password, user.passwordHash)) {
-                log.warn("Login failed: wrong password userId={}", user.id)
-                call.respond(HttpStatusCode.Unauthorized,
-                    AuthResponse(success = false, message = ERR_AUTH_WRONG_PASSWORD))
-                return@post
+            // Transparently upgrade legacy (pre-bcrypt) password hashes on successful login.
+            if (PasswordHasher.needsRehash(user.passwordHash)) {
+                userRepository.rehashPassword(user.id, req.password)
+                log.info("Upgraded legacy password hash userId={}", user.id)
             }
 
             val accessToken  = generateAccessJwt(user.id, user.username)

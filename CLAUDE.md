@@ -81,7 +81,8 @@ ChatScreen → GamePresenter.onChoiceSelected()
 - `GameSessionRepository` persists active sessions + saved states to `SecureStorage` for offline resilience
 
 ### Authentication
-- JWT (RS256) + refresh token rotation on the server
+- JWT (HS256 / HMAC-SHA256, symmetric secret from `JWT_SECRET`) + refresh token rotation on the server. Single-verifier service, so a symmetric secret is sufficient; switch to RS256 only if a separate service must verify tokens without being able to mint them.
+- Passwords hashed with bcrypt (cost 12) over a SHA-256 pre-hash; legacy unsalted SHA-256 hashes are transparently upgraded on next login. Refresh tokens are stored SHA-256-hashed at rest.
 - Client stores tokens in `TokenStorage` (in-memory) + `SecureStorage` (platform-specific)
 - Cold-start session restore via `LaunchedEffect` calling `authPresenter.restoreSession()`
 - Ktor Auth plugin handles token refresh transparently; refresh failure triggers logout callback

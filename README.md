@@ -101,6 +101,7 @@ Open `/iosApp` in Xcode and run. iOS simulator reaches the server via `localhost
 | `SESSION_SECRET` | dev fallback | Admin session cookie signing |
 | `SESSION_SECURE` | — | Set `true` behind HTTPS |
 | `ALLOWED_ORIGINS` | — | CORS origins (comma-separated) |
+| `TRUST_PROXY` | `false` | Set `true` ONLY behind a reverse proxy you control; trusts `X-Forwarded-For` for the rate-limit client IP |
 | `SKIP_MIGRATIONS` | `false` | Skip schema migrations (dev/CI only) |
 
 ## API Routes

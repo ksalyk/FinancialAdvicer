@@ -267,6 +267,7 @@ class AuthRepository(
         "err_auth_user_exists" -> Strings.errAuthUserExists
         "err_auth_user_not_found", "User not found" -> Strings.errAuthUserNotFound
         "err_auth_wrong_password" -> Strings.errAuthWrongPassword
+        "err_auth_invalid_credentials" -> Strings.errAuthInvalidCredentials
         "err_auth_refresh_missing", "Missing refresh token" -> Strings.errAuthRefreshMissing
         "err_auth_refresh_invalid", "Invalid or expired refresh token" -> Strings.errAuthRefreshInvalid
         else -> this

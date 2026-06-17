@@ -10,6 +10,7 @@ import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.admin.AdminUserRow
 import kz.fearsom.financiallifev2.server.auth.JwtConfig
+import kz.fearsom.financiallifev2.server.auth.PasswordHasher
 import kz.fearsom.financiallifev2.server.models.AuthResponse
 import kz.fearsom.financiallifev2.server.models.LoginRequest
 import kz.fearsom.financiallifev2.server.models.RegisterRequest
@@ -19,7 +20,6 @@ import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
 import kz.fearsom.financiallifev2.server.repository.UserRepository
 import org.junit.Test
-import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
@@ -180,7 +180,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("err_auth_user_not_found", body.message)
+        assertEquals("err_auth_invalid_credentials", body.message)
     }
 
     @Test
@@ -202,7 +202,7 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         val body = json.decodeFromString<AuthResponse>(response.bodyAsText())
         assertEquals(false, body.success)
-        assertEquals("err_auth_wrong_password", body.message)
+        assertEquals("err_auth_invalid_credentials", body.message)
     }
 
     @Test
@@ -277,8 +277,8 @@ class AuthRoutesTest {
 /**
  * Thread-safe in-memory [UserRepository] for testing.
  *
- * Stores users in a [ConcurrentHashMap]. Passwords are SHA-256 hashed to mirror
- * production behaviour so [verifyPassword] works correctly in tests.
+ * Stores users in a [ConcurrentHashMap]. Passwords are hashed via [PasswordHasher]
+ * (bcrypt) to mirror production behaviour so [verifyPassword] works correctly in tests.
  * Refresh tokens are stored as plain UUIDs and expire only when explicitly set.
  */
 internal class MockUserRepository : UserRepository {
@@ -303,7 +303,7 @@ internal class MockUserRepository : UserRepository {
         val user = ServerUser(
             id           = id,
             username     = name,
-            passwordHash = sha256Hex(rawPassword),
+            passwordHash = PasswordHasher.hash(rawPassword),
             createdAt    = System.currentTimeMillis()
         )
         users[id]   = user
@@ -312,7 +312,7 @@ internal class MockUserRepository : UserRepository {
     }
 
     override fun verifyPassword(rawPassword: String, storedHash: String): Boolean =
-        sha256Hex(rawPassword) == storedHash
+        PasswordHasher.verify(rawPassword, storedHash)
 
     override suspend fun createRefreshToken(userId: String): String {
         val raw = UUID.randomUUID().toString()
@@ -348,9 +348,14 @@ internal class MockUserRepository : UserRepository {
 
     override suspend fun updatePassword(userId: String, rawPassword: String): Boolean {
         val existing = users[userId] ?: return false
-        users[userId] = existing.copy(passwordHash = sha256Hex(rawPassword))
+        users[userId] = existing.copy(passwordHash = PasswordHasher.hash(rawPassword))
         revokeAllTokens(userId)
         return true
+    }
+
+    override suspend fun rehashPassword(userId: String, rawPassword: String) {
+        val existing = users[userId] ?: return
+        users[userId] = existing.copy(passwordHash = PasswordHasher.hash(rawPassword))
     }
 
     override suspend fun deleteUserCascade(userId: String): Boolean {
@@ -359,9 +364,4 @@ internal class MockUserRepository : UserRepository {
         revokeAllTokens(userId)
         return true
     }
-
-    private fun sha256Hex(input: String): String =
-        MessageDigest.getInstance("SHA-256")
-            .digest(input.toByteArray(Charsets.UTF_8))
-            .joinToString("") { "%02x".format(it) }
 }

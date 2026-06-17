@@ -6,6 +6,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 private val log = LoggerFactory.getLogger("RateLimiter")
 
@@ -20,10 +21,14 @@ private val log = LoggerFactory.getLogger("RateLimiter")
  */
 class RateLimiter(
     private val maxRequests: Int = 10,
-    private val windowMs: Long   = 60_000L    // 1 minute
+    private val windowMs: Long   = 60_000L,    // 1 minute
+    private val pruneIntervalMs: Long = 5L * 60 * 1000   // sweep stale IP buckets at most this often
 ) {
     // IP → list of request timestamps within the current window.
     private val store = ConcurrentHashMap<String, ArrayDeque<Long>>()
+
+    // Timestamp of the last opportunistic sweep (see [isAllowed]).
+    private val lastPruneAt = AtomicLong(System.currentTimeMillis())
 
     fun isAllowed(ip: String): Boolean {
         val now  = System.currentTimeMillis()
@@ -31,20 +36,35 @@ class RateLimiter(
 
         val timestamps = store.getOrPut(ip) { ArrayDeque() }
 
-        synchronized(timestamps) {
+        val allowed = synchronized(timestamps) {
             // Evict timestamps outside the window.
             while (timestamps.isNotEmpty() && timestamps.first() < floor) {
                 timestamps.removeFirst()
             }
 
-            if (timestamps.size >= maxRequests) return false
-
-            timestamps.addLast(now)
-            return true
+            if (timestamps.size >= maxRequests) {
+                false
+            } else {
+                timestamps.addLast(now)
+                true
+            }
         }
+
+        // Opportunistic prune of empty/stale buckets — bounds memory at O(active IPs)
+        // without a dedicated GC thread (mirrors ChoiceLockManager). Runs at most once
+        // per [pruneIntervalMs] regardless of request volume.
+        if (now - lastPruneAt.get() >= pruneIntervalMs) {
+            lastPruneAt.set(now)
+            purgeExpired()
+        }
+
+        return allowed
     }
 
-    /** Periodically call this to avoid unbounded memory growth on large deployments. */
+    /**
+     * Removes IP buckets whose timestamps have all aged out of the window.
+     * Invoked automatically (and throttled) from [isAllowed]; also safe to call manually.
+     */
     fun purgeExpired() {
         val floor = System.currentTimeMillis() - windowMs
         store.entries.removeIf { (_, timestamps) ->
@@ -61,12 +81,30 @@ val authRateLimiter   = RateLimiter(maxRequests = 10, windowMs = 60_000L)   // 1
 val refreshRateLimiter = RateLimiter(maxRequests = 30, windowMs = 60_000L)  // 30 req/min
 
 /**
- * Extracts the real client IP, respecting X-Forwarded-For when behind a proxy.
- * Only trust X-Forwarded-For if you control the proxy that sets it.
+ * When true, X-Forwarded-For is trusted. Set this ONLY when a reverse proxy you control
+ * overwrites the header. Defaults to false so a directly-exposed server cannot have its
+ * rate limiting bypassed by a spoofed header.
+ */
+private val TRUST_PROXY: Boolean = System.getenv("TRUST_PROXY")?.lowercase() == "true"
+
+/**
+ * Extracts the client IP used as the rate-limit key.
+ *
+ * Behind a trusted proxy ([TRUST_PROXY] = true) the left-most X-Forwarded-For entry is the
+ * originating client. Otherwise the header is attacker-controlled and is ignored in favour
+ * of the actual socket peer, so an attacker cannot dodge limits by forging the header.
  */
 fun ApplicationCall.clientIp(): String =
-    request.headers["X-Forwarded-For"]?.split(",")?.firstOrNull()?.trim()
-        ?: request.local.remoteHost
+    if (TRUST_PROXY) {
+        request.headers["X-Forwarded-For"]
+            ?.split(",")
+            ?.firstOrNull()
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: request.local.remoteHost
+    } else {
+        request.local.remoteHost
+    }
 
 /**
  * Applies [limiter] to the current call. Returns true if the request is allowed,

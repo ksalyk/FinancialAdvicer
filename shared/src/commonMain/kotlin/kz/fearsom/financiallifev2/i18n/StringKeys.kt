@@ -275,6 +275,7 @@ object StringKeys {
     const val ERR_AUTH_USER_EXISTS            = "err_auth_user_exists"
     const val ERR_AUTH_USER_NOT_FOUND         = "err_auth_user_not_found"
     const val ERR_AUTH_WRONG_PASSWORD         = "err_auth_wrong_password"
+    const val ERR_AUTH_INVALID_CREDENTIALS    = "err_auth_invalid_credentials"
     const val ERR_AUTH_REFRESH_MISSING        = "err_auth_refresh_missing"
     const val ERR_AUTH_REFRESH_INVALID        = "err_auth_refresh_invalid"
 }

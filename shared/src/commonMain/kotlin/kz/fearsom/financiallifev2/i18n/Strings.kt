@@ -17,6 +17,7 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_SERVER_UNAVAILABLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_EXISTS
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_USER_NOT_FOUND
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_WRONG_PASSWORD
+import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_INVALID_CREDENTIALS
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_2005_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_2015_NAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERA_KZ_90S_NAME
@@ -483,6 +484,7 @@ object Strings {
     val errAuthUserExists          get() = get(ERR_AUTH_USER_EXISTS)
     val errAuthUserNotFound        get() = get(ERR_AUTH_USER_NOT_FOUND)
     val errAuthWrongPassword       get() = get(ERR_AUTH_WRONG_PASSWORD)
+    val errAuthInvalidCredentials  get() = get(ERR_AUTH_INVALID_CREDENTIALS)
     val errAuthRefreshMissing      get() = get(ERR_AUTH_REFRESH_MISSING)
     val errAuthRefreshInvalid      get() = get(ERR_AUTH_REFRESH_INVALID)
 }

@@ -2,6 +2,7 @@ package kz.fearsom.financiallifev2.server.database.migrations
 
 import kz.fearsom.financiallifev2.server.database.migrations.versions.V001_InitialSchema
 import kz.fearsom.financiallifev2.server.database.migrations.versions.V002_AddStatisticsIndex
+import kz.fearsom.financiallifev2.server.database.migrations.versions.V003_HashRefreshTokens
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -48,7 +49,8 @@ class MigrationRunner(private val db: Database) {
     /** Ordered list of all known migrations. Register new migrations here. */
     private val allMigrations: List<Migration> = listOf(
         V001_InitialSchema,
-        V002_AddStatisticsIndex
+        V002_AddStatisticsIndex,
+        V003_HashRefreshTokens
     ).sortedBy { it.version }
 
     suspend fun runMigrations() {

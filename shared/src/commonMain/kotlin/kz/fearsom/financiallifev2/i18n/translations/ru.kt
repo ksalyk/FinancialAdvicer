@@ -276,6 +276,7 @@ val ruStrings: Map<String, String> = mapOf(
     "err_auth_user_exists"           to "Пользователь уже существует",
     "err_auth_user_not_found"        to "Пользователь не найден",
     "err_auth_wrong_password"        to "Неверный пароль",
+    "err_auth_invalid_credentials"   to "Неверный логин или пароль",
     "err_auth_refresh_missing"       to "Отсутствует refresh token",
     "err_auth_refresh_invalid"       to "Refresh token недействителен или истёк",
 

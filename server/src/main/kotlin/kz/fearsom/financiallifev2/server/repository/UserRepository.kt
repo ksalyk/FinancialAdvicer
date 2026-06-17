@@ -50,6 +50,12 @@ interface UserRepository {
     suspend fun updatePassword(userId: String, rawPassword: String): Boolean
 
     /**
+     * Re-hashes the stored password under the current hashing scheme WITHOUT revoking
+     * tokens. Used to transparently upgrade a legacy hash after a successful login.
+     */
+    suspend fun rehashPassword(userId: String, rawPassword: String)
+
+    /**
      * Hard-deletes a user and all their data in one transaction:
      * refresh_tokens, game_state_snapshots, game_sessions, completed_sessions, users.
      * Returns false if [userId] not found.

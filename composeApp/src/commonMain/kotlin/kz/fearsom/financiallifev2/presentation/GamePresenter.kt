@@ -45,7 +45,14 @@ class GamePresenter(
 
     // Tracks which session is currently being played (for save-on-back)
     private var activeSessionId: String? = null
-    private var suppressNextStateSideEffects = false
+
+    // Signature of the last state persisted to the repo; saves are skipped when it is
+    // unchanged (e.g. on relocalization, which re-emits the same logical state).
+    private var lastPersistedSignature: String? = null
+
+    // Session ids whose completion has already been recorded — guards against
+    // double-recording statistics when a game-over state is re-emitted.
+    private val recordedCompletions = mutableSetOf<String>()
 
     init {
         scope.launch {
@@ -57,26 +64,30 @@ class GamePresenter(
                     else
                         emptyList()
                 )
-                // Auto-save progress to repository whenever game state changes
-                gameState?.let { state ->
-                    if (suppressNextStateSideEffects) {
-                        suppressNextStateSideEffects = false
-                        return@let
-                    }
-                    activeSessionId?.let { id ->
-                        sessionRepo.saveGameState(id, state)
-                        // Complete the session if it reached a game-over ending
-                        val endingType = state.endingType
-                        if (state.gameOver && endingType != null) {
-                            val gameEnding = endingType.toGameEnding()
-                            sessionRepo.completeSession(id, gameEnding)
-                            // Sync completed session to server (fire-and-forget)
-                            val session = sessionRepo.getSession(id)
-                            if (session != null && gameApiService != null) {
-                                launch {
-                                    gameApiService.recordCompletedSession(session, gameEnding)
-                                }
-                            }
+                val state = gameState ?: return@collect
+                val sessionId = activeSessionId ?: return@collect
+
+                // Persist only when the logical state actually advanced. Re-localization
+                // re-emits the same event id and message count, so its signature is
+                // unchanged and the redundant save is skipped (replaces the old
+                // suppressNextStateSideEffects flag).
+                val signature = "$sessionId:${state.currentEventId}:${state.messages.size}"
+                if (signature != lastPersistedSignature) {
+                    lastPersistedSignature = signature
+                    sessionRepo.saveGameState(sessionId, state)
+                }
+
+                // Complete + record the session at most once, even if the game-over state
+                // is re-emitted (e.g. by relocalization).
+                val endingType = state.endingType
+                if (state.gameOver && endingType != null && recordedCompletions.add(sessionId)) {
+                    val gameEnding = endingType.toGameEnding()
+                    sessionRepo.completeSession(sessionId, gameEnding)
+                    // Sync completed session to server (fire-and-forget)
+                    val session = sessionRepo.getSession(sessionId)
+                    if (session != null && gameApiService != null) {
+                        launch {
+                            gameApiService.recordCompletedSession(session, gameEnding)
                         }
                     }
                 }
@@ -95,6 +106,9 @@ class GamePresenter(
             startDefaultGame(); return
         }
         activeSessionId = sessionId
+        // Fresh playthrough — clear any persistence guards left from a previous run of this session.
+        recordedCompletions.remove(sessionId)
+        lastPersistedSignature = null
         // Set character info synchronously so the first render already shows the correct character
         _uiState.value = _uiState.value.copy(
             characterName  = session.characterName,
@@ -128,6 +142,11 @@ class GamePresenter(
         }
         activeSessionId = sessionId
         val savedState = sessionRepo.getSavedGameState(sessionId)
+        // Reset persistence guards on (re)entry; if the save is already a finished game,
+        // pre-seed the completion guard so merely loading it doesn't re-record statistics.
+        lastPersistedSignature = null
+        if (savedState?.gameOver == true) recordedCompletions.add(sessionId)
+        else recordedCompletions.remove(sessionId)
         // Set character info synchronously so the first render already shows the correct character
         _uiState.value = _uiState.value.copy(
             characterName  = session.characterName,
@@ -194,7 +213,6 @@ class GamePresenter(
                 characterEmoji = session.characterEmoji,
                 characterTitle = session.characterTitle
             )
-            suppressNextStateSideEffects = _uiState.value.gameState != null
             engine.relocalizeCurrentState(session.characterName)
         } else {
             _uiState.value = _uiState.value.copy(
@@ -202,7 +220,6 @@ class GamePresenter(
                 characterEmoji = "🛒",
                 characterTitle = "Менеджер маркетплейса"
             )
-            suppressNextStateSideEffects = _uiState.value.gameState != null
             engine.relocalizeCurrentState(Strings.sysDefaultCharacterName)
         }
     }

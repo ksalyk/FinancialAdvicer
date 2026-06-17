@@ -286,6 +286,7 @@ val enStrings: Map<String, String> = mapOf(
     "err_auth_user_exists"           to "User already exists",
     "err_auth_user_not_found"        to "User not found",
     "err_auth_wrong_password"        to "Incorrect password",
+    "err_auth_invalid_credentials"   to "Invalid username or password",
     "err_auth_refresh_missing"       to "Missing refresh token",
     "err_auth_refresh_invalid"       to "Invalid or expired refresh token",
 

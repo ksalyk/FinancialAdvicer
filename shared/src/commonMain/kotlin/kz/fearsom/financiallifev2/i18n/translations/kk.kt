@@ -286,6 +286,7 @@ val kkStrings: Map<String, String> = mapOf(
     "err_auth_user_exists"           to "Пайдаланушы бұрыннан бар",
     "err_auth_user_not_found"        to "Пайдаланушы табылмады",
     "err_auth_wrong_password"        to "Құпия сөз қате",
+    "err_auth_invalid_credentials"   to "Логин немесе құпия сөз қате",
     "err_auth_refresh_missing"       to "Refresh token жоқ",
     "err_auth_refresh_invalid"       to "Refresh token жарамсыз немесе мерзімі өткен",
 
