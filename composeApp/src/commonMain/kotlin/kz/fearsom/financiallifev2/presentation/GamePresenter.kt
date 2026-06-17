@@ -25,7 +25,9 @@ data class GameUiState(
     // Dynamic character display info
     val characterName: String  = Strings.sysDefaultCharacterName,
     val characterEmoji: String = "🛒",
-    val characterTitle: String = ""
+    val characterTitle: String = "",
+    val gameStartYear: Int? = null,
+    val gameStartMonth: Int? = null
 )
 
 /**
@@ -106,6 +108,7 @@ class GamePresenter(
             startDefaultGame(); return
         }
         activeSessionId = sessionId
+        val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
         // Fresh playthrough — clear any persistence guards left from a previous run of this session.
         recordedCompletions.remove(sessionId)
         lastPersistedSignature = null
@@ -113,15 +116,16 @@ class GamePresenter(
         _uiState.value = _uiState.value.copy(
             characterName  = session.characterName,
             characterEmoji = session.characterEmoji,
-            characterTitle = session.characterTitle
+            characterTitle = session.characterTitle,
+            gameStartYear  = scenarioStart.year,
+            gameStartMonth = scenarioStart.month
         )
         scope.launch {
             _uiState.value = _uiState.value.copy(isTyping = true)
             delay(800)
-            val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
             val initialState = session.initialStats.toPlayerState(
-                year        = session.currentGameYear,
-                month       = session.currentGameMonth,
+                year        = scenarioStart.year,
+                month       = scenarioStart.month,
                 characterId = session.characterId,
                 eraId       = session.eraId,
                 currency    = scenarioStart.currency
@@ -142,6 +146,7 @@ class GamePresenter(
         }
         activeSessionId = sessionId
         val savedState = sessionRepo.getSavedGameState(sessionId)
+        val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
         // Reset persistence guards on (re)entry; if the save is already a finished game,
         // pre-seed the completion guard so merely loading it doesn't re-record statistics.
         lastPersistedSignature = null
@@ -151,7 +156,9 @@ class GamePresenter(
         _uiState.value = _uiState.value.copy(
             characterName  = session.characterName,
             characterEmoji = session.characterEmoji,
-            characterTitle = session.characterTitle
+            characterTitle = session.characterTitle,
+            gameStartYear  = scenarioStart.year,
+            gameStartMonth = scenarioStart.month
         )
         scope.launch {
             _uiState.value = _uiState.value.copy(isTyping = true)
@@ -159,7 +166,6 @@ class GamePresenter(
             if (savedState != null) {
                 engine.loadState(savedState, session.characterName)
             } else {
-                val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
                 val initialState = session.initialStats.toPlayerState(
                     year        = session.currentGameYear,
                     month       = session.currentGameMonth,
@@ -178,11 +184,14 @@ class GamePresenter(
     fun startDefaultGame() {
         activeSessionId = null
         scope.launch {
+            val defaultStart = ScenarioGraphFactory.forCharacter("era_kz_2024", "kz_2024").initialPlayerState
             _uiState.value = _uiState.value.copy(
                 isTyping       = true,
                 characterName  = Strings.sysDefaultCharacterName,
                 characterEmoji = "🛒",
-                characterTitle = "Менеджер маркетплейса"
+                characterTitle = "Менеджер маркетплейса",
+                gameStartYear  = defaultStart.year,
+                gameStartMonth = defaultStart.month
             )
             delay(800)
             engine.startGame(characterName = Strings.sysDefaultCharacterName)

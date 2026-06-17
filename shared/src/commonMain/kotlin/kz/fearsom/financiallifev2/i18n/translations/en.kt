@@ -217,6 +217,14 @@ val enStrings: Map<String, String> = mapOf(
     "ending_wealth"                  to "🤑 Wealth",
     "ending_prison"                  to "⛓️ Prison",
     "ending_game_over"               to "🏁 Game Over",
+    "ending_caption_loss"            to "Your finances collapsed — but every restart is a fresh lesson.",
+    "ending_caption_neutral"         to "You made it through — yet there was room for more. Try a bolder path.",
+    "ending_caption_win"             to "Well played. Your choices built a future worth keeping.",
+
+    // ── DiaryGameOverBar ────────────────────────────────────────────
+    "ui_gameover_journey"            to "Journey",
+    "ui_gameover_net_worth"          to "Net Worth",
+    "ui_gameover_months_played"      to "%d months",
 
     // ── Currency suffixes ────────────────────────────────────────────
     "currency_rub"                   to "rub.",

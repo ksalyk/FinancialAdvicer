@@ -228,6 +228,14 @@ val ruStrings: Map<String, String> = mapOf(
     "ending_wealth"                  to "🤑 Богатство",
     "ending_prison"                  to "⛓️ Тюрьма",
     "ending_game_over"               to "🏁 Игра окончена",
+    "ending_caption_loss"            to "Финансы рухнули — но каждый перезапуск это новый урок.",
+    "ending_caption_neutral"         to "Ты выстоял — но мог большего. Попробуй смелее.",
+    "ending_caption_win"             to "Отличная игра! Твои решения построили достойное будущее.",
+
+    // ── DiaryGameOverBar ────────────────────────────────────────────
+    "ui_gameover_journey"            to "Путь",
+    "ui_gameover_net_worth"          to "Чистый капитал",
+    "ui_gameover_months_played"      to "%d мес.",
 
     // ── Currency suffixes ────────────────────────────────────────────
     "currency_rub"                   to "руб.",

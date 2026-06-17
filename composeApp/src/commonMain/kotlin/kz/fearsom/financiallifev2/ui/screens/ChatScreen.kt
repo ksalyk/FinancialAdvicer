@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.data.TypingPace
 import kz.fearsom.financiallifev2.model.ChatMessage
-import kz.fearsom.financiallifev2.model.EndingType
 import kz.fearsom.financiallifev2.model.MessageSender
 import kz.fearsom.financiallifev2.presentation.GameUiState
 import kz.fearsom.financiallifev2.ui.components.chat.AnimatedMessageEntry
@@ -333,7 +332,18 @@ fun ChatScreen(
             }
 
             if (uiState.gameState?.gameOver == true) {
-                DiaryGameOverBar(uiState.gameState?.endingType ?: EndingType.PAYCHECK_TO_PAYCHECK, onRestart)
+                val endedGame = uiState.gameState
+                DiaryGameOverBar(
+                    endingType = endedGame.endingType,
+                    playerState = endedGame.playerState,
+                    gameStartYear = uiState.gameStartYear,
+                    gameStartMonth = uiState.gameStartMonth,
+                    characterName = uiState.characterName,
+                    characterEmoji = uiState.characterEmoji,
+                    characterTitle = uiState.characterTitle,
+                    onRestart = onRestart,
+                    onNavigateToMenu = onNavigateToMenu
+                )
             }
         }
 

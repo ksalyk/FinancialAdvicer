@@ -2,12 +2,18 @@ package kz.fearsom.financiallifev2.i18n
 
 import kz.fearsom.financiallifev2.i18n.StringKeys.CURRENCY_RUB
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_BANKRUPTCY
+import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_CAPTION_LOSS
+import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_CAPTION_NEUTRAL
+import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_CAPTION_WIN
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_FREEDOM
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_GAME_OVER
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_PAYCHECK_TO_PAYCHECK
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_PRISON
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_STABILITY
 import kz.fearsom.financiallifev2.i18n.StringKeys.ENDING_WEALTH
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_GAMEOVER_JOURNEY
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_GAMEOVER_MONTHS_PLAYED
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_GAMEOVER_NET_WORTH
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_FILL_FIELDS
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_LOGIN_TOO_SHORT
 import kz.fearsom.financiallifev2.i18n.StringKeys.ERR_AUTH_PASSWORD_TOO_SHORT
@@ -444,6 +450,15 @@ object Strings {
     val endingWealth               get() = get(ENDING_WEALTH)
     val endingPrison               get() = get(ENDING_PRISON)
     val endingGameOver             get() = get(ENDING_GAME_OVER)
+    val endingCaptionLoss          get() = get(ENDING_CAPTION_LOSS)
+    val endingCaptionNeutral       get() = get(ENDING_CAPTION_NEUTRAL)
+    val endingCaptionWin           get() = get(ENDING_CAPTION_WIN)
+
+    // ── DiaryGameOverBar ────────────────────────────────────────────
+    val uiGameoverJourney          get() = get(UI_GAMEOVER_JOURNEY)
+    val uiGameoverNetWorth         get() = get(UI_GAMEOVER_NET_WORTH)
+    /** Months played pattern, uses `%d` placeholder. */
+    val uiGameoverMonthsPlayed     get() = get(UI_GAMEOVER_MONTHS_PLAYED)
 
     // ── Currency suffixes ────────────────────────────────────────────
     val currencyRub                get() = get(CURRENCY_RUB)

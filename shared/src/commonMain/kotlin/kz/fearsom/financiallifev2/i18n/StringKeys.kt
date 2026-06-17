@@ -227,6 +227,14 @@ object StringKeys {
     const val ENDING_WEALTH                   = "ending_wealth"
     const val ENDING_PRISON                   = "ending_prison"
     const val ENDING_GAME_OVER                = "ending_game_over"
+    // Sentiment captions shown under the ending title on the game-over card
+    const val ENDING_CAPTION_LOSS             = "ending_caption_loss"
+    const val ENDING_CAPTION_NEUTRAL          = "ending_caption_neutral"
+    const val ENDING_CAPTION_WIN              = "ending_caption_win"
+    // ── DiaryGameOverBar (game-over summary card) ───────────────────
+    const val UI_GAMEOVER_JOURNEY             = "ui_gameover_journey"
+    const val UI_GAMEOVER_NET_WORTH           = "ui_gameover_net_worth"
+    const val UI_GAMEOVER_MONTHS_PLAYED       = "ui_gameover_months_played"
 
     // ── Currency suffixes ────────────────────────────────────────────
     const val CURRENCY_RUB                    = "currency_rub"

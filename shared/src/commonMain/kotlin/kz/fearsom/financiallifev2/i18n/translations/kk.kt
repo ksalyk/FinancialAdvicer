@@ -217,6 +217,14 @@ val kkStrings: Map<String, String> = mapOf(
     "ending_wealth"                  to "🤑 Байлық",
     "ending_prison"                  to "⛓️ Түрме",
     "ending_game_over"               to "🏁 Ойын аяқталды",
+    "ending_caption_loss"            to "Қаржың күйреді — бірақ әр қайта бастау жаңа сабақ.",
+    "ending_caption_neutral"         to "Сен төздің — бірақ көбірегіне қол жеткізуге болатын еді. Батылырақ көр.",
+    "ending_caption_win"             to "Тамаша ойын! Шешімдерің лайықты болашақ құрды.",
+
+    // ── DiaryGameOverBar ────────────────────────────────────────────
+    "ui_gameover_journey"            to "Жол",
+    "ui_gameover_net_worth"          to "Таза капитал",
+    "ui_gameover_months_played"      to "%d ай",
 
     // ── Currency suffixes ────────────────────────────────────────────
     "currency_rub"                   to "руб.",
