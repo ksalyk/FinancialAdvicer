@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -71,7 +72,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
-import kz.fearsom.financiallifev2.ui.theme.GoldDark
+import kz.fearsom.financiallifev2.ui.components.core.AppTopBar
 import kz.fearsom.financiallifev2.ui.theme.GoldLight
 import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
 import kz.fearsom.financiallifev2.ui.theme.GreenMedium
@@ -90,7 +91,9 @@ fun LoginScreen(
     onLogin: (String, String) -> Unit,
     onRegister: (String, String) -> Unit,
     onToggleMode: () -> Unit,
-    onContinueAsGuest: () -> Unit
+    onContinueAsGuest: () -> Unit,
+    onBack: () -> Unit
+
 ) {
     val colors = LocalAppColors.current
 
@@ -98,7 +101,7 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val focusManager      = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
@@ -109,7 +112,10 @@ fun LoginScreen(
     )
     val logoPulse by infiniteTransition.animateFloat(
         initialValue = 0.93f, targetValue = 1.07f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(
+            tween(2000, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse
+        ),
         label = "pulse"
     )
 
@@ -125,7 +131,12 @@ fun LoginScreen(
                 .size(280.dp)
                 .offset(x = (-60).dp, y = (-40).dp)
                 .background(
-                    Brush.radialGradient(listOf(GoldPrimary.copy(alpha = 0.12f), Color.Transparent)),
+                    Brush.radialGradient(
+                        listOf(
+                            GoldPrimary.copy(alpha = 0.12f),
+                            Color.Transparent
+                        )
+                    ),
                     CircleShape
                 )
         )
@@ -135,7 +146,12 @@ fun LoginScreen(
                 .align(Alignment.BottomEnd)
                 .offset(x = 40.dp, y = 60.dp)
                 .background(
-                    Brush.radialGradient(listOf(GreenSuccess.copy(alpha = 0.08f), Color.Transparent)),
+                    Brush.radialGradient(
+                        listOf(
+                            GreenSuccess.copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    ),
                     CircleShape
                 )
         )
@@ -144,246 +160,272 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .imePadding()  // Prevents IME from covering content
-                .padding(horizontal = 28.dp),
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(88.dp))
-
-            // ── Logo ──────────────────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(listOf(GoldLight, GoldDark))
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("💰", fontSize = (44).sp)
-            }
-            Spacer(Modifier.height(18.dp))
-            Text(
-                "Finance LifeLine",
-                style = MaterialTheme.typography.headlineMedium,
-                color = colors.textPrimary,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                Strings.uiLoginSubtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-                textAlign = TextAlign.Center
+        )  // Prevents IME from covering content
+        {
+            AppTopBar(
+                title = if (isRegisterMode) Strings.uiLoginTabRegister else Strings.uiLoginTabLogin,
+                subtitle = "Start your journey",
+                onBack = onBack
             )
 
-            Spacer(Modifier.height(44.dp))
+            Spacer(Modifier.height(16.dp))
+            Column(
+                modifier = Modifier.padding(horizontal = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
+            {
+                Spacer(Modifier.height(68.dp))
 
-            // ── Try Demo — prominent CTA for new users ────────────────────
-            if (!isRegisterMode) {
-                Button(
-                    onClick  = { onLogin("demo", "demo123") },
-                    enabled  = !isLoading,
-                    modifier = Modifier.fillMaxWidth().height(58.dp),
-                    shape    = RoundedCornerShape(18.dp),
-                    colors   = ButtonDefaults.buttonColors(
-                        containerColor = GreenMedium,
-                        contentColor   = Color(0xFF002010)
-                    )
+                // ── Logo ──────────────────────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .scale(logoPulse)
+                        .size(80.dp)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    GoldPrimary.copy(alpha = 0.25f),
+                                    Color.Transparent
+                                )
+                            ),
+                            CircleShape
+                        )
+                        .border(1.5.dp, GoldPrimary.copy(alpha = 0.5f), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        "🎮  ${Strings.uiLoginTryDemo}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 16.sp
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        Strings.uiLoginTryDemoSub,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color(0xFF002010).copy(alpha = 0.70f)
-                    )
+                    Text("₸", fontSize = 38.sp, color = GoldPrimary)
                 }
 
-                Row(
-                    modifier          = Modifier.fillMaxWidth().padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(
-                        modifier  = Modifier.weight(1f),
-                        thickness = 1.dp,
-                        color     = colors.textHint.copy(alpha = 0.40f)
-                    )
-                    Text(
-                        "  ${Strings.uiLoginOr}  ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textHint
-                    )
-                    HorizontalDivider(
-                        modifier  = Modifier.weight(1f),
-                        thickness = 1.dp,
-                        color     = colors.textHint.copy(alpha = 0.40f)
-                    )
-                }
-            }
+                Spacer(Modifier.height(18.dp))
+                Text(
+                    "Finance LifeLine",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    Strings.uiLoginSubtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center
+                )
 
-            // ── Glass card ────────────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(colors.surfaceGlass)
-                    .border(1.dp, colors.surfaceGlassBorder, RoundedCornerShape(24.dp))
-                    .padding(24.dp)
-            ) {
-                Column {
-                    // Mode title
-                    AnimatedContent(
-                        targetState = isRegisterMode,
-                        transitionSpec = {
-                            slideInVertically { -it } + fadeIn() togetherWith
-                                    slideOutVertically { it } + fadeOut()
-                        },
-                        label = "modeTitle"
-                    ) { isReg ->
+                Spacer(Modifier.height(44.dp))
+
+                // ── Try Demo — prominent CTA for new users ────────────────────
+                if (!isRegisterMode) {
+                    Button(
+                        onClick = { onLogin("demo", "demo123") },
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth().height(58.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GreenMedium,
+                            contentColor = Color(0xFF002010)
+                        )
+                    ) {
                         Text(
-                            if (isReg) Strings.uiLoginTabRegister else Strings.uiLoginTabLogin,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = GoldPrimary,
-                            fontWeight = FontWeight.Bold
+                            "🎮  ${Strings.uiLoginTryDemo}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            Strings.uiLoginTryDemoSub,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF002010).copy(alpha = 0.70f)
                         )
                     }
 
-                    Spacer(Modifier.height(22.dp))
-
-                    // Username
-                    FinanceTextField(
-                        value       = username,
-                        onChange    = { username = it },
-                        label       = Strings.uiLoginFieldUsername,
-                        leadingIcon = { Text("👤", fontSize = 20.sp) },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction    = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            thickness = 1.dp,
+                            color = colors.textHint.copy(alpha = 0.40f)
                         )
-                    )
+                        Text(
+                            "  ${Strings.uiLoginOr}  ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textHint
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            thickness = 1.dp,
+                            color = colors.textHint.copy(alpha = 0.40f)
+                        )
+                    }
+                }
 
-                    Spacer(Modifier.height(14.dp))
+                // ── Glass card ────────────────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(colors.surfaceGlass)
+                        .border(1.dp, colors.surfaceGlassBorder, RoundedCornerShape(24.dp))
+                        .padding(24.dp)
+                ) {
+                    Column {
+                        // Mode title
+                        AnimatedContent(
+                            targetState = isRegisterMode,
+                            transitionSpec = {
+                                slideInVertically { -it } + fadeIn() togetherWith
+                                        slideOutVertically { it } + fadeOut()
+                            },
+                            label = "modeTitle"
+                        ) { isReg ->
+                            Text(
+                                if (isReg) Strings.uiLoginTabRegister else Strings.uiLoginTabLogin,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = GoldPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
-                    // Password
-                    FinanceTextField(
-                        value       = password,
-                        onChange    = { password = it },
-                        label       = Strings.uiLoginFieldPassword,
-                        leadingIcon = { Text("🔒", fontSize = 20.sp) },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Text(
-                                    text = if (passwordVisible) "🙈" else "👁️",
-                                    fontSize = 20.sp
-                                )
+                        Spacer(Modifier.height(22.dp))
+
+                        // Username
+                        FinanceTextField(
+                            value = username,
+                            onChange = { username = it },
+                            label = Strings.uiLoginFieldUsername,
+                            leadingIcon = { Text("👤", fontSize = 20.sp) },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            )
+                        )
+
+                        Spacer(Modifier.height(14.dp))
+
+                        // Password
+                        FinanceTextField(
+                            value = password,
+                            onChange = { password = it },
+                            label = Strings.uiLoginFieldPassword,
+                            leadingIcon = { Text("🔒", fontSize = 20.sp) },
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Text(
+                                        text = if (passwordVisible) "🙈" else "👁️",
+                                        fontSize = 20.sp
+                                    )
+                                }
+                            },
+                            visualTransformation = if (passwordVisible) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    keyboardController?.hide()
+                                    if (isRegisterMode) onRegister(username, password)
+                                    else onLogin(username, password)
+                                }
+                            )
+                        )
+
+                        // Error banner
+                        AnimatedVisibility(
+                            visible = error != null,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            error?.let {
+                                Spacer(Modifier.height(12.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(RedDanger.copy(alpha = 0.13f))
+                                        .border(
+                                            1.dp,
+                                            RedDanger.copy(alpha = 0.28f),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("⚠️", fontSize = 16.sp)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        it,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = RedLight
+                                    )
+                                }
                             }
-                        },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None
-                        else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction    = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
+                        }
+
+                        Spacer(Modifier.height(22.dp))
+
+                        // Primary button
+                        Button(
+                            onClick = {
                                 keyboardController?.hide()
                                 if (isRegisterMode) onRegister(username, password)
                                 else onLogin(username, password)
-                            }
-                        )
-                    )
-
-                    // Error banner
-                    AnimatedVisibility(
-                        visible = error != null,
-                        enter   = expandVertically() + fadeIn(),
-                        exit    = shrinkVertically() + fadeOut()
-                    ) {
-                        error?.let {
-                            Spacer(Modifier.height(12.dp))
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(RedDanger.copy(alpha = 0.13f))
-                                    .border(1.dp, RedDanger.copy(alpha = 0.28f), RoundedCornerShape(12.dp))
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("⚠️", fontSize = 16.sp)
-                                Spacer(Modifier.width(8.dp))
+                            },
+                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                            enabled = !isLoading,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = GoldPrimary,
+                                contentColor = colors.backgroundDeep
+                            )
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = colors.backgroundDeep,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
                                 Text(
-                                    it,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = RedLight
+                                    if (isRegisterMode) Strings.uiLoginBtnRegister else Strings.uiLoginBtnLogin,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
                                 )
                             }
                         }
+
+                        // Demo hint removed — replaced by prominent "Try Demo" button above the card
                     }
-
-                    Spacer(Modifier.height(22.dp))
-
-                    // Primary button
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            if (isRegisterMode) onRegister(username, password)
-                            else onLogin(username, password)
-                        },
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
-                        enabled  = !isLoading,
-                        shape    = RoundedCornerShape(16.dp),
-                        colors   = ButtonDefaults.buttonColors(
-                            containerColor = GoldPrimary,
-                            contentColor   = colors.backgroundDeep
-                        )
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(22.dp),
-                                color       = colors.backgroundDeep,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                if (isRegisterMode) Strings.uiLoginBtnRegister else Strings.uiLoginBtnLogin,
-                                fontWeight = FontWeight.Bold,
-                                fontSize   = 16.sp
-                            )
-                        }
-                    }
-
-                    // Demo hint removed — replaced by prominent "Try Demo" button above the card
                 }
-            }
 
-            Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(18.dp))
 
-            TextButton(onClick = onToggleMode) {
-                Text(
-                    if (isRegisterMode) Strings.uiLoginAlreadyHaveAccount
-                    else Strings.uiLoginNoAccount,
-                    color = GoldLight,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                TextButton(onClick = onToggleMode) {
+                    Text(
+                        if (isRegisterMode) Strings.uiLoginAlreadyHaveAccount
+                        else Strings.uiLoginNoAccount,
+                        color = GoldLight,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                TextButton(onClick = onContinueAsGuest) {
+                    Text(
+                        Strings.uiLoginContinueAsGuest,
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Spacer(Modifier.height(40.dp))
             }
-            TextButton(onClick = onContinueAsGuest) {
-                Text(
-                    Strings.uiLoginContinueAsGuest,
-                    color = colors.textSecondary,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(Modifier.height(40.dp))
         }
+
     }
 }
 
@@ -400,24 +442,24 @@ private fun FinanceTextField(
 ) {
     val colors = LocalAppColors.current
     OutlinedTextField(
-        value                = value,
-        onValueChange        = onChange,
-        label                = { Text(label, color = colors.textSecondary) },
-        leadingIcon          = leadingIcon,
-        trailingIcon         = trailingIcon,
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label, color = colors.textSecondary) },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
         visualTransformation = visualTransformation,
-        keyboardOptions      = keyboardOptions,
-        keyboardActions      = keyboardActions,
-        modifier             = Modifier.fillMaxWidth(),
-        singleLine           = true,
-        shape                = RoundedCornerShape(14.dp),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = GoldPrimary,
+            focusedBorderColor = GoldPrimary,
             unfocusedBorderColor = colors.textHint,
-            focusedTextColor     = colors.textPrimary,
-            unfocusedTextColor   = colors.textPrimary,
-            cursorColor          = GoldPrimary,
-            focusedContainerColor   = colors.backgroundCard,
+            focusedTextColor = colors.textPrimary,
+            unfocusedTextColor = colors.textPrimary,
+            cursorColor = GoldPrimary,
+            focusedContainerColor = colors.backgroundCard,
             unfocusedContainerColor = colors.backgroundCard
         )
     )
@@ -431,7 +473,7 @@ private fun DrawScope.drawParticles(angle: Float) {
         val x = center.x + ri * sin(a.toDouble()).toFloat() * 0.6f
         val y = center.y + ri * sin((a + 1.2f).toDouble()).toFloat()
         drawCircle(
-            color  = GoldPrimary.copy(alpha = 0.025f + (i % 4) * 0.007f),
+            color = GoldPrimary.copy(alpha = 0.025f + (i % 4) * 0.007f),
             radius = 3f + (i % 3) * 2.5f,
             center = Offset(x, y)
         )

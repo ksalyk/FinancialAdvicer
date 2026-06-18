@@ -109,7 +109,7 @@ fun MainMenuScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(88.dp))
 
             // ── Logo ──────────────────────────────────────────────────────────
             Box(
