@@ -32,6 +32,7 @@ object StringKeys {
     const val UI_LOGIN_OR                     = "ui_login_or"
     const val UI_LOGIN_ALREADY_HAVE_ACCOUNT   = "ui_login_already_have_account"
     const val UI_LOGIN_NO_ACCOUNT             = "ui_login_no_account"
+    const val UI_LOGIN_CONTINUE_AS_GUEST      = "ui_login_continue_as_guest"
 
     // ── MainMenuScreen ───────────────────────────────────────────────
     const val UI_MAIN_TAGLINE                 = "ui_main_tagline"
@@ -47,6 +48,11 @@ object StringKeys {
     const val UI_MAIN_SETTINGS                = "ui_main_settings"
     const val UI_MAIN_SETTINGS_SUBTITLE       = "ui_main_settings_subtitle"
     const val UI_MAIN_LOGOUT                  = "ui_main_logout"
+    const val UI_MAIN_LOGIN                   = "ui_main_login"
+    const val UI_MAIN_GUEST                   = "ui_main_guest"
+    const val UI_MAIN_LOGIN_HINT              = "ui_main_login_hint"
+    const val UI_MAIN_SIGNED_IN_AS            = "ui_main_signed_in_as"
+    const val UI_AUTH_REQUIRED                = "ui_auth_required"
 
     // ── EraSelectionScreen ───────────────────────────────────────────
     const val UI_ERA_TITLE                    = "ui_era_title"

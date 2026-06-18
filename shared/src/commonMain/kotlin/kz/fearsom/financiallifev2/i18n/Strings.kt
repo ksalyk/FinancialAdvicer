@@ -151,20 +151,26 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_TRY_DEMO_SUB
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_OR
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_FIELD_PASSWORD
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_FIELD_USERNAME
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_CONTINUE_AS_GUEST
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_NO_ACCOUNT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_TAB_LOGIN
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_LOGIN_TAB_REGISTER
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_AUTH_REQUIRED
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_BEST_ENDING
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_CHARACTERS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_CHARACTERS_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_CONTINUE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_GAMES_PLAYED
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_GUEST
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_LOGIN
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_LOGIN_HINT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_LOGOUT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_NEW_GAME
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_NEW_GAME_SUBTITLE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SETTINGS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SETTINGS_SUBTITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_SIGNED_IN_AS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_START_STORY
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_STATS
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_MAIN_TAGLINE
@@ -276,6 +282,7 @@ object Strings {
     val uiLoginOr                  get() = get(UI_LOGIN_OR)
     val uiLoginAlreadyHaveAccount  get() = get(UI_LOGIN_ALREADY_HAVE_ACCOUNT)
     val uiLoginNoAccount           get() = get(UI_LOGIN_NO_ACCOUNT)
+    val uiLoginContinueAsGuest     get() = get(UI_LOGIN_CONTINUE_AS_GUEST)
 
     // ── MainMenuScreen ───────────────────────────────────────────────
     val uiMainTagline              get() = get(UI_MAIN_TAGLINE)
@@ -291,6 +298,11 @@ object Strings {
     val uiMainSettings             get() = get(UI_MAIN_SETTINGS)
     val uiMainSettingsSubtitle     get() = get(UI_MAIN_SETTINGS_SUBTITLE)
     val uiMainLogout               get() = get(UI_MAIN_LOGOUT)
+    val uiMainLogin                get() = get(UI_MAIN_LOGIN)
+    val uiMainGuest                get() = get(UI_MAIN_GUEST)
+    val uiMainLoginHint            get() = get(UI_MAIN_LOGIN_HINT)
+    val uiMainSignedInAs           get() = get(UI_MAIN_SIGNED_IN_AS)
+    val uiAuthRequired             get() = get(UI_AUTH_REQUIRED)
 
     // ── EraSelectionScreen ───────────────────────────────────────────
     val uiEraTitle                 get() = get(UI_ERA_TITLE)

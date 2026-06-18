@@ -10,7 +10,9 @@ import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
 private fun EraSelectionScreenPreview() {
     EraSelectionScreen(
         uiState = NewGameUiState(),
+        isAuthenticated = false,
         onEraSelected = {},
+        onLoginRequired = {},
         onBack = {}
     )
 

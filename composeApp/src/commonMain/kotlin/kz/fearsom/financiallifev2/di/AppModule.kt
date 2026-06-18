@@ -87,7 +87,7 @@ val commonModule = module {
     single<FeatureFlagRepository> { LocalFeatureFlagRepository(storage = get<SecureStorage>()) }
 
     // ── Game API service (statistics persistence) ─────────────────────────────
-    single { GameApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl) }
+    single { GameApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl, tokenStorage = get()) }
 
     // ── Catalog (admin-managed characters/eras, overlaid onto SeedData) ────────
     single { CatalogRepository(api = get()) }

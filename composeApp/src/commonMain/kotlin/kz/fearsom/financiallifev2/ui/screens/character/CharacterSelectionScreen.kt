@@ -39,8 +39,10 @@ import kz.fearsom.financiallifev2.ui.theme.PurpleAccent
 @Composable
 fun CharacterSelectionScreen(
     uiState: NewGameUiState,
+    isAuthenticated: Boolean,
     onSelectPredefined: (String) -> Unit,   // characterId → sessionId returned from presenter
     onSelectBundle: (String) -> Unit,        // bundleId
+    onLoginRequired: () -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalAppColors.current
@@ -86,9 +88,13 @@ fun CharacterSelectionScreen(
                         visible = visible,
                         enter   = fadeIn(tween(220)) + slideInVertically { it / 2 }
                     ) {
+                        val isLockedForUser = !char.isUnlocked && !isAuthenticated
                         PredefinedCharacterCard(
                             character = char,
-                            onClick   = { if (char.isUnlocked) onSelectPredefined(char.id) }
+                            isLocked = isLockedForUser,
+                            lockedHint = Strings.uiAuthRequired,
+                            onClick = { onSelectPredefined(char.id) },
+                            onLockedClick = onLoginRequired
                         )
                     }
                 }

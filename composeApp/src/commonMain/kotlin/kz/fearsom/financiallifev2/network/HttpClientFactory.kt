@@ -121,7 +121,9 @@ fun buildHttpClient(
             // Proactively attach the token to every request except auth endpoints.
             sendWithoutRequest { request ->
                 val path = request.url.encodedPath
-                !path.contains("/auth/login") && !path.contains("/auth/register")
+                tokenStorage.isAccessTokenPresent() &&
+                    !path.contains("/auth/login") &&
+                    !path.contains("/auth/register")
             }
         }
     }

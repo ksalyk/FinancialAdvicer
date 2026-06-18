@@ -37,7 +37,13 @@ import kz.fearsom.financiallifev2.ui.components.difficultyColor
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 
 @Composable
-fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () -> Unit) {
+fun PredefinedCharacterCard(
+    character: PredefinedCharacter,
+    isLocked: Boolean = !character.isUnlocked,
+    lockedHint: String = Strings.uiCharSelLocked,
+    onClick: () -> Unit,
+    onLockedClick: (() -> Unit)? = null
+) {
     val colors = LocalAppColors.current
     var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
@@ -46,7 +52,6 @@ fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () -> Unit)
         label = "char_scale"
     )
 
-    val isLocked = !character.isUnlocked
     val accentColor = character.difficulty.difficultyColor()
     val bgGradient = if (isLocked)
         listOf(colors.backgroundCard, colors.backgroundCard)
@@ -64,9 +69,9 @@ fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () -> Unit)
                 if (isLocked) colors.textHint.copy(0.2f) else accentColor.copy(0.4f),
                 RoundedCornerShape(16.dp)
             )
-            .clickable(enabled = !isLocked) {
+            .clickable(enabled = !isLocked || onLockedClick != null) {
                 pressed = true
-                onClick()
+                if (isLocked) onLockedClick?.invoke() else onClick()
             }
             .padding(16.dp)
     ) {
@@ -125,11 +130,10 @@ fun PredefinedCharacterCard(character: PredefinedCharacter, onClick: () -> Unit)
         } else {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = Strings.uiCharSelLocked,
+                text = lockedHint,
                 fontSize = 11.sp,
                 color = colors.textHint
             )
         }
     }
 }
-

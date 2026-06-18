@@ -34,6 +34,7 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_login_or"                    to "или",
     "ui_login_already_have_account"  to "Уже есть аккаунт? Войти",
     "ui_login_no_account"            to "Нет аккаунта? Зарегистрироваться",
+    "ui_login_continue_as_guest"      to "Продолжить без аккаунта",
 
     // ── MainMenuScreen ───────────────────────────────────────────────
     "ui_main_tagline"                to "Стать богатым — это наука",
@@ -49,6 +50,11 @@ val ruStrings: Map<String, String> = mapOf(
     "ui_main_settings"               to "Настройки",
     "ui_main_settings_subtitle"      to "Язык и профиль",
     "ui_main_logout"                 to "Выйти из аккаунта",
+    "ui_main_login"                  to "Войти",
+    "ui_main_guest"                  to "Гость",
+    "ui_main_login_hint"             to "Войдите, чтобы открыть синхронизацию и закрытый контент",
+    "ui_main_signed_in_as"           to "Аккаунт:",
+    "ui_auth_required"               to "Войдите, чтобы открыть этот контент",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
     "ui_era_title"                   to "Выбери эпоху",

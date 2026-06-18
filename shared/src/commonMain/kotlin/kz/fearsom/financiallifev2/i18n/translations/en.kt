@@ -23,6 +23,7 @@ val enStrings: Map<String, String> = mapOf(
     "ui_login_or"                    to "or",
     "ui_login_already_have_account"  to "Already have an account? Sign In",
     "ui_login_no_account"            to "No account? Register",
+    "ui_login_continue_as_guest"      to "Continue without an account",
 
     // ── MainMenuScreen ───────────────────────────────────────────────
     "ui_main_tagline"                to "Getting rich is a science",
@@ -38,6 +39,11 @@ val enStrings: Map<String, String> = mapOf(
     "ui_main_settings"               to "Settings",
     "ui_main_settings_subtitle"      to "Language and profile",
     "ui_main_logout"                 to "Sign Out",
+    "ui_main_login"                  to "Sign In",
+    "ui_main_guest"                  to "Guest",
+    "ui_main_login_hint"             to "Sign in to unlock sync and gated content",
+    "ui_main_signed_in_as"           to "Account:",
+    "ui_auth_required"               to "Sign in to unlock this content",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
     "ui_era_title"                   to "Choose an Era",

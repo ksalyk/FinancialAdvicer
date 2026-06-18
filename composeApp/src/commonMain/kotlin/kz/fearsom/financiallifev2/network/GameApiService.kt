@@ -79,7 +79,8 @@ data class PlayerStatisticsResponse(
  */
 class GameApiService(
     private val httpClient: HttpClient,
-    private val baseUrl: String
+    private val baseUrl: String,
+    private val tokenStorage: TokenStorage? = null
 ) {
 
     /**
@@ -89,6 +90,11 @@ class GameApiService(
      */
     suspend fun recordCompletedSession(session: GameSession, ending: GameEnding): Result<Unit> =
         runCatching {
+            if (tokenStorage?.isAccessTokenPresent() != true) {
+                Napier.d("Skipping server session record without auth token", tag = TAG)
+                return@runCatching
+            }
+
             val stats = session.currentStats
             httpClient.post("$baseUrl/game/statistics/record") {
                 contentType(ContentType.Application.Json)
@@ -123,6 +129,9 @@ class GameApiService(
      */
     suspend fun getPlayerStatistics(): Result<PlayerStatisticsResponse> =
         runCatching {
+            if (tokenStorage?.isAccessTokenPresent() != true) {
+                throw IllegalStateException("Authentication required")
+            }
             httpClient.get("$baseUrl/game/statistics").body<PlayerStatisticsResponse>()
         }.onFailure { e ->
             Napier.w("Failed to fetch statistics from server: ${e.message}", tag = TAG)

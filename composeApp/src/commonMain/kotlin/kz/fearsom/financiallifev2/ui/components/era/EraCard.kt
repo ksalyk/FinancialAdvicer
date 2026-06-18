@@ -3,8 +3,6 @@ package kz.fearsom.financiallifev2.ui.components.era
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,11 +33,17 @@ import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 import kz.fearsom.financiallifev2.ui.theme.RedDanger
 
 @Composable
-fun EraCard(era: Era, onClick: () -> Unit) {
+fun EraCard(
+    era: Era,
+    isLocked: Boolean = era.isLocked,
+    lockedHint: String = Strings.uiEraLockedHint,
+    onClick: () -> Unit,
+    onLockedClick: (() -> Unit)? = null
+) {
     val colors = LocalAppColors.current
-    val borderColor = if (era.isLocked) colors.textHint.copy(alpha = 0.3f)
+    val borderColor = if (isLocked) colors.textHint.copy(alpha = 0.3f)
     else GoldPrimary.copy(alpha = 0.4f)
-    val bgGradient = if (era.isLocked)
+    val bgGradient = if (isLocked)
         listOf(colors.backgroundCard, colors.backgroundCard)
     else
         listOf(GoldPrimary.copy(alpha = 0.08f), BlueAccent.copy(alpha = 0.04f))
@@ -50,14 +54,14 @@ fun EraCard(era: Era, onClick: () -> Unit) {
             .clip(RoundedCornerShape(16.dp))
             .background(Brush.horizontalGradient(bgGradient))
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
-            .clickable(enabled = !era.isLocked) {
-                onClick()
+            .clickable(enabled = !isLocked || onLockedClick != null) {
+                if (isLocked) onLockedClick?.invoke() else onClick()
             }
             .padding(18.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (era.isLocked) "🔒" else era.emoji,
+                text = if (isLocked) "🔒" else era.emoji,
                 fontSize = 28.sp
             )
             Spacer(Modifier.width(12.dp))
@@ -66,7 +70,7 @@ fun EraCard(era: Era, onClick: () -> Unit) {
                     text = era.name,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (era.isLocked) colors.textHint else colors.textPrimary
+                    color = if (isLocked) colors.textHint else colors.textPrimary
                 )
                 Text(
                     text = "${era.startYear}–${era.endYear}",
@@ -74,15 +78,15 @@ fun EraCard(era: Era, onClick: () -> Unit) {
                     color = colors.textSecondary
                 )
             }
-            if (!era.isLocked) {
+            if (!isLocked) {
                 Text("›", fontSize = 20.sp, color = GoldPrimary)
             }
         }
 
-        if (era.isLocked) {
+        if (isLocked) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = Strings.uiEraLockedHint,
+                text = lockedHint,
                 fontSize = 11.sp,
                 color = colors.textHint
             )

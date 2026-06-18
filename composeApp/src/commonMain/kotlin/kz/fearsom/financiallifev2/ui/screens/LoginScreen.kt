@@ -89,7 +89,8 @@ fun LoginScreen(
     isRegisterMode: Boolean,
     onLogin: (String, String) -> Unit,
     onRegister: (String, String) -> Unit,
-    onToggleMode: () -> Unit
+    onToggleMode: () -> Unit,
+    onContinueAsGuest: () -> Unit
 ) {
     val colors = LocalAppColors.current
 
@@ -371,6 +372,13 @@ fun LoginScreen(
                     if (isRegisterMode) Strings.uiLoginAlreadyHaveAccount
                     else Strings.uiLoginNoAccount,
                     color = GoldLight,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            TextButton(onClick = onContinueAsGuest) {
+                Text(
+                    Strings.uiLoginContinueAsGuest,
+                    color = colors.textSecondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

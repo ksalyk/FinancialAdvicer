@@ -23,6 +23,7 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_login_or"                    to "немесе",
     "ui_login_already_have_account"  to "Аккаунт бар ма? Кіру",
     "ui_login_no_account"            to "Аккаунт жоқ па? Тіркелу",
+    "ui_login_continue_as_guest"      to "Аккаунтсыз жалғастыру",
 
     // ── MainMenuScreen ───────────────────────────────────────────────
     "ui_main_tagline"                to "Бай болу — бұл ғылым",
@@ -38,6 +39,11 @@ val kkStrings: Map<String, String> = mapOf(
     "ui_main_settings"               to "Баптаулар",
     "ui_main_settings_subtitle"      to "Тіл және профиль",
     "ui_main_logout"                 to "Шығу",
+    "ui_main_login"                  to "Кіру",
+    "ui_main_guest"                  to "Қонақ",
+    "ui_main_login_hint"             to "Синхрондау мен жабық контент үшін кіріңіз",
+    "ui_main_signed_in_as"           to "Аккаунт:",
+    "ui_auth_required"               to "Бұл контентті ашу үшін кіріңіз",
 
     // ── EraSelectionScreen ───────────────────────────────────────────
     "ui_era_title"                   to "Дәуірді таңдаңыз",

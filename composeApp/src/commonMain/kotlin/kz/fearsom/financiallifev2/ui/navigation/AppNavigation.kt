@@ -7,6 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
@@ -40,6 +44,7 @@ import kz.fearsom.financiallifev2.ui.screens.MainMenuScreen
 import kz.fearsom.financiallifev2.ui.screens.SettingsScreen
 import kz.fearsom.financiallifev2.ui.screens.SplashScreen
 import kz.fearsom.financiallifev2.ui.screens.StatisticsScreen
+import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 import org.koin.compose.koinInject
 
 // ── Screen definitions ────────────────────────────────────────────────────────
@@ -60,8 +65,8 @@ sealed interface AppScreen {
 // Navigation depth — drives slide direction.
 private fun AppScreen.depth(): Int = when (this) {
     AppScreen.Splash                 -> -1
-    AppScreen.Login                  -> 0
     AppScreen.MainMenu               -> 1
+    AppScreen.Login                  -> 2
     AppScreen.EraSelection           -> 2
     is AppScreen.CharacterSelection  -> 3
     AppScreen.Characters             -> 2
@@ -75,6 +80,7 @@ private fun AppScreen.depth(): Int = when (this) {
 
 @Composable
 fun AppNavigation() {
+    val colors = LocalAppColors.current
     val authRepository : AuthRepository         = koinInject()
     val gameEngine     : GameEngine             = koinInject()
     val sessionRepo    : GameSessionRepository  = koinInject()
@@ -125,11 +131,7 @@ fun AppNavigation() {
     LaunchedEffect(authUiState.isRestoringSession) {
         if (!authUiState.isRestoringSession && backStack.lastOrNull() == AppScreen.Splash) {
             navForward = true
-            backStack  = if (authUiState.authState.isLoggedIn) {
-                listOf(AppScreen.MainMenu)
-            } else {
-                listOf(AppScreen.Login)
-            }
+            backStack  = listOf(AppScreen.MainMenu)
         }
     }
 
@@ -141,50 +143,54 @@ fun AppNavigation() {
         gamePresenter.refreshLocalizedData()
     }
 
-    // ── Auth state — handles login / logout after splash ──────────────────────
+    // ── Auth state — login returns to main; logout keeps guest mode available ─
     LaunchedEffect(authUiState.authState.isLoggedIn) {
         if (authUiState.authState.isLoggedIn) {
             if (backStack.lastOrNull() == AppScreen.Login) {
                 navForward = true
                 backStack  = listOf(AppScreen.MainMenu)
             }
-        } else {
-            // Don't touch the stack while splash is still showing
-            if (backStack.lastOrNull() != AppScreen.Splash) {
-                navForward = false
-                backStack  = listOf(AppScreen.Login)
-            }
         }
     }
 
-    val currentScreen = backStack.lastOrNull() ?: AppScreen.Login
+    val currentScreen = backStack.lastOrNull() ?: AppScreen.MainMenu
 
     // Re-pull the admin catalog when entering a catalog-driven screen, so changes
     // made in the admin panel show up without an app relaunch.
-    LaunchedEffect(currentScreen) {
+    LaunchedEffect(currentScreen, authUiState.authState.isLoggedIn) {
         when (currentScreen) {
             AppScreen.EraSelection -> newGamePresenter.refresh()
             AppScreen.Characters   -> charsPresenter.refresh()
-            AppScreen.Statistics   -> statsPresenter.refresh()
+            AppScreen.Statistics   -> if (authUiState.authState.isLoggedIn) {
+                statsPresenter.refresh()
+            } else {
+                statsPresenter.refreshLocal()
+            }
             else                   -> {}
         }
     }
 
     SystemBackHandler(enabled = backStack.size > 1, onBack = ::goBack)
 
-    key(settingsUiState.currentLocale) {
-        AnimatedContent(
-            targetState  = currentScreen,
-            transitionSpec = {
-                val dir = if (navForward) 1 else -1
-                slideInHorizontally(initialOffsetX = { it * dir }, animationSpec = tween(320)) +
-                        fadeIn(tween(320)) togetherWith
-                        slideOutHorizontally(targetOffsetX = { -it * dir }, animationSpec = tween(320)) +
-                        fadeOut(tween(200))
-            },
-            label = "appNav"
-        ) { screen ->
-            when (screen) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.backgroundDeep)
+    ) {
+        key(settingsUiState.currentLocale) {
+            AnimatedContent(
+                targetState  = currentScreen,
+                modifier = Modifier.fillMaxSize(),
+                transitionSpec = {
+                    val dir = if (navForward) 1 else -1
+                    slideInHorizontally(initialOffsetX = { it * dir }, animationSpec = tween(320)) +
+                            fadeIn(tween(320)) togetherWith
+                            slideOutHorizontally(targetOffsetX = { -it * dir }, animationSpec = tween(320)) +
+                            fadeOut(tween(200))
+                },
+                label = "appNav"
+            ) { screen ->
+                when (screen) {
 
                 // ── Splash ────────────────────────────────────────────────────
                 AppScreen.Splash -> SplashScreen()
@@ -196,12 +202,18 @@ fun AppNavigation() {
                     isRegisterMode = authUiState.isRegisterMode,
                     onLogin        = authPresenter::login,
                     onRegister     = authPresenter::register,
-                    onToggleMode   = authPresenter::toggleMode
+                    onToggleMode   = authPresenter::toggleMode,
+                    onContinueAsGuest = {
+                        navForward = false
+                        backStack = listOf(AppScreen.MainMenu)
+                    }
                 )
 
                 // ── Main Menu ─────────────────────────────────────────────────
                 AppScreen.MainMenu -> MainMenuScreen(
                     uiState      = mainMenuUiState,
+                    isAuthenticated = authUiState.authState.isLoggedIn,
+                    username     = authUiState.authState.username,
                     onContinue   = {
                         val activeId = mainMenuUiState.activeSession?.id
                         if (activeId != null) {
@@ -213,6 +225,7 @@ fun AppNavigation() {
                     onCharacters = { navigate(AppScreen.Characters) },
                     onStatistics = { navigate(AppScreen.Statistics) },
                     onSettings   = { navigate(AppScreen.Settings) },
+                    onLogin      = { navigate(AppScreen.Login) },
                     onLogout     = {
                         gamePresenter.saveAndPause()
                         authPresenter.logout()
@@ -222,16 +235,19 @@ fun AppNavigation() {
                 // ── Era Selection ─────────────────────────────────────────────
                 AppScreen.EraSelection -> EraSelectionScreen(
                     uiState       = newGameUiState,
+                    isAuthenticated = authUiState.authState.isLoggedIn,
                     onEraSelected = { eraId ->
                         newGamePresenter.selectEra(eraId)
                         navigate(AppScreen.CharacterSelection(eraId))
                     },
+                    onLoginRequired = { navigate(AppScreen.Login) },
                     onBack = ::goBack
                 )
 
                 // ── Character Selection ───────────────────────────────────────
                 is AppScreen.CharacterSelection -> CharacterSelectionScreen(
                     uiState            = newGameUiState,
+                    isAuthenticated    = authUiState.authState.isLoggedIn,
                     onSelectPredefined = { charId ->
                         val sessionId = newGamePresenter.startWithPredefined(charId)
                         if (sessionId != null) {
@@ -248,6 +264,7 @@ fun AppNavigation() {
                             backStack  = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
                         }
                     },
+                    onLoginRequired = { navigate(AppScreen.Login) },
                     onBack = ::goBack
                 )
 
@@ -261,7 +278,9 @@ fun AppNavigation() {
                 // ── Character Detail ──────────────────────────────────────────
                 is AppScreen.CharacterDetail -> CharacterDetailScreen(
                     characterId = screen.characterId,
+                    isAuthenticated = authUiState.authState.isLoggedIn,
                     onBack      = ::goBack,
+                    onLoginRequired = { navigate(AppScreen.Login) },
                     onStartGame = { charId ->
                         val sessionId = newGamePresenter.quickStartWithCharacter(charId)
                         if (sessionId != null) {
@@ -301,6 +320,7 @@ fun AppNavigation() {
                         backStack  = listOf(AppScreen.MainMenu)
                     }
                 )
+                }
             }
         }
     }

@@ -38,7 +38,9 @@ import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 @Composable
 fun EraSelectionScreen(
     uiState: NewGameUiState,
+    isAuthenticated: Boolean,
     onEraSelected: (String) -> Unit,   // eraId
+    onLoginRequired: () -> Unit,
     onBack: () -> Unit
 ) {
     val colors = LocalAppColors.current
@@ -84,7 +86,14 @@ fun EraSelectionScreen(
                         visible = visible,
                         enter   = fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 2 }
                     ) {
-                        EraCard(era = era, onClick = { if (!era.isLocked) onEraSelected(era.id) })
+                        val isLockedForUser = era.isLocked && !isAuthenticated
+                        EraCard(
+                            era = era,
+                            isLocked = isLockedForUser,
+                            lockedHint = Strings.uiAuthRequired,
+                            onClick = { onEraSelected(era.id) },
+                            onLockedClick = onLoginRequired
+                        )
                     }
                 }
             }

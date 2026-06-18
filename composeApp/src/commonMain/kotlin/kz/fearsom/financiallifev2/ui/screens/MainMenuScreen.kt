@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,11 +53,14 @@ import kz.fearsom.financiallifev2.ui.theme.PurpleAccent
 @Composable
 fun MainMenuScreen(
     uiState: MainMenuUiState,
+    isAuthenticated: Boolean,
+    username: String,
     onContinue: () -> Unit,
     onNewGame: () -> Unit,
     onCharacters: () -> Unit,
     onStatistics: () -> Unit,
     onSettings: () -> Unit,
+    onLogin: () -> Unit,
     onLogout: () -> Unit
 ) {
     val colors = LocalAppColors.current
@@ -209,16 +211,61 @@ fun MainMenuScreen(
 
             Spacer(Modifier.weight(1f))
 
-            // ── Footer ────────────────────────────────────────────────────────
-            TextButton(onClick = onLogout) {
-                Text(
-                    text     = Strings.uiMainLogout,
-                    fontSize = 13.sp,
-                    color    = colors.textHint
-                )
-            }
+            AuthFooterButton(
+                isAuthenticated = isAuthenticated,
+                username = username,
+                onLogin = onLogin,
+                onLogout = onLogout
+            )
             Spacer(Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+private fun AuthFooterButton(
+    isAuthenticated: Boolean,
+    username: String,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val accent = if (isAuthenticated) GreenSuccess else GoldPrimary
+    val title = if (isAuthenticated) {
+        "${Strings.uiMainSignedInAs} ${username.ifBlank { Strings.uiMainGuest }}"
+    } else {
+        Strings.uiMainGuest
+    }
+    val action = if (isAuthenticated) Strings.uiMainLogout else Strings.uiMainLogin
+    val subtitle = if (isAuthenticated) action else Strings.uiMainLoginHint
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(accent.copy(alpha = 0.09f))
+            .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+            .clickable(onClick = if (isAuthenticated) onLogout else onLogin)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(if (isAuthenticated) "✓" else "↗", fontSize = 18.sp, color = accent)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.textPrimary
+            )
+            Text(
+                text = subtitle,
+                fontSize = 11.sp,
+                color = colors.textSecondary,
+                maxLines = 1
+            )
+        }
+        Text(action, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = accent)
     }
 }
 

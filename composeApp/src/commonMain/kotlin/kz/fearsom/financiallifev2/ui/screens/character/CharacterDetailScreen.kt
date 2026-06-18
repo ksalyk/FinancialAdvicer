@@ -58,12 +58,15 @@ import org.koin.compose.koinInject
 @Composable
 fun CharacterDetailScreen(
     characterId: String,
+    isAuthenticated: Boolean,
     onBack: () -> Unit,
+    onLoginRequired: () -> Unit,
     onStartGame: (characterId: String) -> Unit   // quick-start with this character
 ) {
     val colors = LocalAppColors.current
     val catalogRepo: CatalogRepository = koinInject()
     val character = catalogRepo.predefinedCharacters().find { it.id == characterId }
+    val canStartGame = character?.isUnlocked == true || isAuthenticated
 
     if (character == null) {
         Box(Modifier.fillMaxSize().background(colors.backgroundDeep), Alignment.Center) {
@@ -191,6 +194,7 @@ fun CharacterDetailScreen(
                         character.compatibleEraIds.forEach { eraId ->
                             val era = catalogRepo.eras().find { it.id == eraId }
                             if (era != null) {
+                                val isLockedForUser = era.isLocked && !isAuthenticated
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(era.emoji, fontSize = 18.sp)
                                     Spacer(Modifier.width(8.dp))
@@ -199,11 +203,11 @@ fun CharacterDetailScreen(
                                             era.name,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = if (era.isLocked) colors.textHint else colors.textPrimary
+                                            color = if (isLockedForUser) colors.textHint else colors.textPrimary
                                         )
-                                        if (era.isLocked) {
+                                        if (isLockedForUser) {
                                             Text(
-                                                Strings.uiCharDetailLockedEra,
+                                                Strings.uiAuthRequired,
                                                 fontSize = 10.sp,
                                                 color = colors.textHint
                                             )
@@ -244,7 +248,7 @@ fun CharacterDetailScreen(
                 Spacer(Modifier.height(28.dp))
 
                 // ── CTA Button ────────────────────────────────────────────────
-                if (character.isUnlocked) {
+                if (canStartGame) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -268,7 +272,7 @@ fun CharacterDetailScreen(
                     }
                 } else {
                     Text(
-                        text = Strings.uiCharDetailLockedChar,
+                        text = Strings.uiAuthRequired,
                         fontSize = 14.sp,
                         color = colors.textHint,
                         modifier = Modifier
@@ -276,6 +280,7 @@ fun CharacterDetailScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .background(colors.backgroundCard)
                             .border(1.dp, colors.textHint.copy(0.2f), RoundedCornerShape(14.dp))
+                            .clickable { onLoginRequired() }
                             .padding(vertical = 16.dp),
                         textAlign = TextAlign.Center
                     )
