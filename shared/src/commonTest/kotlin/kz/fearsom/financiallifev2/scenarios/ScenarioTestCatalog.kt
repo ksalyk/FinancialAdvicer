@@ -20,6 +20,10 @@ object ScenarioTestCatalog {
     /** Authored character graphs — real content. `DaniyarScenarioGraph` is the reference. */
     val authoredCombos: List<Pair<String, String>> = listOf(
         "daniyar_90s" to "kz_90s",
+        "aigul_90s" to "kz_90s",
+        "aidana_2024" to "kz_2024",
+        "timur_2024" to "kz_2024",
+        "marat_2015" to "kz_2015",
     )
 
     /** Everything the simulation + reachability suites run against. */

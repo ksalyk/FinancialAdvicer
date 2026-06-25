@@ -148,6 +148,10 @@ object ScenarioGraphFactory {
     /** Authored characters first; the reference graph is [DaniyarScenarioGraph]. */
     private fun buildGraph(characterId: String, eraId: String): ScenarioGraph = when (characterId) {
         "daniyar_90s" -> DaniyarScenarioGraph()
+        "aigul_90s" -> AigulScenarioGraph()
+        "aidana_2024" -> AidanaScenarioGraph()
+        "timur_2024" -> TimurScenarioGraph()
+        "marat_2015" -> MaratScenarioGraph()
         else -> forEra(eraId)
     }
 

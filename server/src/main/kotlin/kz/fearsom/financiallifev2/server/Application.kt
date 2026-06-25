@@ -19,6 +19,7 @@ import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseGameRepository
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
+import kz.fearsom.financiallifev2.server.auth.validateSecretsForProduction
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.repository.DatabaseStatisticsRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseUserRepository
@@ -37,6 +38,9 @@ fun main() {
 }
 
 fun Application.module() {
+    // 0. Fail fast if running in production with insecure default secrets.
+    validateSecretsForProduction()
+
     // 1. Connect to PostgreSQL — returns the Exposed Database instance.
     val database = DatabaseFactory.init()
 

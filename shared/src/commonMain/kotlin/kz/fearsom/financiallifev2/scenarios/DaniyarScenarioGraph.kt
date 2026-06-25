@@ -32,7 +32,9 @@ import kz.fearsom.financiallifev2.model.ScheduledEvent
  *    scripted chain (direct `next`), then each beat queues the next via `scheduleEvent`.
  *  - Between beats the engine fills months from `eventPool` (routine, scams, calls home)
  *    and `conditionalEvents` (debt crisis, burnout, wage arrears, bankruptcy).
- *  - 5 endings are single terminal-conditional nodes resolved by `capital` + flags.
+ *  - The authored backbone spans spring 1994 through autumn 1996. Its second half
+ *    turns earned capital into a first contract, payroll pressure, and a business choice.
+ *  - 5 endings are single terminal-conditional nodes resolved by `capital`, debt, and flags.
  *
  * Numbers are the design starting point; final balance is tuned against the sim harness.
  */
@@ -41,7 +43,7 @@ class DaniyarScenarioGraph : ScenarioGraph() {
     override val initialPlayerState: PlayerState = PlayerState(
         capital = 3_000L,
         income = 6_000L,
-        expenses = 5_000L,
+        expenses = 5_500L,
         debt = 0L,
         debtPaymentMonthly = 0L,
         investments = 0L,
@@ -61,6 +63,7 @@ class DaniyarScenarioGraph : ScenarioGraph() {
         mmmArc(),
         winterArc(),
         endgameArc(),
+        brigadeArc(),
         regularLifeArc(),
     ).buildEvents()
 
@@ -72,10 +75,13 @@ class DaniyarScenarioGraph : ScenarioGraph() {
     override val eventPool: List<PoolEntry> = listOf(
         PoolEntry("normal_life", 10),       // routine dominates (Bible §5) + engine hard fallback
         PoolEntry("pool_call_home", 8),
+        PoolEntry("pool_cost_of_living", 7),
         PoolEntry("pool_roommate", 6),
         PoolEntry("pool_side_work", 6),
         PoolEntry("pool_notebook", 6),
+        PoolEntry("pool_workwear", 6),
         PoolEntry("pool_bazaar", 5),
+        PoolEntry("pool_registration", 4),
         PoolEntry("pool_kairat_tile", 4),
         PoolEntry("pool_banya", 4),
         PoolEntry("network_favor", 3),
@@ -366,7 +372,7 @@ private fun winterArc(): EventArc = arc(
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-//  АКТ III — последняя развилка (фев '95) → расчёт (~май '95)
+//  АКТ III — первый капитал (фев '95) → выбор пути (~май '95)
 // ════════════════════════════════════════════════════════════════════════════
 
 private fun endgameArc(): EventArc = arc(
@@ -383,8 +389,8 @@ private fun endgameArc(): EventArc = arc(
                 "Поставим на барахолке — наш процент. Не продадим — вернём». Звучит слишком гладко.",
         ),
         options = listOf(
-            option("unload", "Поехать с Нурланом на разгрузку — 15 000 ₸", "👷", MONTHLY_TICK,
-                Effect(capitalDelta = 15_000L, stressDelta = 6, setFlags = setOf("end.stable", "net.t2"),
+            option("unload", "Поехать с Нурланом на разгрузку — 12 000 ₸ чистыми", "👷", MONTHLY_TICK,
+                Effect(capitalDelta = 12_000L, stressDelta = 6, setFlags = setOf("end.stable", "net.t2"),
                     scheduleEvent = ScheduledEvent("final_review", 3))),
             option("furs", "Вписаться с Русланом в шубы", "🧥", MONTHLY_TICK,
                 Effect(debtDelta = 8_000L, debtPaymentDelta = 1_000L, riskDelta = 15,
@@ -416,16 +422,237 @@ private fun endgameArc(): EventArc = arc(
     ),
     event(
         id = "final_review",
+        flavor = "🧰",
+        unique = true,
+        tags = setOf("career"),
+        message = story(
+            "Прошёл год с лишним. Алматы изменился — и ты тоже. Нурлан выкладывает на стол рулетку, " +
+                "шпатели и потёртую тетрадь с заказами.",
+            "«Руки у тебя есть. Теперь решай: носить чужой инструмент, стать старшим или учиться брать свои заказы».",
+            "Свой инструмент стоит 7 000. Должность старшего — 2 500 на общак. Остаться рабочим ничего не стоит. " +
+                "Пока ничего.",
+        ),
+        options = listOf(
+            option("buy_tools", "Купить свой инструмент — 7 000 ₸", "🧰", MONTHLY_TICK,
+                Effect(capitalDelta = -7_000L, incomeDelta = 1_500L, expensesDelta = 500L,
+                    stressDelta = 5, knowledgeDelta = 2,
+                    setFlags = setOf("path.master", "skill.tile", "net.t3"),
+                    scheduleEvent = ScheduledEvent("school_contract", 3))),
+            option("become_senior", "Войти в общак и стать старшим — 2 500 ₸", "👷", MONTHLY_TICK,
+                Effect(capitalDelta = -2_500L, incomeDelta = 1_000L, stressDelta = 7,
+                    setFlags = setOf("path.foreman", "net.t3"),
+                    scheduleEvent = ScheduledEvent("school_contract", 3))),
+            option("stay_worker", "Остаться рабочим и собирать подушку", "✉️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 1, setFlags = setOf("path.worker", "buffer.kept"),
+                    scheduleEvent = ScheduledEvent("school_contract", 3))),
+        ),
+    ),
+)
+
+// ════════════════════════════════════════════════════════════════════════
+//  АКТ IV — своё дело: договор → кассовый разрыв → семья → финал (~осень '96)
+// ════════════════════════════════════════════════════════════════════════
+
+private fun brigadeArc(): EventArc = arc(
+    "brigade",
+    event(
+        id = "school_contract",
+        flavor = "🏫",
+        unique = true,
+        tags = setOf("career"),
+        message = story(
+            "Август 1995-го. Завхоз старой школы ищет бригаду: переложить плитку в столовой до первого звонка. " +
+                "За работу — 40 000, аванс — 10 000. Плитка, клей и цемент съедят больше половины.",
+            "Завхоз протягивает ладонь: «Мы же люди. Зачем бумага?» Кайрат тихо говорит: «Смету не подпишешь — " +
+                "подорожание будет твоим».",
+        ),
+        options = listOf(
+            option("signed_estimate", "Подписать смету и условие о ценах", "📋", MONTHLY_TICK,
+                Effect(capitalDelta = -8_000L, knowledgeDelta = 3,
+                    setFlags = setOf("business.contract"),
+                    scheduleEvent = ScheduledEvent("materials_shock_safe", 2))),
+            option("handshake", "Взять аванс и поверить слову", "🤝", MONTHLY_TICK,
+                Effect(capitalDelta = -5_000L, riskDelta = 8,
+                    setFlags = setOf("business.handshake"),
+                    scheduleEvent = ScheduledEvent("materials_shock_squeezed", 2))),
+            option("decline_contract", "Отказаться: заказ слишком большой", "🚫", MONTHLY_TICK,
+                Effect(stressDelta = -3, setFlags = setOf("business.cautious"),
+                    scheduleEvent = ScheduledEvent("contract_passed", 2))),
+        ),
+    ),
+    event(
+        id = "materials_shock_safe",
+        flavor = "🧱",
+        unique = true,
+        tags = setOf("career", "crisis"),
+        message = story(
+            "Через две недели цемент и клей дорожают почти на четверть. Завхоз хмурится, но в смете есть отдельная строка: " +
+                "материалы пересчитываются по чекам.",
+            "К первому звонку пол готов. После расчёта у тебя остаётся 16 000 чистыми — не удача, а защищённая маржа.",
+        ),
+        options = listOf(
+            option("reserve_profit", "Отложить половину прибыли на следующий заказ", "✉️", MONTHLY_TICK,
+                Effect(capitalDelta = 16_000L, knowledgeDelta = 2,
+                    setFlags = setOf("buffer.business"),
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+            option("share_profit", "Выдать бригаде премию", "🤝", MONTHLY_TICK,
+                Effect(capitalDelta = 10_000L, stressDelta = -4,
+                    setFlags = setOf("net.t3", "crew.trusted"),
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+        ),
+    ),
+    event(
+        id = "materials_shock_squeezed",
+        flavor = "📉",
+        unique = true,
+        tags = setOf("career", "crisis"),
+        message = story(
+            "Цемент и клей дорожают почти на четверть. Завхоз не хочет слышать про новые цены: «Мы же на сорок договаривались».",
+            "Аванс уже в полу, плитка на стене, люди отработали две недели. Ещё 8 000 нужно найти сейчас, иначе заказ встанет.",
+        ),
+        options = listOf(
+            option("cover_gap", "Закрыть разрыв из своего конверта", "✉️", MONTHLY_TICK,
+                Effect(capitalDelta = -8_000L, stressDelta = 6, knowledgeDelta = 2,
+                    setFlags = setOf("business.finished"),
+                    scheduleEvent = ScheduledEvent("thin_margin", 1))),
+            option("borrow_materials", "Взять материалы в долг", "🧱", MONTHLY_TICK,
+                Effect(debtDelta = 8_000L, debtPaymentDelta = 1_000L, stressDelta = 10,
+                    setFlags = setOf("business.finished"),
+                    scheduleEvent = ScheduledEvent("thin_margin", 1))),
+            option("leave_site", "Бросить объект, пока долг не стал больше", "🚪", MONTHLY_TICK,
+                Effect(incomeDelta = -1_000L, stressDelta = 12,
+                    setFlags = setOf("business.reputation_lost"),
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+        ),
+    ),
+    event(
+        id = "thin_margin",
+        flavor = "🧾",
+        unique = true,
+        tags = setOf("career"),
+        message = story(
+            "Школу ты сдаёшь вовремя. Завхоз отсчитывает деньги купюра к купюре. После материалов и оплаты людям прибыль — " +
+                "всего 4 000. Два месяца риска за две трети зарплаты.",
+            "Теперь ты знаешь: выручка — ещё не доход, а устная цена — ещё не договор.",
+        ),
+        options = listOf(
+            option("write_everything", "Завести тетрадь смет и расходов", "📒", MONTHLY_TICK,
+                Effect(capitalDelta = 4_000L, knowledgeDelta = 3,
+                    setFlags = setOf("lesson.cashflow"),
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+            option("blame_prices", "Списать всё на цены и забыть", "🤷", MONTHLY_TICK,
+                Effect(capitalDelta = 4_000L, stressDelta = 4,
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+        ),
+    ),
+    event(
+        id = "contract_passed",
+        flavor = "🚚",
+        unique = true,
+        tags = setOf("career"),
+        message = story(
+            "Заказ берёт другая бригада. До середины работы они просят у завхоза ещё денег: материалы подорожали. К сентябрю рабочие " +
+                "уходят с объекта, а завхоз ищет тебя.",
+            "Отказ сохранил деньги, но не принёс опыта. Следующее решение тоже придётся принимать без гарантий.",
+        ),
+        options = listOf(
+            option("help_finish", "Взяться за остаток только по смете", "📋", MONTHLY_TICK,
+                Effect(capitalDelta = 6_000L, stressDelta = 5, knowledgeDelta = 2,
+                    setFlags = setOf("business.contract"),
+                    scheduleEvent = ScheduledEvent("crew_payday", 2))),
+            option("keep_wage", "Остаться на своей зарплате", "🧱", MONTHLY_TICK,
+                Effect(stressDelta = -4, scheduleEvent = ScheduledEvent("crew_payday", 2))),
+        ),
+    ),
+    event(
+        id = "crew_payday",
+        flavor = "💵",
+        unique = true,
+        tags = setOf("career", "crisis"),
+        message = story(
+            "Конец 1995-го. Нурлан уехал договариваться о новом объекте и оставил тебе расчёт с людьми. Но заказчик переносит платёж " +
+                "на две недели: «Бухгалтер заболела». Трое ребят ждут по 2 000. У одного хозяин общаги уже выносит вещи в коридор.",
+            "Деньги придут. Но доверие нужно оплатить сегодня.",
+        ),
+        options = listOf(
+            option("pay_from_buffer", "Заплатить людям из своего резерва", "✉️", MONTHLY_TICK,
+                Effect(capitalDelta = -6_000L, stressDelta = 3,
+                    setFlags = setOf("crew.trusted", "net.t3"),
+                    scheduleEvent = ScheduledEvent("letter_from_home", 2))),
+            option("ask_to_wait", "Попросить бригаду подождать две недели", "⏳", MONTHLY_TICK,
+                Effect(stressDelta = 10, clearFlags = setOf("crew.trusted"),
+                    scheduleEvent = ScheduledEvent("letter_from_home", 2))),
+            option("borrow_payroll", "Занять на зарплаты у поставщика", "🤝", MONTHLY_TICK,
+                Effect(debtDelta = 7_000L, debtPaymentDelta = 1_000L, stressDelta = 7,
+                    setFlags = setOf("crew.trusted"),
+                    scheduleEvent = ScheduledEvent("letter_from_home", 2))),
+        ),
+    ),
+    event(
+        id = "letter_from_home",
+        flavor = "✉️",
+        unique = true,
+        tags = setOf("family"),
+        message = story(
+            "Конец зимы 1996-го. В конверте от матери — фотография дома. Угол крыши провалился под снегом. Отец пишет одну строку: «Сами до весны " +
+                "закроем, если у тебя туго».",
+            "На крышу нужно 8 000. Можно послать 4 000 на временный ремонт. А можно поехать самому с инструментом, потеряв две недели заработка.",
+        ),
+        options = listOf(
+            option("send_full_roof", "Послать на крышу 8 000 ₸", "🏠", MONTHLY_TICK,
+                Effect(capitalDelta = -8_000L, stressDelta = -4,
+                    setFlags = setOf("family.roof_fixed"),
+                    scheduleEvent = ScheduledEvent("second_spring", 3))),
+            option("send_partial_roof", "Послать 4 000 ₸ и договориться о весне", "📮", MONTHLY_TICK,
+                Effect(capitalDelta = -4_000L, knowledgeDelta = 1,
+                    setFlags = setOf("family.boundary"),
+                    scheduleEvent = ScheduledEvent("second_spring", 3))),
+            option("repair_together", "Поехать и починить крышу самому", "🔨", MONTHLY_TICK,
+                Effect(capitalDelta = -3_000L, incomeDelta = -1_000L, stressDelta = -8,
+                    setFlags = setOf("family.roof_fixed", "family.trusted"),
+                    scheduleEvent = ScheduledEvent("second_spring", 3))),
+        ),
+    ),
+    event(
+        id = "second_spring",
+        flavor = "🌱",
+        unique = true,
+        tags = setOf("career"),
+        message = story(
+            "Весна. В окно общаги снова пахнет мокрым асфальтом. Нурлан предлагает снять на двоих гараж под мастерскую. Аренда и залог — 10 000, " +
+                "зато можно брать ремонты напрямую.",
+            "Кайрат зовёт в свою бригаду без залога: заработок меньше, зато все заказы и сметы на нём. Стройка тоже ждёт — обычная смена, " +
+                "обычная зарплата, никакого нового риска.",
+        ),
+        options = listOf(
+            option("open_workshop", "Снять гараж и открыть мастерскую", "🏭", MONTHLY_TICK,
+                Effect(capitalDelta = -10_000L, incomeDelta = 2_500L, expensesDelta = 1_000L,
+                    stressDelta = 8, setFlags = setOf("business.open", "net.t3"),
+                    scheduleEvent = ScheduledEvent("final_assessment", 4))),
+            option("join_kairat", "Войти в бригаду Кайрата", "🧱", MONTHLY_TICK,
+                Effect(incomeDelta = 1_500L, stressDelta = -3, knowledgeDelta = 2,
+                    setFlags = setOf("career.master", "net.t3"),
+                    scheduleEvent = ScheduledEvent("final_assessment", 4))),
+            option("return_site", "Остаться на стройке и не рисковать", "👷", MONTHLY_TICK,
+                Effect(stressDelta = -5, setFlags = setOf("career.worker"),
+                    scheduleEvent = ScheduledEvent("final_assessment", 4))),
+        ),
+    ),
+    event(
+        id = "final_assessment",
         flavor = "📜",
         unique = true,
         message = story(
-            "Прошёл год с лишним. Алматы изменился — и ты тоже. Ты раскладываешь записи на столе общаги.",
-            "Нурлан зовёт прорабом, но просит вложиться в инструмент. Мать пишет: в ауле ждут твоего решения. " +
-                "Сколько у тебя в конверте — столько у тебя и выбора.",
+            "Осень 1996-го. Ты сидишь за тем же столом в общаге. На нём теперь не только купюры: сметы, долги, адреса клиентов, " +
+                "переводы домой и строка «резерв» — с суммой или честным нулём.",
+            "Два с половиной года назад ты думал, что финансовая грамотность — это знать, где платят больше. Теперь знаешь: видеть всю цену " +
+                "решения до того, как его примешь.",
         ),
         options = listOf(
-            option("settle", "Посчитать всё честно и решить", "🧾", MONTHLY_TICK,
-                Effect(setFlags = setOf("arc.final_check"))),
+            option("count_result", "Свести деньги, долги и обещания", "🧾", MONTHLY_TICK,
+                Effect(knowledgeDelta = 2, setFlags = setOf("arc.final_check"))),
+            option("read_notebook", "Перечитать первую страницу тетради", "📒", MONTHLY_TICK,
+                Effect(stressDelta = -3, setFlags = setOf("arc.final_check"))),
         ),
     ),
 )
@@ -445,10 +672,10 @@ private fun regularLifeArc(): EventArc = arc(
         ),
         options = listOf(
             option("work_on", "Просто работать дальше", "🧱", MONTHLY_TICK),
-            option("put_aside", "Отложить немного в конверт", "✉️", MONTHLY_TICK,
-                Effect(capitalDelta = 200L, setFlags = setOf("buffer.kept"))),
+            option("put_aside", "Убрать остаток зарплаты в отдельный конверт", "✉️", MONTHLY_TICK,
+                Effect(knowledgeDelta = 1, setFlags = setOf("buffer.kept"))),
             option("rest", "Отдохнуть вечером, выспаться", "😴", MONTHLY_TICK,
-                Effect(stressDelta = -2)),
+                Effect(capitalDelta = -300L, stressDelta = -3)),
         ),
     ),
     event(
@@ -466,6 +693,28 @@ private fun regularLifeArc(): EventArc = arc(
                 Effect(capitalDelta = -3_000L, stressDelta = -3)),
             option("honest", "Сказать честно: «коплю, скоро помогу»", "🗣️", MONTHLY_TICK,
                 Effect(knowledgeDelta = 1)),
+        ),
+    ),
+    event(
+        id = "pool_cost_of_living",
+        flavor = "🧺",
+        tags = setOf("crisis"),
+        maxOccurrences = 1,
+        message = story(
+            "На базаре мука, масло и картошка снова дороже. Хозяйка комнаты тоже предупреждает: " +
+                "с будущего месяца за свет и уголь нужно доплачивать.",
+            "Прежние 5 500 в месяц больше не помещают ту же жизнь. Можно купить продукты мешком, " +
+                "урезать еду или просто принять новый расход.",
+        ),
+        options = listOf(
+            option("buy_bulk", "Купить продукты мешком — 1 500 ₸", "🛍️", MONTHLY_TICK,
+                Effect(capitalDelta = -1_500L, expensesDelta = 300L, knowledgeDelta = 1,
+                    setFlags = setOf("budget.bulk_food"))),
+            option("cut_food", "Перейти на чай, крупу и дешёвые обеды", "🥣", MONTHLY_TICK,
+                Effect(expensesDelta = 200L, stressDelta = 6,
+                    setFlags = setOf("budget.food_cut"))),
+            option("pay_new_prices", "Принять новые цены и не менять привычки", "🧾", MONTHLY_TICK,
+                Effect(expensesDelta = 700L)),
         ),
     ),
     event(
@@ -491,8 +740,8 @@ private fun regularLifeArc(): EventArc = arc(
             "Нурлан подкидывает вечернюю халтуру — поставить пару дверей у знакомого. Немного, но живые деньги.",
         ),
         options = listOf(
-            option("take_side", "Взять халтуру — +1 500 ₸", "🔧", MONTHLY_TICK,
-                Effect(capitalDelta = 1_500L, stressDelta = 4)),
+            option("take_side", "Взять халтуру — 1 200 ₸ чистыми", "🔧", MONTHLY_TICK,
+                Effect(capitalDelta = 1_200L, stressDelta = 4)),
             option("rest_side", "Отдохнуть, силы не казённые", "😮‍💨", MONTHLY_TICK,
                 Effect(stressDelta = -3)),
         ),
@@ -504,13 +753,33 @@ private fun regularLifeArc(): EventArc = arc(
         cooldownMonths = 3,
         maxOccurrences = 2,
         message = story(
-            "Старый мастер Кайрат зовёт помочь с ремонтом квартиры. Платит немного, зато показывает, как класть плитку.",
+            "Старый мастер Кайрат зовёт помочь с ремонтом квартиры. Денег почти нет, дорога и расходники твои, " +
+                "зато он показывает, как класть плитку.",
             "«Учись руками, не только спиной», — говорит Нурлан.",
         ),
         options = listOf(
             option("learn_tile", "Учиться ремеслу у Кайрата", "🧱", MONTHLY_TICK,
-                Effect(knowledgeDelta = 2, setFlags = setOf("skill.tile"))),
+                Effect(capitalDelta = -300L, knowledgeDelta = 2, setFlags = setOf("skill.tile"))),
             option("skip_tile", "Не до того сейчас", "🚶", MONTHLY_TICK),
+        ),
+    ),
+    event(
+        id = "pool_workwear",
+        flavor = "🥾",
+        tags = setOf("career"),
+        cooldownMonths = 3,
+        maxOccurrences = 4,
+        message = story(
+            "На сапоге расходится подошва, рукавицы протёрлись до кожи, а у зубила снова сбит край. " +
+                "На стройке вещи не доживают до следующего сезона только потому, что ты аккуратный.",
+        ),
+        options = listOf(
+            option("replace_workwear", "Купить сапоги и рукавицы — 1 200 ₸", "🥾", MONTHLY_TICK,
+                Effect(capitalDelta = -1_200L, stressDelta = -2)),
+            option("patch_workwear", "Залатать старое — 450 ₸", "🪡", MONTHLY_TICK,
+                Effect(capitalDelta = -450L, stressDelta = 3)),
+            option("borrow_gear", "Одолжить снаряжение у бригады", "🤝", MONTHLY_TICK,
+                Effect(capitalDelta = -200L, stressDelta = 2, setFlags = setOf("gear.borrowed"))),
         ),
     ),
     event(
@@ -525,6 +794,24 @@ private fun regularLifeArc(): EventArc = arc(
             option("gift_mother", "Купить матери подарок — 800 ₸", "🎁", MONTHLY_TICK,
                 Effect(capitalDelta = -800L, stressDelta = -3)),
             option("just_walk", "Пройтись без покупок", "👀", MONTHLY_TICK),
+        ),
+    ),
+    event(
+        id = "pool_registration",
+        flavor = "🪪",
+        maxOccurrences = 1,
+        message = story(
+            "У метро милиционер долго листает паспорт и спрашивает про временную регистрацию. " +
+                "В отделении называют официальный сбор и список справок; у входа посредник обещает сделать быстрее.",
+        ),
+        options = listOf(
+            option("register_officially", "Оформить регистрацию официально — 900 ₸", "📋", MONTHLY_TICK,
+                Effect(capitalDelta = -900L, knowledgeDelta = 1,
+                    setFlags = setOf("documents.registered"))),
+            option("ask_nurlan_docs", "Попросить Нурлана помочь со справками — 400 ₸", "🤝", MONTHLY_TICK,
+                Effect(capitalDelta = -400L, setFlags = setOf("documents.registered", "net.t2"))),
+            option("postpone_docs", "Отложить оформление и избегать проверок", "🚶", MONTHLY_TICK,
+                Effect(stressDelta = 7, riskDelta = 3)),
         ),
     ),
     event(
@@ -552,9 +839,9 @@ private fun regularLifeArc(): EventArc = arc(
         ),
         options = listOf(
             option("banya_nurlan", "Пойти с Нурланом и бригадой", "🤝", MONTHLY_TICK,
-                Effect(stressDelta = -5, setFlags = setOf("net.t1"))),
+                Effect(capitalDelta = -350L, stressDelta = -5, setFlags = setOf("net.t1"))),
             option("banya_alone", "Сходить одному, отдохнуть", "🧘", MONTHLY_TICK,
-                Effect(stressDelta = -4)),
+                Effect(capitalDelta = -250L, stressDelta = -4)),
         ),
     ),
     event(
@@ -566,7 +853,7 @@ private fun regularLifeArc(): EventArc = arc(
         ),
         options = listOf(
             option("listen", "Слушать разговоры про подработки", "👂", MONTHLY_TICK,
-                Effect(knowledgeDelta = 1)),
+                Effect(capitalDelta = -200L, knowledgeDelta = 1)),
             option("sleep_early", "Лечь спать пораньше", "💤", MONTHLY_TICK,
                 Effect(stressDelta = -3)),
         ),
@@ -732,15 +1019,19 @@ private fun endingsArc(): EventArc = arc(
         priority = 150,
         conditions = listOf(
             Condition.HasFlag("arc.final_check"),
-            cond(CAPITAL, GTE, 22_000L),
-            Condition.HasFlag("net.t2"),
+            cond(CAPITAL, GTE, 35_000L),
+            cond(DEBT, LTE, 3_000L),
+            Condition.HasFlag("net.t3"),
             Condition.HasFlag("learned.scam.pyramid"),
+            Condition.HasFlag("business.contract"),
+            Condition.HasFlag("business.open"),
+            Condition.HasFlag("crew.trusted"),
         ),
         message = story(
-            "Не империя. Просто редкая для 90-х победа: стабильная бригада, репутация, инструмент, резерв, " +
-                "помощь дому без самоуничтожения.",
-            "Земляки доверяют тебе, ты научился считать и не верить пустым обещаниям. " +
-                "Для парня из аула это и есть большое богатство.",
+            "Не империя. Мастерская в арендованном гараже, подписанные сметы, бригада, которой ты не задержал зарплату, " +
+                "и резерв после всех расчётов.",
+            "Ты научился отличать выручку от прибыли, доверие от устной сделки и помощь семье от самоуничтожения. " +
+                "Для парня, приехавшего с одной клетчатой сумкой, это и есть большое богатство.",
         ),
     ),
     ending(
@@ -750,13 +1041,16 @@ private fun endingsArc(): EventArc = arc(
         priority = 140,
         conditions = listOf(
             Condition.HasFlag("arc.final_check"),
-            cond(CAPITAL, GTE, 14_000L),
+            cond(CAPITAL, GTE, 25_000L),
+            cond(DEBT, LTE, 5_000L),
+            Condition.HasFlag("net.t3"),
             Condition.HasFlag("learned.scam.pyramid"),
+            Condition.HasFlag("crew.trusted"),
         ),
         message = story(
             "Ты впервые отказываешься от сомнительной работы без страха — не из гордости, " +
                 "а потому что можешь позволить себе сказать «нет».",
-            "Подушка, ясная голова и год, который ничему не научил тебя зря.",
+            "Подушка, ясная голова и два с половиной года, за которые ни один урок не пропал зря.",
         ),
     ),
     ending(
@@ -766,7 +1060,8 @@ private fun endingsArc(): EventArc = arc(
         priority = 130,
         conditions = listOf(
             Condition.HasFlag("arc.final_check"),
-            cond(CAPITAL, GTE, 7_000L),
+            cond(CAPITAL, GTE, 14_000L),
+            cond(DEBT, LTE, 8_000L),
         ),
         message = story(
             "Тетрадь, нормальные ботинки, свой инструмент, люди, которым можно звонить, " +

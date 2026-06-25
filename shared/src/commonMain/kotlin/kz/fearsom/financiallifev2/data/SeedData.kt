@@ -27,7 +27,7 @@ object SeedData {
             baseInflationRate = 40.0,
             baseSalaryMin = 5_000L,
             baseSalaryMax = 50_000L,
-            availableCharacterIds = listOf("aidar_90s", "daniyar_90s"),
+            availableCharacterIds = listOf("aidar_90s", "daniyar_90s", "aigul_90s"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_90s_event_1"],
                 Strings["seed_era_kz_90s_event_2"],
@@ -63,7 +63,7 @@ object SeedData {
             baseInflationRate = 14.5,
             baseSalaryMin = 150_000L,
             baseSalaryMax = 500_000L,
-            availableCharacterIds = listOf("dana"),
+            availableCharacterIds = listOf("dana", "marat_2015"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_2015_event_1"],
                 Strings["seed_era_kz_2015_event_2"],
@@ -81,7 +81,7 @@ object SeedData {
             baseInflationRate = 9.8,
             baseSalaryMin = 300_000L,
             baseSalaryMax = 1_500_000L,
-            availableCharacterIds = listOf("asan"),
+            availableCharacterIds = listOf("asan", "aidana_2024", "timur_2024"),
             keyEconomicEvents = listOf(
                 Strings["seed_era_kz_2024_event_1"],
                 Strings["seed_era_kz_2024_event_2"]
@@ -179,6 +179,88 @@ object SeedData {
             difficulty = Difficulty.MEDIUM,
             isUnlocked = true
         ), PredefinedCharacter(
+            id = "aidana_2024",
+            name = "Айдана Бекова",
+            age = 26,
+            profession = "Маркетолог в IT-компании",
+            emoji = "💼",
+            backstory = "Алматы, 2024. Айдана получила первую «взрослую» зарплату 350 000 ₸. " +
+                "Снимает квартиру, телефон в рассрочку, подписки, бранчи с подругой. " +
+                "Денег почему-то не остаётся. Её арка — про бюджет, подушку безопасности, " +
+                "ловушки Kaspi-рассрочки и первые инвестиции.",
+            personality = "Современная, в Instagram, тревожно-амбициозная. Быстро учится, " +
+                "но привычка жить «как все» и доверять советам подруги регулярно стоит денег.",
+            compatibleEraIds = listOf("kz_2024"),
+            initialStats = CharacterStats(
+                capital = 150_000L,
+                income = 350_000L,
+                debt = 90_000L,
+                monthlyExpenses = 280_000L,
+                stress = 35,
+                financialKnowledge = 12,
+                riskLevel = 20
+            ),
+            uniqueEventIds = listOf(
+                "intro", "kaspi_temptation", "medical_shock", "investment_fork", "final_review"
+            ),
+            difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "timur_2024",
+            name = "Тимур Жаксыбеков",
+            age = 20,
+            profession = "Студент-айтишник, фрилансер на Upwork",
+            emoji = "💻",
+            backstory = "Астана, 2024. Тимур получает первый зарубежный заказ — $500 за лендинг. " +
+                "Одногруппник зовёт на стабильную госпрактику. Его арка — про диверсификацию " +
+                "доходов, инвестиции в скилл, доллары как защиту от инфляции и свой продукт.",
+            personality = "Амбициозный, онлайн, немного циничный про «систему». " +
+                "Коворкинг, USD-инвойсы, стартап-чатики. Умеет учиться, но подвержен " +
+                "синдрому самозанятого: берёт всё подряд без стратегии.",
+            compatibleEraIds = listOf("kz_2024"),
+            initialStats = CharacterStats(
+                capital = 80_000L,
+                income = 200_000L,
+                debt = 0L,
+                monthlyExpenses = 120_000L,
+                stress = 30,
+                financialKnowledge = 20,
+                riskLevel = 30
+            ),
+            uniqueEventIds = listOf(
+                "intro", "stream_build", "dry_spell_start", "product_idea", "final_reflection"
+            ),
+            difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "marat_2015",
+            name = "Марат Есенов",
+            age = 25,
+            profession = "Вахтовик на нефтяном месторождении, Атырау",
+            emoji = "🛢️",
+            backstory = "Атырау, 2014. Марат зарабатывает больше, чем большинство его знакомых. " +
+                "Ербол зовёт брать Prado в кредит, Динара хочет свадьбу на 300 гостей, " +
+                "банк одобряет ипотеку в долларах. Нефть кажется вечной. " +
+                "Его арка — про инфляцию образа жизни, валютный риск и концентрацию дохода " +
+                "в одном секторе — который обвалился в августе 2015.",
+            personality = "Уверенный, щедрый, любит понты. Деньги пришли быстро — " +
+                "и ощущение непробиваемости пришло вместе с ними.",
+            compatibleEraIds = listOf("kz_2015"),
+            initialStats = CharacterStats(
+                capital = 500_000L,
+                income = 700_000L,
+                debt = 0L,
+                monthlyExpenses = 220_000L,
+                stress = 15,
+                financialKnowledge = 8,
+                riskLevel = 45
+            ),
+            uniqueEventIds = listOf(
+                "intro", "mortgage_offer", "devaluation_arrives", "final_review"
+            ),
+            difficulty = Difficulty.MEDIUM,
+            isUnlocked = true
+        ), PredefinedCharacter(
             id = "dana",
             name = "Жанар Сейтова",
             age = 34,
@@ -226,19 +308,50 @@ object SeedData {
             age = 22,
             profession = "Подсобник на стройке",
             emoji = "🧱",
-            backstory = "Алматы, 1994. Данияр приехал из аула под Талдыкорганом с 3 000 тенге и нулём понимания, как в городе устроены деньги. Земляк Нурлан берёт его на стройку, сосед по общаге зовёт в «быстрые деньги», а по телевизору улыбается МММ. Его арка — про первую зарплату, подушку безопасности, тёплую куртку против понтов и первую финансовую пирамиду.",
+            backstory = "Алматы, 1994. Данияр приехал из аула под Талдыкорганом с 3 000 тенге и нулём понимания, как в городе устроены деньги. Земляк Нурлан берёт его на стройку, сосед по общаге зовёт в «быстрые деньги», а по телевизору улыбается МММ. Его арка — про первую зарплату, подушку безопасности, первую финансовую пирамиду и путь от подсобника до мастера, который учится считать сметы, оборотные деньги и цену доверия.",
             personality = "Наивный и гордый, не хочет ударить в грязь лицом перед земляками. Учится считать деньги через последствия, а не лекции.",
             compatibleEraIds = listOf("kz_90s"),
             initialStats = CharacterStats(
                 capital = 3_000L,
                 income = 6_000L,
                 debt = 0L,
-                monthlyExpenses = 5_000L,
+                monthlyExpenses = 5_500L,
                 stress = 45,
                 financialKnowledge = 5,
                 riskLevel = 25
             ),
-            uniqueEventIds = listOf("intro", "mmm_arrives", "winter_gear", "final_fork", "final_review"),
+            uniqueEventIds = listOf(
+                "intro", "mmm_arrives", "winter_gear", "final_fork", "school_contract",
+                "crew_payday", "second_spring", "final_assessment"
+            ),
+            difficulty = Difficulty.HARD,
+            isUnlocked = true
+        ), PredefinedCharacter(
+            id = "aigul_90s",
+            name = "Айгуль",
+            age = 30,
+            profession = "Челнок на барахолке",
+            emoji = "🧳",
+            backstory = "Шымкент → Алматы, 1994. Муж уехал на заработки и пропал. Айгуль мать-одиночка — " +
+                "берёт турецкий трикотаж у оптовика Вани в кредит, продаёт на базаре, кормит дочь Амину. " +
+                "Её арка — про оборотный капитал: купи-продай-верни-купи снова, и не дай МММ и рэкету " +
+                "съесть то, что заработала.",
+            personality = "Жёсткая, считает каждую тиынку, гордая. Учится на ошибках кассового разрыва, а не лекциях.",
+            compatibleEraIds = listOf("kz_90s"),
+            initialStats = CharacterStats(
+                capital = 30_000L,
+                income = 0L,
+                debt = 12_000L,
+                monthlyExpenses = 18_000L,
+                stress = 65,
+                financialKnowledge = 20,
+                riskLevel = 40
+            ),
+            uniqueEventIds = listOf(
+                "intro", "amina_clinic", "goods_sold_full", "goods_sold_half", "goods_sold_small",
+                "mmm_wave", "mmm_lost", "mmm_safe", "racket_intro", "racket_retaliation",
+                "supplier_squeeze", "kiosk_offer", "final_review"
+            ),
             difficulty = Difficulty.HARD,
             isUnlocked = true
         )
