@@ -1001,7 +1001,7 @@ private fun conditionalsArc(): EventArc = arc(
         conditions = listOf(
             cond(CAPITAL, GTE, 200_000L),
             Condition.HasFlag("stream.usd"),
-            Condition.NotHasFlag("learned.fx"),
+            Condition.NotFlag("learned.fx"),
         ),
         message = story(
             "Тенге ослаб ещё раз. Твои USD-клиенты превращаются в большее количество тенге " +
