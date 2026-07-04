@@ -9,9 +9,13 @@ simulation + content tests (`./gradlew :shared:test`).
 Usage:
     python3 .claude/skills/scenario-writer/scripts/validate_scenarios.py [PATH ...]
 
-With no args it scans the author-facing scenario dirs:
-    shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios/characters
-    shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios/arcs
+With no args it scans authored character graphs (files matching
+*ScenarioGraph.kt) directly under:
+    shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios/
+
+Infra files (NarrativeDsl.kt, Scenarios.kt, EraDefinition.kt,
+EventPoolSelector.kt) are intentionally excluded — they legitimately construct
+GameEvent/GameOption directly.
 
 Severities:
     ERROR  -> real bug (factory won't match / type mismatch). Exit code 1.
@@ -36,13 +40,28 @@ RE_SCHEDULE_PAIR = re.compile(r"scheduleEvent\s*=\s*(Pair\b|\")")
 RE_OBJECT_GRAPH = re.compile(r"\bobject\s+\w*ScenarioGraph\b")
 RE_ERA_ID = re.compile(r'\beraId\s*=\s*"([^"]*)"')
 RE_DIRECT_CTOR = re.compile(r"\b(GameEvent|GameOption)\s*\(")
-RE_ISENDING = re.compile(r"\bisEnding\s*=\s*true\b")
-RE_OPTIONS_ASSIGN = re.compile(r"\boptions\s*=\s*(emptyList\(\)|listOf\()")
+RE_ISENDING = re.compile(r"\bisEnding\s*=")
 
-DEFAULT_DIRS = [
-    "shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios/characters",
-    "shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios/arcs",
-]
+SCENARIOS_DIR = "shared/src/commonMain/kotlin/kz/fearsom/financiallifev2/scenarios"
+
+# Engine/DSL infrastructure — not authored content; excluded from the default scan.
+INFRA_FILES = {
+    "NarrativeDsl.kt",
+    "Scenarios.kt",          # factory + EmptyEraScenarioGraph shells
+    "EraDefinition.kt",
+    "EventPoolSelector.kt",
+}
+
+
+def default_files():
+    """Authored graphs: scenarios/*ScenarioGraph.kt minus infra files."""
+    if not os.path.isdir(SCENARIOS_DIR):
+        return []
+    return sorted(
+        os.path.join(SCENARIOS_DIR, n)
+        for n in os.listdir(SCENARIOS_DIR)
+        if n.endswith("ScenarioGraph.kt") and n not in INFRA_FILES
+    )
 
 errors = []
 warns = []
@@ -86,12 +105,13 @@ def check_file(path):
         if RE_DIRECT_CTOR.search(line):
             add(warns, path, i, "prefer event()/option() DSL over direct GameEvent(...)/GameOption(...) construction")
 
-        # WARN (heuristic): an ending should declare options = emptyList()
+        # ERROR: scenario files never set isEnding directly. event() has no such
+        # parameter (it hardcodes isEnding = false), so this either doesn't compile
+        # or is a hand-rolled GameEvent(...) bypassing the DSL. Use ending().
         if RE_ISENDING.search(line):
-            window = "".join(lines[i - 1:i + 30])
-            om = RE_OPTIONS_ASSIGN.search(window)
-            if om and om.group(1) != "emptyList()":
-                add(warns, path, i, "isEnding=true event: terminal endings must use options = emptyList()")
+            add(errors, path, i,
+                "isEnding in a scenario file — use the ending() DSL helper "
+                "(event() has no isEnding param; endings get options = emptyList() built in)")
 
 
 def collect(paths):
@@ -106,11 +126,13 @@ def collect(paths):
 
 
 def main():
-    args = sys.argv[1:] or DEFAULT_DIRS
-    files = collect(args)
+    args = sys.argv[1:]
+    files = collect(args) if args else default_files()
     if not files:
-        print("No .kt scenario files found under:", ", ".join(args))
-        return 0
+        where = ", ".join(args) if args else SCENARIOS_DIR
+        print("ERROR: no .kt scenario files found under:", where)
+        print("(run from the repository root, or pass explicit paths)")
+        return 1
     for f in files:
         check_file(f)
 

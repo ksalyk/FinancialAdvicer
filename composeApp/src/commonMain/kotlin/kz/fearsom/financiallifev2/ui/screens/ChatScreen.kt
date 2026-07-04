@@ -30,8 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -49,7 +47,7 @@ import kz.fearsom.financiallifev2.ui.components.chat.DiaryTopBar
 import kz.fearsom.financiallifev2.ui.components.chat.DiaryWritingIndicator
 import kz.fearsom.financiallifev2.ui.components.chat.SkipButtonOverlay
 import kz.fearsom.financiallifev2.ui.components.core.StatsPanelOverlay
-import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
+import kz.fearsom.financiallifev2.ui.theme.IndigoPrimary
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -62,7 +60,8 @@ fun ChatScreen(
     onChoiceSelected: (String) -> Unit,
     onToggleStats: () -> Unit,
     onRestart: () -> Unit,
-    onNavigateToMenu: () -> Unit = {}
+    onNavigateToMenu: () -> Unit = {},
+    onOpenAsan: (() -> Unit)? = null
 ) {
     val colors = LocalAppColors.current
     val listState = rememberLazyListState()
@@ -222,21 +221,6 @@ fun ChatScreen(
             .fillMaxSize()
             .background(colors.backgroundChat)
     ) {
-        // Top gradient vignette
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            colors.backgroundDeep,
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
         Column(modifier = Modifier.fillMaxSize()) {
             DiaryTopBar(
                 playerState = playerState,
@@ -245,7 +229,8 @@ fun ChatScreen(
                 characterTitle = uiState.characterTitle,
                 onStatsClick = onToggleStats,
                 onRestartClick = onRestart,
-                onMenuClick = onNavigateToMenu
+                onMenuClick = onNavigateToMenu,
+                onAsanClick = onOpenAsan
             )
 
             Box(modifier = Modifier.weight(1f)) {
@@ -285,6 +270,7 @@ fun ChatScreen(
                             DiaryMessageItem(
                                 message = message,
                                 playerState = playerState,
+                                characterName = uiState.characterName,
                                 isLatestChar = isLatestChar,
                                 displayedLength = displayedLength
                             )
@@ -295,7 +281,7 @@ fun ChatScreen(
                     }
                     if (uiState.isTyping) {
                         item(key = "typing") {
-                            DiaryWritingIndicator()
+                            DiaryWritingIndicator(characterName = uiState.characterName)
                         }
                     }
                 }
@@ -326,7 +312,7 @@ fun ChatScreen(
                         modifier = Modifier
                             .padding(16.dp)
                             .size(32.dp),
-                        color = GoldPrimary
+                        color = IndigoPrimary
                     )
                 }
             }

@@ -73,7 +73,11 @@ class GamePresenter(
                 // re-emits the same event id and message count, so its signature is
                 // unchanged and the redundant save is skipped (replaces the old
                 // suppressNextStateSideEffects flag).
-                val signature = "$sessionId:${state.currentEventId}:${state.messages.size}"
+                // absoluteMonth is included because the engine caps message history:
+                // once the cap is hit, size stops growing, and a repeated filler event
+                // (same eventId) would otherwise produce an identical signature and
+                // silently skip the save.
+                val signature = "$sessionId:${state.currentEventId}:${state.messages.size}:${state.playerState.absoluteMonth}"
                 if (signature != lastPersistedSignature) {
                     lastPersistedSignature = signature
                     sessionRepo.saveGameState(sessionId, state)

@@ -10,6 +10,7 @@ import java.security.MessageDigest
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 import kz.fearsom.financiallifev2.server.plugins.AdminSession
+import kz.fearsom.financiallifev2.server.plugins.isExpired
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
 import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
@@ -22,7 +23,11 @@ private val log = LoggerFactory.getLogger("AdminRoutes")
  * This preserves backward compatibility for programmatic/API access via the static key.
  */
 internal fun ApplicationCall.isAdminAuthorized(): Boolean {
-    if (sessions.get<AdminSession>() != null) return true
+    sessions.get<AdminSession>()?.let { session ->
+        if (!session.isExpired()) return true
+        // Expired cookie — clear it so the SPA falls back to the login screen.
+        sessions.clear<AdminSession>()
+    }
     val adminKey = System.getenv("ADMIN_KEY") ?: "dev-admin-key"
     val bearer = request.header(HttpHeaders.Authorization)
         ?.removePrefix("Bearer ")?.trim() ?: ""

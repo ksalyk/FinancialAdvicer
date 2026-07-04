@@ -70,7 +70,10 @@ fun buildHttpClient(
                 Napier.d(message, tag = "KtorHttp")
             }
         }
-        level = LogLevel.BODY
+        // BODY logs plaintext passwords (login/register) and full token pairs.
+        // Gated on the platform debug flag — release builds log nothing, and we
+        // don't rely on Napier having no antilog registered as the only defence.
+        level = if (NetworkConfig.enableHttpLogging) LogLevel.BODY else LogLevel.NONE
     }
 
     install(Auth) {

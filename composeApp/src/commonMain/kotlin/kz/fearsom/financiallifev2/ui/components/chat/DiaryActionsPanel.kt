@@ -10,17 +10,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,64 +38,75 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.GameOption
-import kz.fearsom.financiallifev2.ui.theme.DiaryHeaderStyle
-import kz.fearsom.financiallifev2.ui.theme.DiaryTextStyle
-import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
-import kz.fearsom.financiallifev2.ui.theme.GreenSuccess
+import kz.fearsom.financiallifev2.ui.icons.LineIcons
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
-import kz.fearsom.financiallifev2.ui.theme.RedDanger
 
-// ─── Actions Panel ────────────────────────────────────────────────────────────
+// ─── Actions Panel (redesign 2026-07) ─────────────────────────────────────────
 
+/**
+ * Bottom action panel: pencil + "ТВОЙ ХОД" header, option cards with a 4dp
+ * risk-colored left bar and РИСК/НАДЁЖНО badges. Neutral options render with
+ * a border-colored bar and no badge, per the mock's hints-off state.
+ */
 @Composable
 fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) -> Unit) {
     val colors = LocalAppColors.current
     val scrollState = rememberScrollState()
-    Surface(color = colors.backgroundDeep, shadowElevation = 16.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                Text("✍️", fontSize = 14.sp, modifier = Modifier.padding(end = 6.dp))
-                Text(
-                    Strings.uiChatActionLabel,
-                    style = DiaryHeaderStyle.copy(fontSize = 14.sp, color = colors.textSecondary),
-                    color = colors.textSecondary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            // Height cap prevents the panel from swallowing the screen when there are
-            // 3–4 options. Options become vertically scrollable if they overflow.
+    Surface(color = colors.backgroundPanel) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            HorizontalDivider(thickness = 1.dp, color = colors.divider)
             Column(
                 modifier = Modifier
-                    .heightIn(max = 220.dp)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                options.forEachIndexed { index, option ->
-                    var visible by remember { mutableStateOf(false) }
-                    LaunchedEffect(option.id) {
-                        delay(index * 80L)
-                        visible = true
-                    }
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = slideInHorizontally { it / 2 } + fadeIn(tween(250))
-                    ) {
-                        DiaryActionItem(option, onClick = { onSelected(option.id) })
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                ) {
+                    Icon(
+                        imageVector = LineIcons.Pencil,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(7.dp))
+                    Text(
+                        Strings.uiChatActionLabel.uppercase(),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = colors.textSecondary
+                    )
+                }
+                // Height cap prevents the panel from swallowing the screen when
+                // there are 3–4 options; overflow becomes scrollable.
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 220.dp)
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    options.forEachIndexed { index, option ->
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(option.id) {
+                            delay(index * 80L)
+                            visible = true
+                        }
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = slideInHorizontally { it / 2 } + fadeIn(tween(250))
+                        ) {
+                            DiaryActionItem(option, onClick = { onSelected(option.id) })
+                        }
                     }
                 }
             }
@@ -99,12 +117,13 @@ fun DiaryActionsPanel(options: List<GameOption>, onSelected: (String) -> Unit) {
 @Composable
 private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
     val colors = LocalAppColors.current
-    val shape = RoundedCornerShape(8.dp)
+    val shape = RoundedCornerShape(11.dp)
     val risk = effectRisk(option)
-    val riskColor = when (risk) {
-        OptionRisk.SAFE -> GreenSuccess
-        OptionRisk.RISKY -> RedDanger
-        OptionRisk.NEUTRAL -> GoldPrimary
+
+    val barColor = when (risk) {
+        OptionRisk.RISKY -> colors.accentNegative
+        OptionRisk.SAFE -> colors.accentPositive
+        OptionRisk.NEUTRAL -> colors.borderStrong
     }
 
     Surface(
@@ -113,53 +132,78 @@ private fun DiaryActionItem(option: GameOption, onClick: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 48.dp),   // WCAG touch target minimum
         shape = shape,
-        color = colors.backgroundElevated,
-        border = BorderStroke(1.dp, riskColor.copy(alpha = 0.25f))
+        color = colors.bubbleCharacter,
+        border = BorderStroke(1.dp, colors.borderStrong)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .height(IntrinsicSize.Min)
+                .heightIn(min = 48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ── Colored left accent bar ──────────────────────────────────
+            // ── Colored left accent bar (full height) ────────────────────────
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .heightIn(min = 48.dp)
                     .fillMaxHeight()
-                    .background(
-                        color = riskColor.copy(alpha = 0.85f),
-                        shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
-                    )
+                    .background(barColor)
             )
 
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 13.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (option.emoji.isNotEmpty()) {
-                    Text(option.emoji, fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
-                }
                 Text(
                     option.text,
-                    style = DiaryTextStyle.copy(
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textPrimary
-                    ),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = colors.textPrimary,
-                    modifier = Modifier.weight(1f),
                     fontWeight = FontWeight.Medium,
-                    lineHeight = 20.sp
+                    lineHeight = 19.sp,
+                    modifier = Modifier.weight(1f)
                 )
+                when (risk) {
+                    OptionRisk.RISKY -> RiskBadge(
+                        text = Strings.uiChatOptionRisky,
+                        textColor = colors.accentNegativeText,
+                        background = colors.accentNegative.copy(alpha = 0.12f)
+                    )
+
+                    OptionRisk.SAFE -> RiskBadge(
+                        text = Strings.uiChatOptionSafe,
+                        textColor = colors.accentPositiveText,
+                        background = colors.accentPositive.copy(alpha = 0.12f)
+                    )
+
+                    OptionRisk.NEUTRAL -> Unit
+                }
             }
         }
     }
 }
 
+@Composable
+private fun RiskBadge(text: String, textColor: Color, background: Color) {
+    Box(
+        modifier = Modifier
+            .background(background, RoundedCornerShape(6.dp))
+            .padding(horizontal = 7.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp,
+            color = textColor
+        )
+    }
+}
+
 /**
  * Risk level for a player choice, derived from its [Effect].
- * Drives the left-border accent color in [DiaryActionItem].
+ * Drives the left-bar color and the РИСК/НАДЁЖНО badge in [DiaryActionItem].
  */
 private enum class OptionRisk { SAFE, NEUTRAL, RISKY }
 

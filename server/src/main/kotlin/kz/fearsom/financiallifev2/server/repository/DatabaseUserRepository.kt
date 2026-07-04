@@ -137,7 +137,11 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
                 return@newSuspendedTransaction null
             }
 
-            RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq tokenHash }
+            // The DELETE is the atomic claim. Two concurrent refreshes with the same
+            // token can both pass the SELECT above, but only one DELETE reports a
+            // removed row — the loser gets null instead of a second live token pair.
+            val claimed = RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq tokenHash }
+            if (claimed == 0) return@newSuspendedTransaction null
 
             UsersTable
                 .selectAll()
@@ -163,7 +167,7 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
         newSuspendedTransaction(db = db) {
             val query = UsersTable.selectAll()
             if (!search.isNullOrBlank()) {
-                query.where { UsersTable.username like "%${search.lowercase()}%" }
+                query.where { UsersTable.username like "%${search.lowercase().escapeLikeWildcards()}%" }
             }
             val userRows = query
                 .orderBy(UsersTable.createdAt, SortOrder.DESC)
@@ -195,10 +199,17 @@ class DatabaseUserRepository(private val db: Database) : UserRepository {
         newSuspendedTransaction(db = db) {
             val query = UsersTable.selectAll()
             if (!search.isNullOrBlank()) {
-                query.where { UsersTable.username like "%${search.lowercase()}%" }
+                query.where { UsersTable.username like "%${search.lowercase().escapeLikeWildcards()}%" }
             }
             query.count()
         }
+
+    /**
+     * Escapes LIKE metacharacters so a search for "50%" matches the literal string
+     * instead of acting as a wildcard. PostgreSQL's default LIKE escape is backslash.
+     */
+    private fun String.escapeLikeWildcards(): String =
+        replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
     override suspend fun updatePassword(userId: String, rawPassword: String): Boolean {
         val hash = PasswordHasher.hash(rawPassword)

@@ -21,8 +21,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,18 +41,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.PlayerState
-import kz.fearsom.financiallifev2.ui.theme.GoldDark
-import kz.fearsom.financiallifev2.ui.theme.GoldLight
-import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
-import kz.fearsom.financiallifev2.ui.theme.GreenSuccess
+import kz.fearsom.financiallifev2.ui.icons.LineIcons
+import kz.fearsom.financiallifev2.ui.theme.AppColors
+import kz.fearsom.financiallifev2.ui.theme.IndigoPrimary
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
-import kz.fearsom.financiallifev2.ui.theme.RedDanger
-import kz.fearsom.financiallifev2.ui.theme.StatCapital
-import kz.fearsom.financiallifev2.ui.theme.StatDebt
-import kz.fearsom.financiallifev2.ui.theme.StatKnowledge
-import kz.fearsom.financiallifev2.ui.theme.StatRisk
-import kz.fearsom.financiallifev2.ui.theme.StatStress
+import kz.fearsom.financiallifev2.ui.theme.MoneyLargeStyle
+import kz.fearsom.financiallifev2.ui.theme.MoneyMediumStyle
+import kz.fearsom.financiallifev2.ui.theme.MoneySmallStyle
 
+/**
+ * Financial health bottom sheet (redesign 2026-07, "Метрики" screen):
+ * indigo→emerald freedom gradient, mono numerals, bordered metric cards.
+ */
 @Composable
 fun StatsPanelOverlay(
     playerState: PlayerState,
@@ -70,198 +73,215 @@ fun StatsPanelOverlay(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .background(colors.backgroundCard)
+                .background(colors.backgroundDeep)
                 .border(
-                    1.dp, colors.surfaceGlassBorder,
+                    1.dp, colors.border,
                     RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
                 )
                 .clickable(enabled = false) {}
-                .padding(24.dp)
+                .padding(horizontal = 16.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars)
+                .verticalScroll(rememberScrollState())
         ) {
+            Spacer(Modifier.height(12.dp))
+
             // Drag handle
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .width(40.dp).height(4.dp)
                     .clip(CircleShape)
-                    .background(colors.textHint)
+                    .background(colors.borderStrong)
             )
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(14.dp))
 
             // ── Header ────────────────────────────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(colors.backgroundElevated),
-                    contentAlignment = Alignment.Center
-                ) { Text(characterEmoji, fontSize = 24.sp) }
-
-                Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "${Strings.uiStatsPanelTitle} $characterName",
-                        style = MaterialTheme.typography.titleLarge,
+                        Strings.uiStatsPanelTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 15.sp,
                         color = colors.textPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "${Strings.uiStatsPanelMonths.getOrElse(playerState.month) { "?" }} ${playerState.year}",
+                        "$characterName · ${Strings.uiStatsPanelMonths.getOrElse(playerState.month) { "?" }} ${playerState.year}",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
                 }
                 IconButton(onClick = onDismiss) {
-                    Text("✕", fontSize = 24.sp, color = colors.textSecondary)
+                    Icon(
+                        imageVector = LineIcons.Close,
+                        contentDescription = Strings.uiChatCancel,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(14.dp))
 
-            // ── HERO TIER: Financial Freedom ──────────────────────────────────
+            // ── Financial Freedom (hero card) ─────────────────────────────────
             val freedomPct = calculateFreedom(playerState)
             val animPct by animateFloatAsState(
                 targetValue = freedomPct,
                 animationSpec = tween(900, easing = FastOutSlowInEasing),
                 label = "freedom"
             )
-            Text(
-                Strings.uiStatsPanelFreedom,
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.textPrimary,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(12.dp))
-
-            // Freedom progress bar (hero size: 12dp)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth().height(12.dp)
-                    .clip(CircleShape)
-                    .background(colors.backgroundElevated)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animPct)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .background(
-                            Brush.horizontalGradient(listOf(GoldDark, GoldPrimary, GoldLight))
-                        )
-                )
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(Strings.uiStatsPanelStart, style = MaterialTheme.typography.bodySmall, color = colors.textHint)
-                Text(
-                    "${(animPct * 100).toInt()}%",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = GoldPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(Strings.uiStatsPanelFreedomLabel, style = MaterialTheme.typography.bodySmall, color = colors.textHint)
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── PRIMARY: Net Cash Flow (full width) ────────────────────────────
-            val netCashFlow =
-                playerState.income - playerState.expenses - playerState.debtPaymentMonthly
-            Text(
-                Strings.uiStatsPanelFlow,
-                style = MaterialTheme.typography.titleSmall,
-                color = colors.textSecondary,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(colors.backgroundElevated)
-                    .border(1.5.dp,
-                        if (netCashFlow >= 0) GreenSuccess.copy(0.4f) else RedDanger.copy(0.4f),
-                        RoundedCornerShape(14.dp)
-                    )
-                    .padding(16.dp)
-            ) {
+            MetricCard(colors) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        if (netCashFlow >= 0) Strings.uiStatsPanelProfit else Strings.uiStatsPanelDeficit,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textSecondary
+                        Strings.uiStatsPanelFreedom,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textEmphasis
                     )
                     Text(
-                        (if (netCashFlow >= 0) "+" else "") + formatMoney(netCashFlow),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = if (netCashFlow >= 0) GreenSuccess else RedDanger,
-                        fontWeight = FontWeight.Bold
+                        "${(animPct * 100).toInt()}%",
+                        style = MoneyLargeStyle,
+                        color = colors.textPrimary
+                    )
+                }
+                Spacer(Modifier.height(11.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth().height(9.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(colors.backgroundElevated.copy(alpha = 0.6f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(animPct)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(IndigoPrimary, colors.accentPositive)
+                                )
+                            )
                     )
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // ── SECONDARY: Financial Position (balance sheet row) ───────────────
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ── Net Cash Flow ─────────────────────────────────────────────────
+            val netCashFlow =
+                playerState.income - playerState.expenses - playerState.debtPaymentMonthly
+            val flowPositive = netCashFlow >= 0
+            val flowAccent = if (flowPositive) colors.accentPositive else colors.accentNegative
+            val flowText = if (flowPositive) colors.accentPositiveText else colors.accentNegativeText
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.backgroundCard)
+                    .border(1.dp, flowAccent.copy(alpha = 0.32f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        Strings.uiStatsPanelFlow,
+                        fontSize = 12.sp,
+                        color = colors.textSecondary
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        if (flowPositive) Strings.uiStatsPanelProfit else Strings.uiStatsPanelDeficit,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textEmphasis
+                    )
+                }
+                Text(
+                    (if (flowPositive) "+" else "") + formatMoney(netCashFlow),
+                    style = MoneyLargeStyle.copy(fontSize = 21.sp),
+                    color = flowText
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // ── Capital / Debt ────────────────────────────────────────────────
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                 MoneyCard(
                     label = Strings.uiStatsPanelCapital,
                     value = formatMoney(playerState.capital),
-                    color = StatCapital,
+                    valueColor = colors.accentPositiveText,
                     modifier = Modifier.weight(1f)
                 )
                 MoneyCard(
                     label = Strings.uiStatsPanelDebt,
                     value = formatMoney(playerState.debt),
-                    color = StatDebt,
+                    valueColor = if (playerState.debt > 0) colors.accentNegativeText else colors.textSecondary,
                     modifier = Modifier.weight(1f)
                 )
             }
+
             Spacer(Modifier.height(10.dp))
 
-            // ── DETAIL: Income, Expenses, Investments ──────────────────────────
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MoneyCard(
+            // ── Income / Expenses / Investments ───────────────────────────────
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                SubMetricCard(
                     label = Strings.uiStatsPanelIncome,
-                    value = formatMoney(playerState.income) + Strings.uiStatsPanelPerMonth,
-                    color = GreenSuccess,
+                    value = formatAmount(playerState.income),
                     modifier = Modifier.weight(1f)
                 )
-                MoneyCard(
+                SubMetricCard(
                     label = Strings.uiStatsPanelExpenses,
-                    value = formatMoney(playerState.expenses) + Strings.uiStatsPanelPerMonth,
-                    color = StatStress,
+                    value = formatAmount(playerState.expenses),
                     modifier = Modifier.weight(1f)
                 )
-                MoneyCard(
+                SubMetricCard(
                     label = Strings.uiStatsPanelInvestments,
-                    value = formatMoney(playerState.investments),
-                    color = StatKnowledge,
+                    value = formatAmount(playerState.investments),
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // ── Soft metrics ──────────────────────────────────────────────────
-            Text(
-                Strings.uiStatsPanelIndicators,
-                style = MaterialTheme.typography.titleSmall,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            StatBar(Strings.uiStatsPanelStress, playerState.stress, StatStress)
-            Spacer(Modifier.height(10.dp))
-            StatBar(Strings.uiStatsPanelKnowledge, playerState.financialKnowledge, StatKnowledge)
-            Spacer(Modifier.height(10.dp))
-            StatBar(Strings.uiStatsPanelRisk, playerState.riskLevel, StatRisk)
+            // ── Soft metrics ("Показатели") ───────────────────────────────────
+            MetricCard(colors) {
+                Text(
+                    Strings.uiStatsPanelIndicators.uppercase(),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.7.sp,
+                    color = colors.textSecondary
+                )
+                Spacer(Modifier.height(13.dp))
+                StatBar(
+                    label = Strings.uiStatsPanelStress,
+                    value = playerState.stress,
+                    barColor = colors.accentWarning,
+                    valueColor = colors.accentWarningText
+                )
+                Spacer(Modifier.height(13.dp))
+                StatBar(
+                    label = Strings.uiStatsPanelKnowledge,
+                    value = playerState.financialKnowledge,
+                    barColor = IndigoPrimary,
+                    valueColor = IndigoPrimary
+                )
+                Spacer(Modifier.height(13.dp))
+                StatBar(
+                    label = Strings.uiStatsPanelRisk,
+                    value = playerState.riskLevel,
+                    barColor = colors.accentNegative,
+                    valueColor = colors.accentNegativeText
+                )
+            }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -269,30 +289,65 @@ fun StatsPanelOverlay(
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 @Composable
-private fun MoneyCard(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+private fun MetricCard(
+    colors: AppColors,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(colors.backgroundCard)
+            .border(1.dp, colors.border, RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 15.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun MoneyCard(
+    label: String,
+    value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier
+) {
     val colors = LocalAppColors.current
-    Box(
+    Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(colors.backgroundElevated)
-            .border(1.dp, color.copy(alpha = 0.28f), RoundedCornerShape(14.dp))
-            .padding(12.dp)
+            .background(colors.backgroundCard)
+            .border(1.dp, colors.border, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 13.dp)
     ) {
-        Column {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                value,
-                style = MaterialTheme.typography.titleSmall,
-                color = color,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Text(label, fontSize = 12.sp, color = colors.textSecondary)
+        Spacer(Modifier.height(6.dp))
+        Text(value, style = MoneyMediumStyle, color = valueColor)
     }
 }
 
 @Composable
-private fun StatBar(label: String, value: Int, color: Color) {
+private fun SubMetricCard(label: String, value: String, modifier: Modifier = Modifier) {
+    val colors = LocalAppColors.current
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(13.dp))
+            .background(colors.backgroundSubCard)
+            .border(1.dp, colors.border, RoundedCornerShape(13.dp))
+            .padding(horizontal = 12.dp, vertical = 11.dp)
+    ) {
+        Text(label, fontSize = 11.sp, color = colors.textSecondary, maxLines = 1)
+        Spacer(Modifier.height(5.dp))
+        Text(
+            value,
+            style = MoneySmallStyle.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            color = colors.textBody,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun StatBar(label: String, value: Int, barColor: Color, valueColor: Color) {
     val colors = LocalAppColors.current
     val animValue by animateFloatAsState(
         targetValue = value / 100f,
@@ -301,27 +356,22 @@ private fun StatBar(label: String, value: Int, color: Color) {
     )
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
-            Text(
-                "$value / 100",
-                style = MaterialTheme.typography.bodySmall,
-                color = color,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(label, fontSize = 13.sp, color = colors.textEmphasis)
+            Text("$value / 100", style = MoneySmallStyle, color = valueColor)
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth().height(6.dp)
-                .clip(CircleShape)
-                .background(colors.backgroundElevated)
+                .clip(RoundedCornerShape(4.dp))
+                .background(colors.backgroundElevated.copy(alpha = 0.6f))
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(animValue)
                     .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.55f), color)))
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(barColor)
             )
         }
     }
@@ -329,12 +379,14 @@ private fun StatBar(label: String, value: Int, color: Color) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-private fun formatMoney(amount: Long): String {
-    return when {
-        amount >= 1_000_000L -> "${amount / 1_000_000L}M ₸"
-        amount >= 1_000L     -> "${amount / 1_000}k ₸"
-        else                 -> "$amount ₸"
-    }
+/** "1 500 ₸" — space-grouped, full precision (mock style). */
+internal fun formatMoney(amount: Long): String = "${formatAmount(amount)} ₸"
+
+internal fun formatAmount(amount: Long): String {
+    val negative = amount < 0
+    val digits = (if (negative) -amount else amount).toString()
+    val grouped = digits.reversed().chunked(3).joinToString(" ").reversed()
+    return if (negative) "-$grouped" else grouped
 }
 
 /**
@@ -354,5 +406,3 @@ private fun calculateFreedom(ps: PlayerState): Float {
     val stressScore    = ((100 - ps.stress) / 100f) * 0.15f
     return (capitalScore + debtScore + knowledgeScore + stressScore).coerceIn(0f, 1f)
 }
-
-// monthName() removed — replaced inline with Strings.uiStatsPanelMonths.getOrElse()

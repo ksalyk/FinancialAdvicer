@@ -48,7 +48,7 @@ fun SkipButtonOverlay(visible: Boolean, onSkip: () -> Unit) {
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
-                    "⏭  ${Strings.uiChatSkip}",
+                    Strings.uiChatSkip,
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.textPrimary,
                     fontWeight = FontWeight.SemiBold

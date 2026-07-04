@@ -249,12 +249,32 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Local-only logout: clears tokens and state on this device.
+     * Used directly by the token-refresh-failure path, where the server has
+     * already rejected our refresh token — there is nothing left to revoke.
+     * User-initiated logout should go through [logoutAndRevoke] instead.
+     */
     fun logout() {
         Napier.i("Logout userId=${_authState.value.userId}", tag = TAG)
         tokenStorage.clear()
         secureStorage.clear(KEY_ACCESS_TOKEN)
         secureStorage.clear(KEY_REFRESH_TOKEN)
         _authState.value = AuthState()
+    }
+
+    /**
+     * User-initiated logout: best-effort POST /auth/logout so the server revokes
+     * all refresh tokens (otherwise the stored one stays valid for 30 days),
+     * then clears local state regardless of the network outcome.
+     */
+    suspend fun logoutAndRevoke() {
+        runCatching {
+            httpClient.post("$baseUrl/auth/logout") { expectSuccess = false }
+        }.onFailure { e ->
+            Napier.w("Server-side logout failed (tokens revoked locally only): ${e.message}", tag = TAG)
+        }
+        logout()
     }
 
     // Convenience accessor — prefer reading from authState.collectAsState() in UI.

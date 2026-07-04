@@ -6,7 +6,6 @@ import kz.fearsom.financiallifev2.model.*
 import kz.fearsom.financiallifev2.scenarios.EraDefinition
 import kz.fearsom.financiallifev2.scenarios.EraRegistry
 import kz.fearsom.financiallifev2.scenarios.EventPoolSelector
-import kz.fearsom.financiallifev2.scenarios.Kz2024ScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraph
 import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +15,14 @@ import kotlin.random.Random
 
 /** Safety bound on how many uneventful months a single choice may fast-forward. */
 private const val MAX_FAST_FORWARD_MONTHS = 600
+
+/**
+ * Upper bound on retained chat history. Every CHARACTER message embeds a full
+ * PlayerState snapshot, so an uncapped history makes the serialized GameState grow
+ * O(months) — the server decodes/encodes the whole thing on every /game/choose.
+ * 300 messages ≈ 100+ turns, far more than any screen scrolls back through.
+ */
+private const val MAX_MESSAGE_HISTORY = 300
 
 /**
  * Core game FSM — 3-layer architecture:
@@ -38,7 +45,10 @@ private const val MAX_FAST_FORWARD_MONTHS = 600
  *     → emit new GameState via StateFlow
  */
 class GameEngine(
-    private var graph: ScenarioGraph = Kz2024ScenarioGraph(),
+    // Resolved through the factory so the default hits the graph cache instead of
+    // building a fresh Kz2024ScenarioGraph per instance (the server constructs a
+    // GameEngine on every /game/choose request and immediately loadState()s over it).
+    private var graph: ScenarioGraph = ScenarioGraphFactory.forCharacter("asan", "kz_2024"),
     private var eraDefinition: EraDefinition? = null,
     private val random: Random = Random.Default
 ) {
@@ -188,7 +198,9 @@ class GameEngine(
         return current.copy(
             playerState        = ps,
             currentEventId     = nextEventId,
-            messages           = current.messages + newMessages,
+            // Cap retained history — see MAX_MESSAGE_HISTORY. takeLast keeps the
+            // newest messages, so the visible chat tail is unaffected.
+            messages           = (current.messages + newMessages).takeLast(MAX_MESSAGE_HISTORY),
             isWaitingForChoice = !ending,
             gameOver           = ending,
             endingType         = nextEvent?.endingType
@@ -212,7 +224,11 @@ class GameEngine(
         // Advance the sequence counter past the already-stored messages so that
         // IDs generated after restore never collide with IDs in the loaded history.
         // Compose uses ChatMessage.id as LazyList keys; duplicates cause diff glitches.
-        msgSeq = localizedState.messages.size
+        // Derived from the max numeric suffix (not list size): with MAX_MESSAGE_HISTORY
+        // trimming, size plateaus while retained ids keep their original higher suffixes.
+        msgSeq = localizedState.messages.maxOfOrNull { msg ->
+            msg.id.substringAfterLast('_').toIntOrNull() ?: 0
+        } ?: 0
         _state.value = localizedState
     }
 

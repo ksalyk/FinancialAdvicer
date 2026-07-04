@@ -40,7 +40,10 @@ class AdminAuthRoutesTest {
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    adminAuthRoutes()
+                    // Limiter disabled in tests — the shared authRateLimiter is
+                    // process-global and would flake across test classes (same
+                    // pattern as AuthRoutesTest).
+                    adminAuthRoutes(loginLimiter = null)
                 }
             }
         }

@@ -9,6 +9,10 @@ import io.ktor.server.sessions.*
 import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.server.plugins.AdminSession
+import kz.fearsom.financiallifev2.server.plugins.RateLimiter
+import kz.fearsom.financiallifev2.server.plugins.authRateLimiter
+import kz.fearsom.financiallifev2.server.plugins.checkRateLimit
+import kz.fearsom.financiallifev2.server.plugins.isExpired
 
 @Serializable
 private data class AdminLoginRequest(val username: String, val password: String)
@@ -26,10 +30,13 @@ private data class AdminMeResponse(val username: String)
  * These routes must be mounted inside a `/api/v1` block (see Routing.kt).
  * ADMIN_KEY Bearer access is unchanged — see AdminRoutes.isAdminAuthorized().
  */
-fun Route.adminAuthRoutes() {
+fun Route.adminAuthRoutes(loginLimiter: RateLimiter? = authRateLimiter) {
     route("/admin") {
 
         post("/login") {
+            // Same budget as /auth/login — the admin panel is the most valuable
+            // brute-force target on the server, not the least.
+            if (loginLimiter != null && !call.checkRateLimit(loginLimiter)) return@post
             val req = call.receive<AdminLoginRequest>()
             val adminUsername = System.getenv("ADMIN_USERNAME") ?: "admin"
             val adminPassword = System.getenv("ADMIN_PASSWORD") ?: "dev-admin-password"
@@ -58,9 +65,10 @@ fun Route.adminAuthRoutes() {
 
         get("/me") {
             val session = call.sessions.get<AdminSession>()
-            if (session != null) {
+            if (session != null && !session.isExpired()) {
                 call.respond(AdminMeResponse(username = session.username))
             } else {
+                if (session != null) call.sessions.clear<AdminSession>()
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Not authenticated"))
             }
         }

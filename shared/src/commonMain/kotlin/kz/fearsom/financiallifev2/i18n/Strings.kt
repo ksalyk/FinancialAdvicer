@@ -137,6 +137,19 @@ import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_7
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_8
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_SHORT_MONTH_9
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_WRITING
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_OPTION_RISKY
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_CHAT_OPTION_SAFE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_TITLE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_STATUS
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_PLACEHOLDER
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_GREETING
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_REPLY_GENERIC
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_FLAG_GUARANTEE
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_FLAG_UPFRONT
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_FLAG_URGENCY
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_CD_OPEN
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_CD_SEND
+import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ASAN_CD_VOICE
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ERA_INFLATION
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ERA_LOCKED_HINT
 import kz.fearsom.financiallifev2.i18n.StringKeys.UI_ERA_SALARY
@@ -413,6 +426,21 @@ object Strings {
     val uiChatSceneWindfall        get() = get(UI_CHAT_SCENE_WINDFALL)
     val uiChatSceneWorld           get() = get(UI_CHAT_SCENE_WORLD)
     val uiChatRestartGame          get() = get(UI_CHAT_RESTART_GAME)
+    val uiChatOptionRisky          get() = get(UI_CHAT_OPTION_RISKY)
+    val uiChatOptionSafe           get() = get(UI_CHAT_OPTION_SAFE)
+
+    // ── Asan AI advisor ──────────────────────────────────────────────
+    val uiAsanTitle                get() = get(UI_ASAN_TITLE)
+    val uiAsanStatus               get() = get(UI_ASAN_STATUS)
+    val uiAsanPlaceholder          get() = get(UI_ASAN_PLACEHOLDER)
+    val uiAsanGreeting             get() = get(UI_ASAN_GREETING)
+    val uiAsanReplyGeneric         get() = get(UI_ASAN_REPLY_GENERIC)
+    val uiAsanFlagGuarantee        get() = get(UI_ASAN_FLAG_GUARANTEE)
+    val uiAsanFlagUpfront          get() = get(UI_ASAN_FLAG_UPFRONT)
+    val uiAsanFlagUrgency          get() = get(UI_ASAN_FLAG_URGENCY)
+    val uiAsanCdOpen               get() = get(UI_ASAN_CD_OPEN)
+    val uiAsanCdSend               get() = get(UI_ASAN_CD_SEND)
+    val uiAsanCdVoice              get() = get(UI_ASAN_CD_VOICE)
     val uiChatShortMonths          get() = listOf("",
         get(UI_CHAT_SHORT_MONTH_1), get(UI_CHAT_SHORT_MONTH_2), get(UI_CHAT_SHORT_MONTH_3),
         get(UI_CHAT_SHORT_MONTH_4), get(UI_CHAT_SHORT_MONTH_5), get(UI_CHAT_SHORT_MONTH_6),

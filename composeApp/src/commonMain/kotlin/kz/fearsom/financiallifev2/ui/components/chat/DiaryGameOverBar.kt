@@ -75,17 +75,18 @@ import kotlin.math.sin
 private enum class EndingSentiment { WIN, NEUTRAL, LOSS }
 
 /**
- * Accent color for an ending. Mirrors the original DiaryGameOverBar palette so
- * existing visual cues (green/gold/red/orange/blue) remain intact.
+ * Accent color for an ending — redesign 2026-07 palette:
+ * coral for loss, amber for grinding, indigo for stability,
+ * emerald for freedom, purple for wealth.
  */
 private fun endingAccentColor(endingType: EndingType?): Color = Color(
     when (endingType) {
-        EndingType.BANKRUPTCY            -> 0xFFFF5252
-        EndingType.PAYCHECK_TO_PAYCHECK  -> 0xFFFF6E40
-        EndingType.FINANCIAL_STABILITY   -> 0xFF40C4FF
-        EndingType.FINANCIAL_FREEDOM     -> 0xFFFFD700
-        EndingType.WEALTH                -> 0xFF00E676
-        null                             -> 0xFF8899BB
+        EndingType.BANKRUPTCY            -> 0xFFFF6B5E
+        EndingType.PAYCHECK_TO_PAYCHECK  -> 0xFFF0B94A
+        EndingType.FINANCIAL_STABILITY   -> 0xFF5C6BE6
+        EndingType.FINANCIAL_FREEDOM     -> 0xFF2BC48A
+        EndingType.WEALTH                -> 0xFF7C5CE6
+        null                             -> 0xFF8B95A4
     }
 )
 

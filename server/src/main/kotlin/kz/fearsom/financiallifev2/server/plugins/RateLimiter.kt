@@ -90,15 +90,20 @@ private val TRUST_PROXY: Boolean = System.getenv("TRUST_PROXY")?.lowercase() == 
 /**
  * Extracts the client IP used as the rate-limit key.
  *
- * Behind a trusted proxy ([TRUST_PROXY] = true) the left-most X-Forwarded-For entry is the
- * originating client. Otherwise the header is attacker-controlled and is ignored in favour
- * of the actual socket peer, so an attacker cannot dodge limits by forging the header.
+ * Behind a trusted proxy ([TRUST_PROXY] = true) the RIGHT-most X-Forwarded-For entry is
+ * used: that is the value appended by the proxy we control, i.e. the peer that actually
+ * connected to it. The left-most entry is whatever the client itself sent and is trivially
+ * spoofable ("X-Forwarded-For: 1.2.3.4" in the request dodges the limit per fake IP).
+ * Without TRUST_PROXY the header is ignored entirely in favour of the socket peer.
+ *
+ * Note: assumes a single trusted proxy hop. For a chain of N trusted proxies, take the
+ * N-th entry from the right.
  */
 fun ApplicationCall.clientIp(): String =
     if (TRUST_PROXY) {
         request.headers["X-Forwarded-For"]
             ?.split(",")
-            ?.firstOrNull()
+            ?.lastOrNull()
             ?.trim()
             ?.takeIf { it.isNotBlank() }
             ?: request.local.remoteHost

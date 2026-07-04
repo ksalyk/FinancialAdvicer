@@ -12,9 +12,11 @@ private val INSECURE_DEFAULTS = setOf(
     "dev-secret-change-in-production",
     "dev-admin-key",
     "dev-admin-session-secret-key!!!!",
+    "dev-admin-password",
     "secret",
     "changeme",
     "password",
+    "admin",
 )
 
 /**
@@ -57,6 +59,36 @@ fun validateSecretsForProduction() {
             spec.value.length < 32 ->
                 violations += "${spec.envVar} is too short (${spec.value.length} chars); minimum 32 required in production"
         }
+    }
+
+    // ── Admin panel credentials (AdminAuthRoutes) ─────────────────────────────
+    // These guard the browser admin login; they fall back to "admin"/"dev-admin-password"
+    // in dev, which must never survive into production.
+    val adminUsername = System.getenv("ADMIN_USERNAME")
+    val adminPassword = System.getenv("ADMIN_PASSWORD")
+    when {
+        adminUsername.isNullOrBlank() ->
+            violations += "ADMIN_USERNAME is not set (blank or missing)"
+        adminUsername in INSECURE_DEFAULTS ->
+            violations += "ADMIN_USERNAME is set to a known insecure dev default"
+    }
+    when {
+        adminPassword.isNullOrBlank() ->
+            violations += "ADMIN_PASSWORD is not set (blank or missing)"
+        adminPassword in INSECURE_DEFAULTS ->
+            violations += "ADMIN_PASSWORD is set to a known insecure dev default"
+        adminPassword.length < 16 ->
+            violations += "ADMIN_PASSWORD is too short (${adminPassword.length} chars); minimum 16 required in production"
+    }
+
+    // ── Transport / origin hardening ──────────────────────────────────────────
+    // One forgotten env var must not silently ship anyHost() CORS or a
+    // non-Secure admin cookie into production.
+    if (System.getenv("ALLOWED_ORIGINS").isNullOrBlank()) {
+        violations += "ALLOWED_ORIGINS is not set — CORS would fall back to anyHost()"
+    }
+    if (System.getenv("SESSION_SECURE")?.lowercase() != "true") {
+        violations += "SESSION_SECURE is not 'true' — admin session cookie would be sent over plain HTTP"
     }
 
     if (violations.isNotEmpty()) {

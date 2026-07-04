@@ -74,7 +74,9 @@ class AuthPresenter(
         }
     }
 
-    fun logout() = authRepository.logout()
+    fun logout() {
+        scope.launch { authRepository.logoutAndRevoke() }
+    }
 
     fun toggleMode() {
         _uiState.value = _uiState.value.copy(

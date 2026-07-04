@@ -36,6 +36,17 @@ private const val ERR_AUTH_INVALID_CREDENTIALS = "err_auth_invalid_credentials"
 private const val ERR_AUTH_REFRESH_MISSING = "err_auth_refresh_missing"
 private const val ERR_AUTH_REFRESH_INVALID = "err_auth_refresh_invalid"
 
+// Input bounds — bcrypt input is fixed-size via the SHA-256 pre-hash, but there is
+// no reason to accept megabyte credentials into JSON parsing and logs.
+private const val MAX_USERNAME_LENGTH = 32
+private const val MAX_PASSWORD_LENGTH = 128
+
+/** True when the cause chain contains a PostgreSQL unique-constraint violation (SQLSTATE 23505). */
+private fun Throwable.isUniqueViolation(): Boolean =
+    generateSequence(this) { it.cause }
+        .filterIsInstance<java.sql.SQLException>()
+        .any { it.sqlState == "23505" }
+
 fun Route.authRoutes(
     userRepository: UserRepository,
     authLimiter: RateLimiter? = authRateLimiter,
@@ -61,13 +72,35 @@ fun Route.authRoutes(
                     AuthResponse(success = false, message = ERR_AUTH_PASSWORD_TOO_SHORT))
                 return@post
             }
+            if (username.length > MAX_USERNAME_LENGTH) {
+                call.respond(HttpStatusCode.BadRequest,
+                    AuthResponse(success = false, message = "Username too long (max $MAX_USERNAME_LENGTH)"))
+                return@post
+            }
+            if (password.length > MAX_PASSWORD_LENGTH) {
+                call.respond(HttpStatusCode.BadRequest,
+                    AuthResponse(success = false, message = "Password too long (max $MAX_PASSWORD_LENGTH)"))
+                return@post
+            }
             if (userRepository.existsByUsername(username)) {
                 call.respond(HttpStatusCode.Conflict,
                     AuthResponse(success = false, message = ERR_AUTH_USER_EXISTS))
                 return@post
             }
 
-            val user         = userRepository.create(username, password)
+            // The exists-check above is advisory only — two concurrent registrations
+            // can both pass it. The DB unique constraint is the real gate; map its
+            // violation to the same 409 instead of leaking a 500.
+            val user = try {
+                userRepository.create(username, password)
+            } catch (e: Exception) {
+                if (e.isUniqueViolation()) {
+                    call.respond(HttpStatusCode.Conflict,
+                        AuthResponse(success = false, message = ERR_AUTH_USER_EXISTS))
+                    return@post
+                }
+                throw e
+            }
             val accessToken  = generateAccessJwt(user.id, user.username)
             val refreshToken = userRepository.createRefreshToken(user.id)
 

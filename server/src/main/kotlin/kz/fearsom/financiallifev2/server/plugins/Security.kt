@@ -35,7 +35,7 @@ fun Application.configureSecurity() {
         // Note: AdminRoutes.isAdminAuthorized() checks both mechanisms manually, so
         // this provider is available for future authenticate("admin-auth") blocks.
         session<AdminSession>("admin-auth") {
-            validate { session -> session }
+            validate { session -> session.takeUnless { it.isExpired() } }
             challenge {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Admin session required"))
             }

@@ -10,42 +10,42 @@ import androidx.compose.ui.graphics.Color
 
 // ─── DARK COLOR SCHEME ────────────────────────────────────────────────────────
 internal val DarkColorScheme = darkColorScheme(
-    primary          = GoldPrimary,
-    onPrimary        = BackgroundDeep,
-    primaryContainer = GoldDark,
-    secondary        = GreenSuccess,
+    primary          = IndigoPrimary,
+    onPrimary        = Color.White,
+    primaryContainer = IndigoDark,
+    secondary        = EmeraldOnDark,
     onSecondary      = BackgroundDeep,
-    tertiary         = BlueAccent,
-    onTertiary       = BackgroundDeep,
+    tertiary         = PurpleGradient,
+    onTertiary       = Color.White,
     background       = BackgroundDeep,
     onBackground     = TextPrimary,
     surface          = BackgroundCard,
     onSurface        = TextPrimary,
     surfaceVariant   = BackgroundElevated,
     onSurfaceVariant = TextSecondary,
-    error            = RedDanger,
+    error            = CoralOnDark,
     onError          = Color.White,
-    outline          = TextHint
+    outline          = BorderStrongDark
 )
 
 // ─── LIGHT COLOR SCHEME ───────────────────────────────────────────────────────
 internal val LightColorScheme = lightColorScheme(
-    primary          = GoldPrimary,
-    onPrimary        = BackgroundDeep,
-    primaryContainer = GoldLight,
-    secondary        = GreenSuccess,
+    primary          = IndigoPrimary,
+    onPrimary        = Color.White,
+    primaryContainer = IndigoLight,
+    secondary        = EmeraldOnLight,
     onSecondary      = Color.White,
-    tertiary         = BlueAccent,
-    onTertiary       = BackgroundDeep,
+    tertiary         = PurpleGradient,
+    onTertiary       = Color.White,
     background       = BackgroundLightDeep,
     onBackground     = TextPrimaryLight,
     surface          = BackgroundLightCard,
     onSurface        = TextPrimaryLight,
     surfaceVariant   = BackgroundLightElevated,
     onSurfaceVariant = TextSecondaryLight,
-    error            = RedDanger,
+    error            = CoralOnLight,
     onError          = Color.White,
-    outline          = TextHintLight
+    outline          = BorderLight
 )
 
 /**

@@ -16,4 +16,13 @@ import kz.fearsom.financiallifev2.network.NetworkConfig.baseUrl
 object NetworkConfig {
     // Defaults to Android emulator loopback — override via Koin parameters in androidMain.
     var baseUrl: String = "http://10.0.2.2:8082/api/v1"
+
+    /**
+     * Enables Ktor BODY-level HTTP logging. MUST stay false in release builds:
+     * request bodies include plaintext login/register passwords and responses
+     * include full token pairs. Set from the platform entry point:
+     *   Android: NetworkConfig.enableHttpLogging = BuildConfig.DEBUG   (MainActivity)
+     *   iOS:     NetworkConfig.enableHttpLogging = Platform.isDebugBinary (MainViewController)
+     */
+    var enableHttpLogging: Boolean = false
 }

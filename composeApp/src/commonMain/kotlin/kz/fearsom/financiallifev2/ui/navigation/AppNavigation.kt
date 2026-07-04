@@ -27,6 +27,7 @@ import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
+import kz.fearsom.financiallifev2.presentation.AsanPresenter
 import kz.fearsom.financiallifev2.presentation.AuthPresenter
 import kz.fearsom.financiallifev2.presentation.CharactersPresenter
 import kz.fearsom.financiallifev2.presentation.GamePresenter
@@ -34,6 +35,7 @@ import kz.fearsom.financiallifev2.presentation.MainMenuPresenter
 import kz.fearsom.financiallifev2.presentation.NewGamePresenter
 import kz.fearsom.financiallifev2.presentation.SettingsPresenter
 import kz.fearsom.financiallifev2.presentation.StatisticsPresenter
+import kz.fearsom.financiallifev2.ui.screens.AsanAdvisorScreen
 import kz.fearsom.financiallifev2.ui.screens.ChatScreen
 import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
 import kz.fearsom.financiallifev2.ui.screens.LoginScreen
@@ -60,6 +62,7 @@ sealed interface AppScreen {
     object Statistics : AppScreen
     object Settings : AppScreen
     data class Game(val sessionId: String) : AppScreen
+    object AsanAdvisor : AppScreen
 }
 
 // Navigation depth — drives slide direction.
@@ -74,6 +77,7 @@ private fun AppScreen.depth(): Int = when (this) {
     AppScreen.Statistics -> 2
     AppScreen.Settings -> 2
     is AppScreen.Game -> 4
+    AppScreen.AsanAdvisor -> 5
 }
 
 // ── Navigation host ───────────────────────────────────────────────────────────
@@ -99,6 +103,7 @@ fun AppNavigation() {
     val charsPresenter = remember { CharactersPresenter(sessionRepo, catalogRepo, scope) }
     val statsPresenter = remember { StatisticsPresenter(sessionRepo, scope, gameApiService) }
     val settingsPresenter = remember { SettingsPresenter(localeRepo, featureFlags, scope) }
+    val asanPresenter = remember { AsanPresenter(scope) }
 
     val authUiState by authPresenter.uiState.collectAsStateWithLifecycle()
     val gameUiState by gamePresenter.uiState.collectAsStateWithLifecycle()
@@ -107,6 +112,7 @@ fun AppNavigation() {
     val charsUiState by charsPresenter.uiState.collectAsStateWithLifecycle()
     val statsUiState by statsPresenter.uiState.collectAsStateWithLifecycle()
     val settingsUiState by settingsPresenter.uiState.collectAsStateWithLifecycle()
+    val asanUiState by asanPresenter.uiState.collectAsStateWithLifecycle()
 
     // ── Back stack ────────────────────────────────────────────────────────────
     var backStack by remember { mutableStateOf(listOf<AppScreen>(AppScreen.Splash)) }
@@ -323,7 +329,20 @@ fun AppNavigation() {
                             gamePresenter.saveAndPause()
                             navForward = false
                             backStack = listOf(AppScreen.MainMenu)
+                        },
+                        onOpenAsan = {
+                            asanPresenter.openConversation()
+                            navigate(AppScreen.AsanAdvisor)
                         }
+                    )
+
+                    // ── Asan AI advisor (UI stub) ─────────────────────────────────
+                    AppScreen.AsanAdvisor -> AsanAdvisorScreen(
+                        uiState = asanUiState,
+                        onSend = asanPresenter::sendMessage,
+                        onToggleVoice = asanPresenter::toggleRecording,
+                        onCancelVoice = asanPresenter::cancelRecording,
+                        onBack = ::goBack
                     )
                 }
             }

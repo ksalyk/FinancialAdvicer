@@ -163,6 +163,22 @@ object StringKeys {
     const val UI_CHAT_SCENE_WINDFALL          = "ui_chat_scene_windfall"
     const val UI_CHAT_SCENE_WORLD             = "ui_chat_scene_world"
     const val UI_CHAT_RESTART_GAME            = "ui_chat_restart_game"
+    // Option risk badges (redesign 2026-07)
+    const val UI_CHAT_OPTION_RISKY            = "ui_chat_option_risky"
+    const val UI_CHAT_OPTION_SAFE             = "ui_chat_option_safe"
+
+    // ── Asan AI advisor ──────────────────────────────────────────────
+    const val UI_ASAN_TITLE                   = "ui_asan_title"
+    const val UI_ASAN_STATUS                  = "ui_asan_status"
+    const val UI_ASAN_PLACEHOLDER             = "ui_asan_placeholder"
+    const val UI_ASAN_GREETING                = "ui_asan_greeting"
+    const val UI_ASAN_REPLY_GENERIC           = "ui_asan_reply_generic"
+    const val UI_ASAN_FLAG_GUARANTEE          = "ui_asan_flag_guarantee"
+    const val UI_ASAN_FLAG_UPFRONT            = "ui_asan_flag_upfront"
+    const val UI_ASAN_FLAG_URGENCY            = "ui_asan_flag_urgency"
+    const val UI_ASAN_CD_OPEN                 = "ui_asan_cd_open"
+    const val UI_ASAN_CD_SEND                 = "ui_asan_cd_send"
+    const val UI_ASAN_CD_VOICE                = "ui_asan_cd_voice"
     // Short month names (Янв, Фев …)
     const val UI_CHAT_SHORT_MONTH_1           = "ui_chat_short_month_1"
     const val UI_CHAT_SHORT_MONTH_2           = "ui_chat_short_month_2"

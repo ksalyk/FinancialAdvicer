@@ -1,6 +1,8 @@
 package kz.fearsom.financiallifev2
 
 import androidx.compose.ui.window.ComposeUIViewController
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.Platform
 import kz.fearsom.financiallifev2.di.commonModule
 import kz.fearsom.financiallifev2.di.iosModule
 import kz.fearsom.financiallifev2.network.NetworkConfig
@@ -29,11 +31,14 @@ import org.koin.mp.KoinPlatform
  *   }
  *   ```
  */
+@OptIn(ExperimentalNativeApi::class)
 fun MainViewController() = ComposeUIViewController(
     configure = {
         // iOS simulator reaches host machine directly via localhost,
         // unlike Android emulator which requires the 10.0.2.2 alias.
         NetworkConfig.baseUrl = "http://localhost:8082/api/v1"
+        // HTTP BODY logging carries credentials/tokens — debug binaries only.
+        NetworkConfig.enableHttpLogging = Platform.isDebugBinary
         // Guard against double-start if SwiftUI recreates the view controller.
         if (KoinPlatform.getKoinOrNull() == null) {
             startKoin { modules(commonModule, iosModule) }

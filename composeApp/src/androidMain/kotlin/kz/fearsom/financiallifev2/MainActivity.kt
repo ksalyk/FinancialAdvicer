@@ -9,6 +9,7 @@ import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import kz.fearsom.financiallifev2.di.androidModule
 import kz.fearsom.financiallifev2.di.commonModule
+import kz.fearsom.financiallifev2.network.NetworkConfig
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
@@ -23,6 +24,8 @@ class MainActivity : ComponentActivity() {
         if (BuildConfig.DEBUG) {
             Napier.base(DebugAntilog())
         }
+        // HTTP BODY logging carries credentials/tokens — debug builds only.
+        NetworkConfig.enableHttpLogging = BuildConfig.DEBUG
 
         if (GlobalContext.getOrNull() == null) {
             startKoin {

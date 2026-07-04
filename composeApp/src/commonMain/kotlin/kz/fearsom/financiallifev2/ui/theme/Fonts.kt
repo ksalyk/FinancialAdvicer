@@ -157,25 +157,62 @@ val AppTypography = Typography(
 )
 
 /**
- * Diary-specific text style (ChatScreen, DiaryCard, game narrative)
- * Uses Caveat for handwritten flavor while maintaining readability
+ * Monospace family for numerals: money, percentages, timers, stat values.
+ * Redesign spec calls for JetBrains Mono (500/600/700).
+ *
+ * TODO(redesign): bundle JetBrains Mono TTFs into
+ * composeApp/src/commonMain/composeResources/font/ (jetbrains_mono_medium.ttf,
+ * jetbrains_mono_semibold.ttf, jetbrains_mono_bold.ttf) and switch this val to
+ * a Font(Res.font...) family, mirroring ManropeFontFamily above.
+ * Until then the platform monospace keeps the tabular-figure look.
  */
-val DiaryTextStyle = TextStyle(
-    fontFamily = KalamFontFamily,
-    fontWeight = FontWeight.Normal,
-    fontSize = 16.sp,
-    lineHeight = 24.sp,
-    letterSpacing = 0.25.sp
+val MonoFontFamily: FontFamily = FontFamily.Monospace
+
+/** Big money / percent values (e.g. "34%", "+1 000 ₸"). */
+val MoneyLargeStyle = TextStyle(
+    fontFamily = MonoFontFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize = 22.sp,
+    lineHeight = 26.sp,
+    letterSpacing = 0.sp
+)
+
+/** Card-level money values (capital / debt). */
+val MoneyMediumStyle = TextStyle(
+    fontFamily = MonoFontFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize = 18.sp,
+    lineHeight = 22.sp,
+    letterSpacing = 0.sp
+)
+
+/** Small metric values (income / expenses / "45 / 100"). */
+val MoneySmallStyle = TextStyle(
+    fontFamily = MonoFontFamily,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 13.sp,
+    lineHeight = 16.sp,
+    letterSpacing = 0.sp
 )
 
 /**
- * Diary header (title of diary entry, character name, date)
- * Handwritten but with more prominence
+ * Redesign 2026-07: the handwritten diary metaphor is retired — game narrative
+ * now renders in the fintech chat style. These styles stay (Manrope-based) so
+ * any remaining call sites keep compiling; new code should prefer
+ * MaterialTheme.typography directly.
  */
+val DiaryTextStyle = TextStyle(
+    fontFamily = ManropeFontFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize = 14.sp,
+    lineHeight = 21.sp,
+    letterSpacing = 0.1.sp
+)
+
 val DiaryHeaderStyle = TextStyle(
-    fontFamily = KalamFontFamily,
+    fontFamily = ManropeFontFamily,
     fontWeight = FontWeight.Bold,
-    fontSize = 20.sp,
-    lineHeight = 28.sp,
+    fontSize = 15.sp,
+    lineHeight = 20.sp,
     letterSpacing = 0.sp
 )

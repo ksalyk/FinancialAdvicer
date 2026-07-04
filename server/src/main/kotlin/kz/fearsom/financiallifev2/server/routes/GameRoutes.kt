@@ -28,6 +28,9 @@ import java.util.concurrent.atomic.AtomicLong
 
 private val log = LoggerFactory.getLogger("GameRoutes")
 
+/** Upper bound for client-submitted snapshot payloads (~512 KB of UTF-16 chars). */
+private const val MAX_STATE_JSON_CHARS = 256 * 1024
+
 // ── DTOs ──────────────────────────────────────────────────────────────────────
 
 @Serializable
@@ -255,6 +258,21 @@ fun Route.gameRoutes(
                 // savedState.playerState internally — forCharacterAndEra would build the
                 // same graph and then loadState() would immediately overwrite it.
                 val savedState = json.decodeFromString<GameState>(session.stateJson)
+
+                // Validate the option BEFORE running the engine: makeChoice() silently
+                // returns the unchanged state for an unknown optionId, which would let
+                // this route reply success=true on a no-op and desync the client.
+                val currentEvent = ScenarioGraphFactory.forCharacter(
+                    savedState.playerState.characterId,
+                    savedState.playerState.eraId
+                ).findEvent(savedState.currentEventId)
+                if (currentEvent == null || currentEvent.options.none { it.id == optionId }) {
+                    return@withLock call.respond(
+                        HttpStatusCode.BadRequest,
+                        ChoiceResponse(success = false, message = "Option '$optionId' is not valid for event '${savedState.currentEventId}'")
+                    )
+                }
+
                 val engine = GameEngine()
                 engine.loadState(savedState)
                 val newState = engine.makeChoice(optionId)
@@ -276,10 +294,29 @@ fun Route.gameRoutes(
             val userId = call.jwtUserId()
             val req    = call.receive<GameStateRequest>()
 
+            // Bound the payload — snapshots are stored verbatim, so without a cap a
+            // client can grow DB rows without limit.
+            if (req.stateJson.length > MAX_STATE_JSON_CHARS) {
+                return@post call.respond(
+                    HttpStatusCode.PayloadTooLarge,
+                    mapOf("error" to "stateJson exceeds $MAX_STATE_JSON_CHARS chars")
+                )
+            }
+            // Must at least be a well-formed GameState; otherwise a later
+            // /game/restore or /game/event would 500 on deserialization.
+            // NOTE: values are still client-authored — server-authoritative stats
+            // would require replaying choices server-side (tracked separately).
+            if (runCatching { json.decodeFromString<GameState>(req.stateJson) }.isFailure) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "stateJson is not a valid GameState")
+                )
+            }
+
             val snapshot = gameRepository.saveSnapshot(
                 userId    = userId,           // always use the JWT userId, never trust body
                 stateJson = req.stateJson,
-                slotName  = req.slotName ?: "manual"
+                slotName  = (req.slotName ?: "manual").take(64)
             )
 
             log.info("Snapshot saved userId={} snapshotId={}", userId, snapshot.snapshotId)
@@ -377,6 +414,11 @@ fun Route.gameRoutes(
 private fun ApplicationCall.jwtUserId(): String =
     principal<JWTPrincipal>()!!.payload.getClaim("userId").asString()
 
+// LIMITATION: validation is static against SeedData, but the admin panel writes
+// characters/eras to the DB — admin-created content passes the catalog endpoints yet
+// can never start a game here (and has no ScenarioGraph anyway). If DB-authored
+// scenarios ever become a feature, this must consult CharactersRepository/ErasRepository
+// and ScenarioGraphFactory must resolve graphs dynamically.
 private val VALID_ERA_IDS: Set<String> =
     SeedData.eras.map { it.id }.toSet()
 

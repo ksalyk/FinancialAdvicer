@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.ui.components.chat
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,9 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,11 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.PlayerState
+import kz.fearsom.financiallifev2.ui.icons.LineIcons
 import kz.fearsom.financiallifev2.ui.theme.LocalAppColors
-import kz.fearsom.financiallifev2.ui.theme.RedDanger
 
 // ─── Top Bar ──────────────────────────────────────────────────────────────────
 
+/**
+ * Gameplay top bar (redesign 2026-07): linear icons, no emoji.
+ * Left notebook tile navigates home; right side hosts Asan, metrics and overflow.
+ */
 @Composable
 fun DiaryTopBar(
     playerState: PlayerState?,
@@ -50,7 +55,8 @@ fun DiaryTopBar(
     characterTitle: String,
     onStatsClick: () -> Unit,
     onRestartClick: () -> Unit,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    onAsanClick: (() -> Unit)? = null
 ) {
     val colors = LocalAppColors.current
     var showMenu by remember { mutableStateOf(false) }
@@ -70,7 +76,7 @@ fun DiaryTopBar(
                         onRestartClick()
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = RedDanger
+                        containerColor = colors.accentNegative
                     )
                 ) {
                     Text(Strings.uiChatResetConfirm)
@@ -84,86 +90,105 @@ fun DiaryTopBar(
         )
     }
 
-    Surface(color = colors.backgroundDeep, shadowElevation = 6.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onMenuClick,
-                modifier = Modifier.size(48.dp)
+    Surface(color = colors.backgroundDeep) {
+        Column(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = Strings.uiChatCdHome,
-                    tint = colors.textPrimary
-                )
-            }
-
-            Text("📓", fontSize = 26.sp, modifier = Modifier.padding(end = 8.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "${Strings.uiChatDiary} · $characterName",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                val subtitle = if (playerState != null) {
-                    "$characterTitle · ${monthName(playerState.month)} ${playerState.year}"
-                } else {
-                    characterTitle
+                // Notebook tile → home menu
+                IconButton(onClick = onMenuClick, modifier = Modifier.size(48.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(colors.backgroundElevated, RoundedCornerShape(11.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = LineIcons.Notebook,
+                            contentDescription = Strings.uiChatCdHome,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
                 }
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary
-                )
-            }
 
-            IconButton(
-                onClick = onStatsClick,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.BarChart,
-                    contentDescription = Strings.uiChatCdStats,
-                    tint = colors.textPrimary
-                )
-            }
-
-            // Overflow menu (three-dot menu)
-            Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(48.dp)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
                 ) {
+                    Text(
+                        "${Strings.uiChatDiary} · $characterName",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 15.sp,
+                        color = colors.textPrimary,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                    val subtitle = if (playerState != null) {
+                        "$characterTitle · ${monthName(playerState.month)} ${playerState.year}"
+                    } else {
+                        characterTitle
+                    }
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary,
+                        maxLines = 1
+                    )
+                }
+
+                if (onAsanClick != null) {
+                    IconButton(onClick = onAsanClick, modifier = Modifier.size(44.dp)) {
+                        Icon(
+                            imageVector = LineIcons.Sparkle,
+                            contentDescription = Strings.uiAsanCdOpen,
+                            tint = colors.bubblePlayer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                IconButton(onClick = onStatsClick, modifier = Modifier.size(44.dp)) {
                     Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = Strings.uiChatCdOptions,
-                        tint = colors.textPrimary
+                        imageVector = LineIcons.Bars,
+                        contentDescription = Strings.uiChatCdStats,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(Strings.uiChatRestartGame) },
-                        onClick = {
-                            showMenu = false
-                            showConfirmRestart = true
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Refresh, contentDescription = null)
-                        }
-                    )
+                // Overflow menu (three-dot menu)
+                Box {
+                    IconButton(onClick = { showMenu = true }, modifier = Modifier.size(44.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = Strings.uiChatCdOptions,
+                            tint = colors.textSecondary
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(Strings.uiChatRestartGame) },
+                            onClick = {
+                                showMenu = false
+                                showConfirmRestart = true
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Refresh, contentDescription = null)
+                            }
+                        )
+                    }
                 }
             }
+            HorizontalDivider(thickness = 1.dp, color = colors.divider)
         }
     }
 }
