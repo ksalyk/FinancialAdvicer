@@ -104,7 +104,9 @@ class MigrationTest {
         val runner = MigrationRunner(db)
         runner.runMigrations()
 
-        // Roll back only V001 (the one that created all tables).
+        // Roll back in reverse order: V004's achievement tables reference users,
+        // so they must be dropped before V001 can drop the users table.
+        runner.rollback(4)
         runner.rollback(1)
 
         // After rollback, the users table should no longer exist.

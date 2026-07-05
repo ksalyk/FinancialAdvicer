@@ -531,6 +531,40 @@ object Strings {
     val eraKz2005Name              get() = get(ERA_KZ_2005_NAME)
     val eraKz2015Name              get() = get(ERA_KZ_2015_NAME)
 
+    // ── AchievementsScreen ───────────────────────────────────────────
+    val uiAchTitle                 get() = get(StringKeys.UI_ACH_TITLE)
+    val uiAchSubtitle              get() = get(StringKeys.UI_ACH_SUBTITLE)
+    /** Main-menu subtitle pattern: "Открыто %s из %s". */
+    val uiAchMenuSubtitle          get() = get(StringKeys.UI_ACH_MENU_SUBTITLE)
+    val uiAchUnlockedLabel         get() = get(StringKeys.UI_ACH_UNLOCKED_LABEL)
+    /** Count pattern: "%s из %s". */
+    val uiAchCountPattern          get() = get(StringKeys.UI_ACH_COUNT_PATTERN)
+    val uiAchSectionGame           get() = get(StringKeys.UI_ACH_SECTION_GAME)
+    val uiAchSectionScams          get() = get(StringKeys.UI_ACH_SECTION_SCAMS)
+    val uiAchScamHint              get() = get(StringKeys.UI_ACH_SCAM_HINT)
+    val uiAchRarityCommon          get() = get(StringKeys.UI_ACH_RARITY_COMMON)
+    val uiAchRarityRare            get() = get(StringKeys.UI_ACH_RARITY_RARE)
+    val uiAchRarityLegend          get() = get(StringKeys.UI_ACH_RARITY_LEGEND)
+    val uiAchStatusUnlocked        get() = get(StringKeys.UI_ACH_STATUS_UNLOCKED)
+    /** "Открыта · %s" — %s is the character name that unlocked it. */
+    val uiAchUnlockedVia           get() = get(StringKeys.UI_ACH_UNLOCKED_VIA)
+    val uiAchStatusLockedGame      get() = get(StringKeys.UI_ACH_STATUS_LOCKED_GAME)
+    val uiAchStatusLockedScam      get() = get(StringKeys.UI_ACH_STATUS_LOCKED_SCAM)
+    /** "схеме %s" — scheme age chip. */
+    val uiAchAgePattern            get() = get(StringKeys.UI_ACH_AGE_PATTERN)
+    val uiAchTaskLabel             get() = get(StringKeys.UI_ACH_TASK_LABEL)
+    val uiAchHintLabel             get() = get(StringKeys.UI_ACH_HINT_LABEL)
+    val uiAchTeaserTitle           get() = get(StringKeys.UI_ACH_TEASER_TITLE)
+    val uiAchTeaserText            get() = get(StringKeys.UI_ACH_TEASER_TEXT)
+    val uiAchStoryTitle            get() = get(StringKeys.UI_ACH_STORY_TITLE)
+    val uiAchOriginLabel           get() = get(StringKeys.UI_ACH_ORIGIN_LABEL)
+    val uiAchVariantLabel          get() = get(StringKeys.UI_ACH_VARIANT_LABEL)
+    val uiAchModernLabel           get() = get(StringKeys.UI_ACH_MODERN_LABEL)
+    val uiAchNow                   get() = get(StringKeys.UI_ACH_NOW)
+    val uiAchSignsTitle            get() = get(StringKeys.UI_ACH_SIGNS_TITLE)
+    val uiAchFbQuestion            get() = get(StringKeys.UI_ACH_FB_QUESTION)
+    val uiAchFbThanks              get() = get(StringKeys.UI_ACH_FB_THANKS)
+
     // ── Auth errors ──────────────────────────────────────────────────
     val errAuthFillFields          get() = get(ERR_AUTH_FILL_FIELDS)
     val errAuthServerUnavailable   get() = get(ERR_AUTH_SERVER_UNAVAILABLE)

@@ -318,4 +318,4 @@ val enStrings: Map<String, String> = mapOf(
     "err_auth_refresh_missing"       to "Missing refresh token",
     "err_auth_refresh_invalid"       to "Invalid or expired refresh token",
 
-) + enContentStrings + enHardcodedStrings
+) + enContentStrings + enHardcodedStrings + enAchievementStrings

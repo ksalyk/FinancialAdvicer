@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kz.fearsom.financiallifev2.data.AchievementsRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.i18n.Strings
@@ -40,7 +41,8 @@ class GamePresenter(
     private val engine: GameEngine,
     private val sessionRepo: GameSessionRepository,
     private val scope: CoroutineScope,
-    private val gameApiService: GameApiService? = null
+    private val gameApiService: GameApiService? = null,
+    private val achievementsRepo: AchievementsRepository? = null
 ) {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -68,6 +70,15 @@ class GamePresenter(
                 )
                 val state = gameState ?: return@collect
                 val sessionId = activeSessionId ?: return@collect
+
+                // Achievement unlock detection — evaluates on every state advance;
+                // repo dedupes internally, sync is fire-and-forget (offline-safe).
+                achievementsRepo?.let { repo ->
+                    val newlyUnlocked = repo.onGameState(state)
+                    if (newlyUnlocked.isNotEmpty()) {
+                        launch { repo.sync() }
+                    }
+                }
 
                 // Persist only when the logical state actually advanced. Re-localization
                 // re-emits the same event id and message count, so its signature is
@@ -113,6 +124,7 @@ class GamePresenter(
         }
         activeSessionId = sessionId
         val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
+        achievementsRepo?.startSessionTracking(sessionId, session.characterId, session.eraId, freshRun = true)
         // Fresh playthrough — clear any persistence guards left from a previous run of this session.
         recordedCompletions.remove(sessionId)
         lastPersistedSignature = null
@@ -151,6 +163,7 @@ class GamePresenter(
         activeSessionId = sessionId
         val savedState = sessionRepo.getSavedGameState(sessionId)
         val scenarioStart = ScenarioGraphFactory.forCharacter(session.characterId, session.eraId).initialPlayerState
+        achievementsRepo?.startSessionTracking(sessionId, session.characterId, session.eraId)
         // Reset persistence guards on (re)entry; if the save is already a finished game,
         // pre-seed the completion guard so merely loading it doesn't re-record statistics.
         lastPersistedSignature = null

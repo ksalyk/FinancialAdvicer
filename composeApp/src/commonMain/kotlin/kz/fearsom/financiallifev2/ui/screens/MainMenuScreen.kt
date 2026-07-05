@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,8 +24,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -43,6 +46,7 @@ import kz.fearsom.financiallifev2.i18n.Strings
 import kz.fearsom.financiallifev2.model.emoji
 import kz.fearsom.financiallifev2.model.label
 import kz.fearsom.financiallifev2.presentation.MainMenuUiState
+import kz.fearsom.financiallifev2.ui.theme.AmberOnDark
 import kz.fearsom.financiallifev2.ui.theme.BlueAccent
 import kz.fearsom.financiallifev2.ui.theme.GoldDark
 import kz.fearsom.financiallifev2.ui.theme.GoldPrimary
@@ -58,6 +62,9 @@ fun MainMenuScreen(
     onContinue: () -> Unit,
     onNewGame: () -> Unit,
     onCharacters: () -> Unit,
+    onAchievements: () -> Unit,
+    achievementsUnlocked: Int,
+    achievementsTotal: Int,
     onStatistics: () -> Unit,
     onSettings: () -> Unit,
     onLogin: () -> Unit,
@@ -92,6 +99,7 @@ fun MainMenuScreen(
                     CircleShape
                 )
         )
+
         Box(
             modifier = Modifier
                 .size(280.dp)
@@ -106,8 +114,11 @@ fun MainMenuScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding( 24.dp)
+                .verticalScroll(rememberScrollState())
+            ,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(Modifier.height(88.dp))
 
@@ -125,9 +136,6 @@ fun MainMenuScreen(
             ) {
                 Text("₸", fontSize = 38.sp, color = GoldPrimary)
             }
-
-            Spacer(Modifier.height(16.dp))
-
             Text(
                 text       = "FinancialLife",
                 fontSize   = 28.sp,
@@ -140,7 +148,7 @@ fun MainMenuScreen(
                 color    = colors.textSecondary
             )
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(20.dp))
 
             // ── Hero tier ──────────────────────────────────────────────────────
             // Two-tier system: hero action first (Continue or New Game), then secondary actions
@@ -154,7 +162,6 @@ fun MainMenuScreen(
                     context     = "${activeSession.characterEmoji} ${activeSession.characterName} · ${activeSession.eraName}",
                     onClick     = onContinue
                 )
-                Spacer(Modifier.height(20.dp))
             } else {
                 // Hero: New Game when no active session (promote this as primary action)
                 HeroActionCard(
@@ -163,8 +170,8 @@ fun MainMenuScreen(
                     context     = Strings.uiMainNewGameSubtitle,
                     onClick     = onNewGame
                 )
-                Spacer(Modifier.height(20.dp))
             }
+            Spacer(Modifier.height(20.dp))
 
             // ── Secondary tier ────────────────────────────────────────────────
 
@@ -177,7 +184,6 @@ fun MainMenuScreen(
                     accentColor = BlueAccent,
                     onClick     = onNewGame
                 )
-                Spacer(Modifier.height(10.dp))
             }
 
             OutlinedMenuButton(
@@ -187,7 +193,16 @@ fun MainMenuScreen(
                 accentColor = PurpleAccent,
                 onClick     = onCharacters
             )
-            Spacer(Modifier.height(10.dp))
+
+            OutlinedMenuButton(
+                emoji       = "🏆",
+                label       = Strings.uiAchTitle,
+                description = Strings.uiAchMenuSubtitle
+                    .replaceFirst("%s", achievementsUnlocked.toString())
+                    .replaceFirst("%s", achievementsTotal.toString()),
+                accentColor = AmberOnDark,
+                onClick     = onAchievements
+            )
 
             OutlinedMenuButton(
                 emoji       = "📊",
@@ -199,7 +214,6 @@ fun MainMenuScreen(
                 accentColor = GreenSuccess,
                 onClick     = onStatistics
             )
-            Spacer(Modifier.height(10.dp))
 
             OutlinedMenuButton(
                 emoji       = "⚙️",
@@ -217,7 +231,7 @@ fun MainMenuScreen(
                 onLogin = onLogin,
                 onLogout = onLogout
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(32.dp))
         }
     }
 }

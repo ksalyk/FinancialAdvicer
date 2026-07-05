@@ -1,6 +1,7 @@
 package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.AchievementsRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
@@ -9,6 +10,7 @@ import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.i18n.initDeviceLocaleCache
+import kz.fearsom.financiallifev2.network.AchievementApiService
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.network.NetworkConfig
 import kz.fearsom.financiallifev2.network.TokenStorage
@@ -91,4 +93,8 @@ val commonModule = module {
 
     // ── Catalog (admin-managed characters/eras, overlaid onto SeedData) ────────
     single { CatalogRepository(api = get()) }
+
+    // ── Achievements (offline-first unlock store + server sync) ────────────────
+    single { AchievementApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl, tokenStorage = get()) }
+    single { AchievementsRepository(secureStorage = get<SecureStorage>(), api = get()) }
 }

@@ -1367,4 +1367,4 @@ val ruStrings: Map<String, String> = mapOf(
     "seed_bundle_crypto_profession" to "Блогер/трейдер",
     "seed_bundle_crypto_trait_1" to "импульсивный",
 
-) + ruHardcodedStrings
+) + ruHardcodedStrings + ruAchievementStrings

@@ -16,6 +16,7 @@ import kz.fearsom.financiallifev2.server.plugins.configureSecurityHeaders
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
+import kz.fearsom.financiallifev2.server.repository.DatabaseAchievementsRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseGameRepository
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
@@ -62,11 +63,12 @@ fun Application.module() {
     }
 
     // 3. Repositories (singletons for server lifetime)
-    val userRepository       = DatabaseUserRepository(database)
-    val gameRepository       = DatabaseGameRepository(database)
-    val statisticsRepository = DatabaseStatisticsRepository(database)
-    val charactersRepository = CharactersRepository(database)
-    val erasRepository       = ErasRepository(database)
+    val userRepository         = DatabaseUserRepository(database)
+    val gameRepository         = DatabaseGameRepository(database)
+    val statisticsRepository   = DatabaseStatisticsRepository(database)
+    val charactersRepository   = CharactersRepository(database)
+    val erasRepository         = ErasRepository(database)
+    val achievementsRepository = DatabaseAchievementsRepository(database)
 
     // 4. Seed hardcoded characters/eras into DB.
     //    insert-only-when-missing: admin edits (rename, deactivate, era membership)
@@ -121,5 +123,5 @@ fun Application.module() {
     configureStatusPages()
     configureAdminSession()       // Session plugin (must be before Authentication)
     configureSecurity()           // JWT + session auth providers
-    configureRouting(userRepository, gameRepository, statisticsRepository, charactersRepository, erasRepository)
+    configureRouting(userRepository, gameRepository, statisticsRepository, charactersRepository, erasRepository, achievementsRepository)
 }

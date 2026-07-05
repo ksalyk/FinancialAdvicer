@@ -318,4 +318,4 @@ val kkStrings: Map<String, String> = mapOf(
     "err_auth_refresh_missing"       to "Refresh token жоқ",
     "err_auth_refresh_invalid"       to "Refresh token жарамсыз немесе мерзімі өткен",
 
-) + kkContentStrings + kkHardcodedStrings
+) + kkContentStrings + kkHardcodedStrings + kkAchievementStrings

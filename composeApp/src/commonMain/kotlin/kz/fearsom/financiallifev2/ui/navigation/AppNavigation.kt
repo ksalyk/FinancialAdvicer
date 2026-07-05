@@ -21,12 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.AchievementsRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
+import kz.fearsom.financiallifev2.presentation.AchievementsPresenter
 import kz.fearsom.financiallifev2.presentation.AsanPresenter
 import kz.fearsom.financiallifev2.presentation.AuthPresenter
 import kz.fearsom.financiallifev2.presentation.CharactersPresenter
@@ -35,6 +37,7 @@ import kz.fearsom.financiallifev2.presentation.MainMenuPresenter
 import kz.fearsom.financiallifev2.presentation.NewGamePresenter
 import kz.fearsom.financiallifev2.presentation.SettingsPresenter
 import kz.fearsom.financiallifev2.presentation.StatisticsPresenter
+import kz.fearsom.financiallifev2.ui.screens.AchievementsScreen
 import kz.fearsom.financiallifev2.ui.screens.AsanAdvisorScreen
 import kz.fearsom.financiallifev2.ui.screens.ChatScreen
 import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
@@ -59,6 +62,7 @@ sealed interface AppScreen {
     data class CharacterSelection(val eraId: String) : AppScreen
     object Characters : AppScreen
     data class CharacterDetail(val characterId: String) : AppScreen
+    object Achievements : AppScreen
     object Statistics : AppScreen
     object Settings : AppScreen
     data class Game(val sessionId: String) : AppScreen
@@ -74,6 +78,7 @@ private fun AppScreen.depth(): Int = when (this) {
     is AppScreen.CharacterSelection -> 3
     AppScreen.Characters -> 2
     is AppScreen.CharacterDetail -> 3
+    AppScreen.Achievements -> 2
     AppScreen.Statistics -> 2
     AppScreen.Settings -> 2
     is AppScreen.Game -> 4
@@ -92,12 +97,14 @@ fun AppNavigation() {
     val catalogRepo: CatalogRepository = koinInject()
     val localeRepo: LocaleRepository = koinInject()
     val featureFlags: FeatureFlagRepository = koinInject()
+    val achievementsRepo: AchievementsRepository = koinInject()
 
     val scope = rememberCoroutineScope()
 
     // Shared presenters — lifetime bound to this Composable's composition
     val authPresenter = remember { AuthPresenter(authRepository, scope) }
-    val gamePresenter = remember { GamePresenter(gameEngine, sessionRepo, scope, gameApiService) }
+    val gamePresenter = remember { GamePresenter(gameEngine, sessionRepo, scope, gameApiService, achievementsRepo) }
+    val achievementsPresenter = remember { AchievementsPresenter(achievementsRepo, scope) }
     val mainMenuPresenter = remember { MainMenuPresenter(sessionRepo, scope) }
     val newGamePresenter = remember { NewGamePresenter(sessionRepo, catalogRepo, scope) }
     val charsPresenter = remember { CharactersPresenter(sessionRepo, catalogRepo, scope) }
@@ -111,6 +118,7 @@ fun AppNavigation() {
     val newGameUiState by newGamePresenter.uiState.collectAsStateWithLifecycle()
     val charsUiState by charsPresenter.uiState.collectAsStateWithLifecycle()
     val statsUiState by statsPresenter.uiState.collectAsStateWithLifecycle()
+    val achievementsUiState by achievementsPresenter.uiState.collectAsStateWithLifecycle()
     val settingsUiState by settingsPresenter.uiState.collectAsStateWithLifecycle()
     val asanUiState by asanPresenter.uiState.collectAsStateWithLifecycle()
 
@@ -171,6 +179,10 @@ fun AppNavigation() {
                 statsPresenter.refresh()
             } else {
                 statsPresenter.refreshLocal()
+            }
+
+            AppScreen.Achievements -> if (authUiState.authState.isLoggedIn) {
+                achievementsPresenter.refresh()
             }
 
             else -> {}
@@ -234,6 +246,9 @@ fun AppNavigation() {
                         },
                         onNewGame = { navigate(AppScreen.EraSelection) },
                         onCharacters = { navigate(AppScreen.Characters) },
+                        onAchievements = { navigate(AppScreen.Achievements) },
+                        achievementsUnlocked = achievementsUiState.unlockedCount,
+                        achievementsTotal = achievementsUiState.totalCount,
                         onStatistics = { navigate(AppScreen.Statistics) },
                         onSettings = { navigate(AppScreen.Settings) },
                         onLogin = { navigate(AppScreen.Login) },
@@ -300,6 +315,15 @@ fun AppNavigation() {
                                 backStack = listOf(AppScreen.MainMenu, AppScreen.Game(sessionId))
                             }
                         }
+                    )
+
+                    // ── Achievements ──────────────────────────────────────────────
+                    AppScreen.Achievements -> AchievementsScreen(
+                        uiState = achievementsUiState,
+                        onSelect = achievementsPresenter::select,
+                        onCloseDetail = achievementsPresenter::closeDetail,
+                        onVote = achievementsPresenter::vote,
+                        onBack = ::goBack
                     )
 
                     // ── Statistics ────────────────────────────────────────────────
