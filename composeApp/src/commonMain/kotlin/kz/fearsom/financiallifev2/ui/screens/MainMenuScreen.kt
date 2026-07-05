@@ -231,7 +231,6 @@ fun MainMenuScreen(
                 onLogin = onLogin,
                 onLogout = onLogout
             )
-            Spacer(Modifier.height(32.dp))
         }
     }
 }
