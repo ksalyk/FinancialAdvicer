@@ -1,12 +1,18 @@
-package kz.fearsom.financiallifev2.adminui.graph
+package kz.fearsom.financiallifev2.scenarios.analysis
 
 import kz.fearsom.financiallifev2.admin.ScenarioGraphDto
+import kz.fearsom.financiallifev2.admin.StoryValidationIssue
+import kz.fearsom.financiallifev2.admin.StoryValidationReport
 import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.MONTHLY_TICK
 
 /**
  * Pure, UI-free analysis of a [ScenarioGraphDto]. Computes a layered layout and a
- * set of validation warnings for the read-only scenario viewer.
+ * set of validation warnings.
+ *
+ * Lives in :shared so it is used by BOTH:
+ *  - the :admin SPA (scenario viewer + story editor live validation), and
+ *  - the :server (publish-time validation of DB-backed stories).
  *
  * Engine facts this relies on (see GameEngine / ScenarioGraph):
  *  - The narrative entry point is the event whose id is "intro".
@@ -16,9 +22,6 @@ import kz.fearsom.financiallifev2.model.MONTHLY_TICK
  *    entry or a scheduled-consequence target — only true orphans are flagged.
  *  - `MONTHLY_TICK` is a sentinel `next`, not a concrete event id.
  *  - Endings are leaf nodes and should carry empty `options`.
- *
- * Kept deliberately framework-free so the logic can be reasoned about and tested
- * independently of Compose.
  */
 
 /** Which visual band a node belongs to: the main narrative tree, or the pool/other grid. */
@@ -70,6 +73,23 @@ data class ScenarioAnalysis(
     fun node(id: String): GraphNode? = nodes.firstOrNull { it.event.id == id }
 }
 
+/** Serializable report for the admin API (publish gating / dry-run validation). */
+fun ScenarioAnalysis.toValidationReport(): StoryValidationReport {
+    val issues = warnings.map {
+        StoryValidationIssue(
+            severity = it.severity.name,
+            eventId  = it.eventId,
+            message  = it.message
+        )
+    }
+    return StoryValidationReport(
+        errors   = warnings.count { it.severity == GraphWarning.Severity.ERROR },
+        warnings = warnings.count { it.severity == GraphWarning.Severity.WARN },
+        infos    = warnings.count { it.severity == GraphWarning.Severity.INFO },
+        issues   = issues
+    )
+}
+
 private const val SECONDARY_GRID_COLUMNS = 4
 
 fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
@@ -78,7 +98,10 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
 
     if (events.isEmpty()) {
         return ScenarioAnalysis(
-            nodes = emptyList(), edges = emptyList(), warnings = emptyList(),
+            nodes = emptyList(), edges = emptyList(),
+            warnings = listOf(
+                GraphWarning(GraphWarning.Severity.ERROR, "-", "graph has no events — add an 'intro' event")
+            ),
             rootId = null, rankCount = 0, columnCount = 0,
             stats = ScenarioStats(0, 0, 0, dto.conditionalEvents.size, dto.eventPool.size)
         )
@@ -184,6 +207,16 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
     val warnings = ArrayList<GraphWarning>()
     val knownIds = byId.keys + dto.conditionalEvents.map { it.id }.toSet()
 
+    // Duplicate ids across events + conditionalEvents (authoring error a form editor can produce)
+    val duplicateIds = (events.map { it.id } + dto.conditionalEvents.map { it.id })
+        .groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+    for (dup in duplicateIds) {
+        warnings += GraphWarning(
+            GraphWarning.Severity.ERROR, dup,
+            "duplicate event id '$dup' — ids must be unique across events and conditional events"
+        )
+    }
+
     for (e in events) {
         // Unresolved option targets (could be a shared scam/era-library event — WARN not ERROR)
         for (o in e.options) {
@@ -222,6 +255,24 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
                     "and not a scheduled consequence"
             )
         }
+    }
+
+    // Pool entries pointing at unknown events
+    for (p in dto.eventPool) {
+        if (p.eventId !in knownIds) {
+            warnings += GraphWarning(
+                GraphWarning.Severity.WARN, p.eventId,
+                "pool entry → '${p.eventId}' not found in events/conditional events"
+            )
+        }
+    }
+
+    // A playable story needs at least one reachable ending
+    if (events.none { it.isEnding }) {
+        warnings += GraphWarning(
+            GraphWarning.Severity.ERROR, rootId,
+            "graph has no ending events — the story can never finish"
+        )
     }
 
     val stats = ScenarioStats(

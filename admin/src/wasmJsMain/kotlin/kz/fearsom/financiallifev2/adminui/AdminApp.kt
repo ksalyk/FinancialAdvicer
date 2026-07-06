@@ -8,17 +8,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kz.fearsom.financiallifev2.adminui.net.AdminApiClient
+import kz.fearsom.financiallifev2.adminui.screens.AchievementsScreen
 import kz.fearsom.financiallifev2.adminui.screens.CharactersScreen
 import kz.fearsom.financiallifev2.adminui.screens.ErasScreen
 import kz.fearsom.financiallifev2.adminui.screens.LoginScreen
 import kz.fearsom.financiallifev2.adminui.screens.ScenariosScreen
+import kz.fearsom.financiallifev2.adminui.screens.StoriesScreen
 import kz.fearsom.financiallifev2.adminui.screens.UsersScreen
 
-private enum class AdminTab(val label: String) {
-    USERS("Users"),
-    CHARACTERS("Characters"),
-    ERAS("Eras"),
-    SCENARIOS("Scenarios")
+private enum class AdminTab(val label: String, val icon: String) {
+    USERS("Users", "👤"),
+    CHARACTERS("Characters", "🧑"),
+    ERAS("Eras", "🕰"),
+    SCENARIOS("Built-in", "🧬"),
+    STORIES("Stories", "📖"),
+    ACHIEVEMENTS("Achievements", "🏆")
 }
 
 @Composable
@@ -26,7 +30,7 @@ fun AdminApp(api: AdminApiClient) {
     MaterialTheme(colorScheme = darkColorScheme()) {
         Surface(modifier = Modifier.fillMaxSize()) {
 
-            // Auth state: null = loading, "" = not logged in, username = logged in
+            // Auth state: null = not logged in (or still checking), non-null = username.
             var loggedInUser by remember { mutableStateOf<String?>(null) }
             var authChecked by remember { mutableStateOf(false) }
 
@@ -54,7 +58,7 @@ fun AdminApp(api: AdminApiClient) {
     }
 }
 
-// ── Main scaffold with tab navigation ────────────────────────────────────────
+// ── Main scaffold with left navigation rail ──────────────────────────────────
 
 @Composable
 private fun MainScaffold(
@@ -77,26 +81,30 @@ private fun MainScaffold(
                 }
             )
         },
-        bottomBar = {
-            NavigationBar {
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
+        Row(Modifier.fillMaxSize().padding(padding)) {
+            // Desktop admin → left rail scales to 6 sections better than a bottom bar.
+            NavigationRail {
                 AdminTab.entries.forEach { tab ->
-                    NavigationBarItem(
+                    NavigationRailItem(
                         selected = selectedTab == tab,
                         onClick  = { selectedTab = tab },
                         label    = { Text(tab.label) },
-                        icon     = {}
+                        icon     = { Text(tab.icon) }
                     )
                 }
             }
-        },
-        snackbarHost = { SnackbarHost(snackbar) }
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (selectedTab) {
-                AdminTab.USERS      -> UsersScreen(api)
-                AdminTab.CHARACTERS -> CharactersScreen(api, onMessage)
-                AdminTab.ERAS       -> ErasScreen(api, onMessage)
-                AdminTab.SCENARIOS  -> ScenariosScreen(api, onMessage)
+            VerticalDivider()
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                when (selectedTab) {
+                    AdminTab.USERS        -> UsersScreen(api, onMessage)
+                    AdminTab.CHARACTERS   -> CharactersScreen(api, onMessage)
+                    AdminTab.ERAS         -> ErasScreen(api, onMessage)
+                    AdminTab.SCENARIOS    -> ScenariosScreen(api, onMessage)
+                    AdminTab.STORIES      -> StoriesScreen(api, onMessage)
+                    AdminTab.ACHIEVEMENTS -> AchievementsScreen(api, onMessage)
+                }
             }
         }
     }

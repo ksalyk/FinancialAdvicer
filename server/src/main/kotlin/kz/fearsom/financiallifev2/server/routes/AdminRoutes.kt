@@ -5,44 +5,31 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
-import java.security.MessageDigest
+import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
-import kz.fearsom.financiallifev2.server.plugins.AdminSession
-import kz.fearsom.financiallifev2.server.plugins.isExpired
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
-import kz.fearsom.financiallifev2.server.repository.StatisticsRepository
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("AdminRoutes")
 
-/**
- * Returns true if the request carries a valid admin session cookie OR a valid ADMIN_KEY Bearer token.
- * This preserves backward compatibility for programmatic/API access via the static key.
- */
-internal fun ApplicationCall.isAdminAuthorized(): Boolean {
-    sessions.get<AdminSession>()?.let { session ->
-        if (!session.isExpired()) return true
-        // Expired cookie — clear it so the SPA falls back to the login screen.
-        sessions.clear<AdminSession>()
-    }
-    val adminKey = System.getenv("ADMIN_KEY") ?: "dev-admin-key"
-    val bearer = request.header(HttpHeaders.Authorization)
-        ?.removePrefix("Bearer ")?.trim() ?: ""
-    // Constant-time compare — prevents timing-based key enumeration attacks
-    return MessageDigest.isEqual(bearer.toByteArray(Charsets.UTF_8), adminKey.toByteArray(Charsets.UTF_8))
-}
+// Typed responses — kotlinx cannot serialize Map<String, Any> (mixed-type maps
+// compile but fail at runtime inside ContentNegotiation).
+@Serializable
+private data class EntityDeleteResponse(val deleted: Boolean, val id: String, val statsRowsDeleted: Int)
+
+@Serializable
+private data class EntityToggleResponse(val id: String, val isActive: Boolean)
 
 /**
  * Admin API for character and era management.
  *
- * All routes are protected by a static ADMIN_KEY (Bearer token), configured
- * via the ADMIN_KEY environment variable.  Set it to a long random string
- * in production; defaults to "dev-admin-key" for local development only.
- *
- * Authentication: include `Authorization: Bearer <ADMIN_KEY>` in every request.
+ * Authorization is handled ONCE at mount point: these routes live inside
+ * `authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH)` in Routing.kt — either a
+ * valid admin session cookie (SPA) or `Authorization: Bearer <ADMIN_KEY>`
+ * (programmatic access). No per-handler checks: a new endpoint added here is
+ * guarded automatically.
  *
  * Character endpoints:
  *   GET    /admin/characters              — list all (incl. inactive)
@@ -62,25 +49,19 @@ internal fun ApplicationCall.isAdminAuthorized(): Boolean {
  */
 fun Route.adminRoutes(
     charactersRepository: CharactersRepository,
-    erasRepository: ErasRepository,
-    statisticsRepository: StatisticsRepository
+    erasRepository: ErasRepository
 ) {
     route("/admin") {
 
-        // ── GET /admin/characters ─────────────────────────────────────────────
+        // ════════════════════════════════════════════════════════════════════
+        //  CHARACTER ENDPOINTS
+        // ════════════════════════════════════════════════════════════════════
+
         get("/characters") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@get
-            }
-            val characters = charactersRepository.listAll(activeOnly = false)
-            call.respond(characters)
+            call.respond(charactersRepository.listAll(activeOnly = false))
         }
 
-        // ── GET /admin/characters/{id} ────────────────────────────────────────
         get("/characters/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@get
-            }
             val id = call.parameters["id"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
             val character = charactersRepository.findById(id)
@@ -88,12 +69,8 @@ fun Route.adminRoutes(
             call.respond(character)
         }
 
-        // ── POST /admin/characters ────────────────────────────────────────────
         // Creates a new character or updates an existing one (upsert by id).
         post("/characters") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val req = call.receive<UpsertCharacterRequest>()
             if (req.id.isBlank() || req.name.isBlank()) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "id and name are required"))
@@ -103,13 +80,9 @@ fun Route.adminRoutes(
             call.respond(HttpStatusCode.OK, character)
         }
 
-        // ── DELETE /admin/characters/{id} ─────────────────────────────────────
         // Hard-delete: removes the character AND all completed_sessions rows
         // for this character across ALL users (application-level cascade).
         delete("/characters/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@delete
-            }
             val id = call.parameters["id"]
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
@@ -119,69 +92,42 @@ fun Route.adminRoutes(
             }
 
             log.info("Character hard-deleted id={} statsDeleted={}", id, result.statsRowsDeleted)
-            call.respond(mapOf(
-                "deleted"          to true,
-                "characterId"      to id,
-                "statsRowsDeleted" to result.statsRowsDeleted
-            ))
+            call.respond(EntityDeleteResponse(deleted = true, id = id, statsRowsDeleted = result.statsRowsDeleted))
         }
 
-        // ── POST /admin/characters/{id}/deactivate ────────────────────────────
         // Soft-delete: hides from game UI but preserves statistics.
         post("/characters/{id}/deactivate") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val id = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
-            val success = charactersRepository.softDelete(id)
-            if (!success) {
+            if (!charactersRepository.setActive(id, active = false)) {
                 return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Character '$id' not found"))
             }
-            log.info("Character soft-deleted id={}", id)
-            call.respond(mapOf("deactivated" to true, "characterId" to id))
+            log.info("Character deactivated id={}", id)
+            call.respond(EntityToggleResponse(id = id, isActive = false))
         }
 
-        // ── POST /admin/characters/{id}/activate ──────────────────────────────
-        // Re-activates a previously deactivated character.
+        // Re-activates a previously deactivated character (atomic flag flip).
         post("/characters/{id}/activate") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val id = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
-            val character = charactersRepository.findById(id)
-                ?: return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Character '$id' not found"))
-
-            val updated = charactersRepository.upsert(
-                UpsertCharacterRequest(id = character.id, name = character.name,
-                    emoji = character.emoji, type = character.type,
-                    eraIds = character.eraIds, isActive = true)
-            )
+            if (!charactersRepository.setActive(id, active = true)) {
+                return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Character '$id' not found"))
+            }
             log.info("Character re-activated id={}", id)
-            call.respond(updated)
+            call.respond(charactersRepository.findById(id)!!)
         }
 
         // ════════════════════════════════════════════════════════════════════
         //  ERA ENDPOINTS
         // ════════════════════════════════════════════════════════════════════
 
-        // ── GET /admin/eras ───────────────────────────────────────────────────
         get("/eras") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@get
-            }
-            val eras = erasRepository.listAll(activeOnly = false)
-            call.respond(eras)
+            call.respond(erasRepository.listAll(activeOnly = false))
         }
 
-        // ── GET /admin/eras/{id} ──────────────────────────────────────────────
         get("/eras/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@get
-            }
             val id = call.parameters["id"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
             val era = erasRepository.findById(id)
@@ -189,12 +135,8 @@ fun Route.adminRoutes(
             call.respond(era)
         }
 
-        // ── POST /admin/eras ──────────────────────────────────────────────────
         // Creates a new era or updates an existing one (upsert by id).
         post("/eras") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val req = call.receive<UpsertEraRequest>()
             if (req.id.isBlank() || req.name.isBlank()) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "id and name are required"))
@@ -204,13 +146,9 @@ fun Route.adminRoutes(
             call.respond(HttpStatusCode.OK, era)
         }
 
-        // ── DELETE /admin/eras/{id} ───────────────────────────────────────────
         // Hard-delete: removes the era AND all completed_sessions rows
         // for this era across ALL users (application-level cascade).
         delete("/eras/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@delete
-            }
             val id = call.parameters["id"]
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
@@ -220,57 +158,31 @@ fun Route.adminRoutes(
             }
 
             log.info("Era hard-deleted id={} statsDeleted={}", id, result.statsRowsDeleted)
-            call.respond(mapOf(
-                "deleted"          to true,
-                "eraId"            to id,
-                "statsRowsDeleted" to result.statsRowsDeleted
-            ))
+            call.respond(EntityDeleteResponse(deleted = true, id = id, statsRowsDeleted = result.statsRowsDeleted))
         }
 
-        // ── POST /admin/eras/{id}/deactivate ──────────────────────────────────
         // Soft-delete: hides from game UI but preserves statistics.
         post("/eras/{id}/deactivate") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val id = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
-            val success = erasRepository.softDelete(id)
-            if (!success) {
+            if (!erasRepository.setActive(id, active = false)) {
                 return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Era '$id' not found"))
             }
-            log.info("Era soft-deleted id={}", id)
-            call.respond(mapOf("deactivated" to true, "eraId" to id))
+            log.info("Era deactivated id={}", id)
+            call.respond(EntityToggleResponse(id = id, isActive = false))
         }
 
-        // ── POST /admin/eras/{id}/activate ────────────────────────────────────
-        // Re-activates a previously deactivated era.
+        // Re-activates a previously deactivated era (atomic flag flip).
         post("/eras/{id}/activate") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid admin key")); return@post
-            }
             val id = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
-            val era = erasRepository.findById(id)
-                ?: return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Era '$id' not found"))
-
-            val updated = erasRepository.upsert(
-                UpsertEraRequest(
-                    id                    = era.id,
-                    name                  = era.name,
-                    description           = era.description,
-                    emoji                 = era.emoji,
-                    startYear             = era.startYear,
-                    endYear               = era.endYear,
-                    availableCharacterIds = era.availableCharacterIds,
-                    isActive              = true,
-                    isLocked              = era.isLocked
-                )
-            )
+            if (!erasRepository.setActive(id, active = true)) {
+                return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Era '$id' not found"))
+            }
             log.info("Era re-activated id={}", id)
-            call.respond(updated)
+            call.respond(erasRepository.findById(id)!!)
         }
     }
 }

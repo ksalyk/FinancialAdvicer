@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("AdminScenarioRoutes")
 
 /**
- * Admin scenario graph viewer endpoints.  All guarded by [isAdminAuthorized].
+ * Admin scenario graph viewer endpoints for BUILT-IN (code-authored) graphs.
+ * Guarded at mount point by `authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH)`.
+ * DB-backed stories are served by AdminStoryRoutes.
  *
  *   GET /admin/scenarios                          — list all valid {characterId, eraId} combos
  *   GET /admin/scenarios/{characterId}/{eraId}    — full ScenarioGraphDto for that combo
@@ -35,10 +37,6 @@ fun Route.adminScenarioRoutes(
 
         // ── GET /admin/scenarios ──────────────────────────────────────────────
         get {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@get
-            }
-
             val characters = charactersRepository.listAll(activeOnly = false)
             val erasById   = erasRepository.listAll(activeOnly = false).associateBy { it.id }
 
@@ -58,10 +56,6 @@ fun Route.adminScenarioRoutes(
 
         // ── GET /admin/scenarios/{characterId}/{eraId} ────────────────────────
         get("/{characterId}/{eraId}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@get
-            }
-
             val characterId = call.parameters["characterId"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing characterId"))
             val eraId = call.parameters["eraId"]

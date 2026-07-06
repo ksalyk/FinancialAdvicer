@@ -50,6 +50,8 @@ object DatabaseTestFixture {
     fun reset() {
         transaction(database) {
             exec("SET REFERENTIAL_INTEGRITY FALSE")
+            exec("TRUNCATE TABLE stories")
+            exec("TRUNCATE TABLE achievements_catalog")
             exec("TRUNCATE TABLE achievement_feedback")
             exec("TRUNCATE TABLE user_achievements")
             exec("TRUNCATE TABLE completed_sessions")

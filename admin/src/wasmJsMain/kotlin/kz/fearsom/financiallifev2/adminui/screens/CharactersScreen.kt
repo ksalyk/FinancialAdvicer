@@ -52,13 +52,14 @@ fun CharactersScreen(api: AdminApiClient, onMessage: (String) -> Unit) {
 
     fun toggle(char: CharacterRow, onRevert: () -> Unit) {
         scope.launch {
-            val ok = try {
+            try {
                 if (char.isActive) api.deactivateCharacter(char.id)
                 else               api.activateCharacter(char.id)
+                reload()
             } catch (e: Exception) {
-                onMessage("Toggle failed: ${e.message}"); false
+                onMessage("Toggle failed: ${e.message}")
+                onRevert()
             }
-            if (ok) reload() else onRevert()
         }
     }
 
@@ -82,12 +83,9 @@ fun CharactersScreen(api: AdminApiClient, onMessage: (String) -> Unit) {
         scope.launch {
             busy = true
             try {
-                if (api.deleteCharacter(char.id)) {
-                    onMessage("Deleted character '${char.id}'")
-                    reload()
-                } else {
-                    onMessage("Delete failed for '${char.id}'")
-                }
+                api.deleteCharacter(char.id)
+                onMessage("Deleted character '${char.id}'")
+                reload()
             } catch (e: Exception) {
                 onMessage("Delete failed: ${e.message}")
             } finally {

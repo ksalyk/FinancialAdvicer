@@ -10,7 +10,11 @@ import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.admin.AdminUserDetailRow
 import kz.fearsom.financiallifev2.admin.AdminUserListResponse
+import io.ktor.server.auth.*
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_KEY_AUTH
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_SESSION_AUTH
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
+import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
 import org.junit.Test
@@ -43,10 +47,13 @@ class AdminUserRoutesTest {
         application {
             configureAdminSession()
             configureSerialization()
+            configureSecurity()
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    adminUserRoutes(userRepo, statsRepo)
+                    authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+                        adminUserRoutes(userRepo, statsRepo)
+                    }
                 }
             }
         }

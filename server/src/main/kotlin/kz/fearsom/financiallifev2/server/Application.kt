@@ -4,6 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.runBlocking
+import kz.fearsom.financiallifev2.achievements.AchievementCatalog
 import kz.fearsom.financiallifev2.data.SeedData
 import kz.fearsom.financiallifev2.server.database.DatabaseFactory
 import kz.fearsom.financiallifev2.server.database.migrations.DataValidation
@@ -15,9 +16,11 @@ import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSecurityHeaders
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
+import kz.fearsom.financiallifev2.server.repository.AchievementCatalogRepository
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseAchievementsRepository
 import kz.fearsom.financiallifev2.server.repository.DatabaseGameRepository
+import kz.fearsom.financiallifev2.server.repository.StoriesRepository
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 import kz.fearsom.financiallifev2.server.auth.validateSecretsForProduction
@@ -63,12 +66,14 @@ fun Application.module() {
     }
 
     // 3. Repositories (singletons for server lifetime)
-    val userRepository         = DatabaseUserRepository(database)
-    val gameRepository         = DatabaseGameRepository(database)
-    val statisticsRepository   = DatabaseStatisticsRepository(database)
-    val charactersRepository   = CharactersRepository(database)
-    val erasRepository         = ErasRepository(database)
-    val achievementsRepository = DatabaseAchievementsRepository(database)
+    val userRepository               = DatabaseUserRepository(database)
+    val gameRepository               = DatabaseGameRepository(database)
+    val statisticsRepository         = DatabaseStatisticsRepository(database)
+    val charactersRepository         = CharactersRepository(database)
+    val erasRepository               = ErasRepository(database)
+    val achievementsRepository       = DatabaseAchievementsRepository(database)
+    val achievementCatalogRepository = AchievementCatalogRepository(database)
+    val storiesRepository            = StoriesRepository(database)
 
     // 4. Seed hardcoded characters/eras into DB.
     //    insert-only-when-missing: admin edits (rename, deactivate, era membership)
@@ -111,6 +116,10 @@ fun Application.module() {
                 isLocked              = e.isLocked
             )
         })
+
+        // Achievement definitions: code catalog → DB (insert-only-when-missing,
+        // admin edits persist across restarts).
+        achievementCatalogRepository.seedMissing(AchievementCatalog.all)
     }
 
     // 5. Ktor plugins
@@ -122,6 +131,15 @@ fun Application.module() {
     configureCORS()
     configureStatusPages()
     configureAdminSession()       // Session plugin (must be before Authentication)
-    configureSecurity()           // JWT + session auth providers
-    configureRouting(userRepository, gameRepository, statisticsRepository, charactersRepository, erasRepository, achievementsRepository)
+    configureSecurity()           // JWT + admin session + admin key auth providers
+    configureRouting(
+        userRepository,
+        gameRepository,
+        statisticsRepository,
+        charactersRepository,
+        erasRepository,
+        achievementsRepository,
+        achievementCatalogRepository,
+        storiesRepository
+    )
 }

@@ -27,8 +27,9 @@ private data class AdminMeResponse(val username: String)
  * POST /admin/logout  — clears the session cookie
  * GET  /admin/me      — 200 {username} when authenticated, 401 otherwise
  *
- * These routes must be mounted inside a `/api/v1` block (see Routing.kt).
- * ADMIN_KEY Bearer access is unchanged — see AdminRoutes.isAdminAuthorized().
+ * These routes stay OUTSIDE the admin guard (login can't require a session).
+ * ADMIN_KEY Bearer access is handled by the ADMIN_KEY_AUTH provider (Security.kt),
+ * which — together with ADMIN_SESSION_AUTH — guards all other admin routes.
  */
 fun Route.adminAuthRoutes(loginLimiter: RateLimiter? = authRateLimiter) {
     route("/admin") {

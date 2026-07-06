@@ -15,8 +15,8 @@ data class AdminSession(
 /**
  * Hard lifetime of an admin session. The cookie is HMAC-signed but stateless —
  * without this check a stolen cookie stays valid until SESSION_SECRET rotates.
- * Enforced in every place a session is accepted: the "admin-auth" provider
- * (Security.kt), isAdminAuthorized() (AdminRoutes.kt), and GET /admin/me.
+ * Enforced wherever a session is accepted: the ADMIN_SESSION_AUTH provider's
+ * validate block (Security.kt) that guards every admin route, and GET /admin/me.
  */
 const val ADMIN_SESSION_TTL_MS: Long = 8L * 60 * 60 * 1000   // 8 hours
 

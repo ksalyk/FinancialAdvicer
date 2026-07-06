@@ -103,4 +103,35 @@ class DatabaseAchievementsRepository(private val db: Database) : AchievementsRep
                     it[AchievementFeedbackTable.achievementId] to it[AchievementFeedbackTable.vote]
                 }
         }
+
+    // ── Admin operations ──────────────────────────────────────────────────────
+
+    override suspend fun adminGrant(userId: String, achievementId: String): Boolean =
+        newSuspendedTransaction(db = db) {
+            val exists = UserAchievementsTable
+                .selectAll()
+                .where {
+                    (UserAchievementsTable.userId eq userId) and
+                        (UserAchievementsTable.achievementId eq achievementId)
+                }
+                .count() > 0
+            if (exists) return@newSuspendedTransaction false
+
+            UserAchievementsTable.insert {
+                it[UserAchievementsTable.userId]            = userId
+                it[UserAchievementsTable.achievementId]     = achievementId
+                it[UserAchievementsTable.unlockedAt]        = System.currentTimeMillis()
+                it[UserAchievementsTable.sourceCharacterId] = null
+                it[UserAchievementsTable.sourceEraId]       = null
+            }
+            true
+        }
+
+    override suspend fun adminRevoke(userId: String, achievementId: String): Boolean =
+        newSuspendedTransaction(db = db) {
+            UserAchievementsTable.deleteWhere {
+                (UserAchievementsTable.userId eq userId) and
+                    (UserAchievementsTable.achievementId eq achievementId)
+            } > 0
+        }
 }

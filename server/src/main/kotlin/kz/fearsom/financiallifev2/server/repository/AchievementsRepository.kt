@@ -29,4 +29,16 @@ interface AchievementsRepository {
 
     /** achievementId → vote for [userId]. */
     suspend fun listFeedback(userId: String): Map<String, String>
+
+    // ── Admin operations ──────────────────────────────────────────────────────
+
+    /**
+     * Admin grant: unlocks [achievementId] for [userId] with the current
+     * timestamp and no source character/era. Idempotent — returns false when
+     * the user already has the unlock.
+     */
+    suspend fun adminGrant(userId: String, achievementId: String): Boolean
+
+    /** Admin revoke: removes the unlock row. Returns false when it didn't exist. */
+    suspend fun adminRevoke(userId: String, achievementId: String): Boolean
 }

@@ -119,22 +119,28 @@ class ErasRepository(private val db: Database) {
         }
     }
 
-    // ── Soft delete ───────────────────────────────────────────────────────────
+    // ── Active toggle / soft delete ───────────────────────────────────────────
+
+    /**
+     * Atomically sets the active flag. Single UPDATE — no read-modify-write
+     * race, and admin toggles never overwrite concurrent field edits.
+     * Returns false when the id does not exist.
+     */
+    suspend fun setActive(eraId: String, active: Boolean): Boolean {
+        val now = System.currentTimeMillis()
+        return newSuspendedTransaction(db = db) {
+            ErasTable.update({ ErasTable.id eq eraId }) {
+                it[isActive]  = active
+                it[updatedAt] = now
+            } > 0
+        }
+    }
 
     /**
      * Marks an era as inactive (soft-delete).
      * Statistics are preserved — use [deleteWithStatsCascade] to also wipe them.
      */
-    suspend fun softDelete(eraId: String): Boolean {
-        val now = System.currentTimeMillis()
-        return newSuspendedTransaction(db = db) {
-            val updated = ErasTable.update({ ErasTable.id eq eraId }) {
-                it[isActive]  = false
-                it[updatedAt] = now
-            }
-            updated > 0
-        }
-    }
+    suspend fun softDelete(eraId: String): Boolean = setActive(eraId, false)
 
     // ── Hard delete with cascade ──────────────────────────────────────────────
 

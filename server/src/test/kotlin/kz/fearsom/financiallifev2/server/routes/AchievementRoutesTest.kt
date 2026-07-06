@@ -8,15 +8,19 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.auth.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.achievements.AchievementCatalog
 import kz.fearsom.financiallifev2.achievements.AchievementUnlockDto
 import kz.fearsom.financiallifev2.achievements.UnlockAchievementsResponse
 import kz.fearsom.financiallifev2.achievements.UserAchievementsResponse
+import kz.fearsom.financiallifev2.server.database.DatabaseTestFixture
 import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
 import kz.fearsom.financiallifev2.server.plugins.configureStatusPages
+import kz.fearsom.financiallifev2.server.repository.AchievementCatalogRepository
 import kz.fearsom.financiallifev2.server.repository.AchievementsRepository
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
@@ -25,10 +29,21 @@ import kotlin.test.assertTrue
 /**
  * Unit tests for /api/v1/achievements endpoints using an in-memory mock repo.
  * Same JWT approach as [GameRoutesTest]: real token via [generateAccessJwt].
+ *
+ * Unlock-id validation is DB-backed (achievements_catalog seeded from the code
+ * catalog), so the H2 fixture is used for the catalog repository.
  */
 class AchievementRoutesTest {
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    private val catalogRepo = AchievementCatalogRepository(DatabaseTestFixture.database)
+
+    @Before
+    fun setup() {
+        DatabaseTestFixture.reset()
+        runBlocking { catalogRepo.seedMissing(AchievementCatalog.all) }
+    }
 
     // ── Test app setup ────────────────────────────────────────────────────────
 
@@ -40,7 +55,7 @@ class AchievementRoutesTest {
             routing {
                 route("/api/v1") {
                     authenticate("auth-jwt") {
-                        achievementRoutes(repo)
+                        achievementRoutes(repo, catalogRepo)
                     }
                 }
             }
@@ -277,4 +292,13 @@ internal class MockAchievementsRepository : AchievementsRepository {
     override suspend fun listFeedback(userId: String): Map<String, String> =
         feedback.filterKeys { it.first == userId }
             .entries.associate { (k, v) -> k.second to v }
+
+    override suspend fun adminGrant(userId: String, achievementId: String): Boolean =
+        unlocks.putIfAbsent(
+            userId to achievementId,
+            AchievementUnlockDto(achievementId, System.currentTimeMillis())
+        ) == null
+
+    override suspend fun adminRevoke(userId: String, achievementId: String): Boolean =
+        unlocks.remove(userId to achievementId) != null
 }

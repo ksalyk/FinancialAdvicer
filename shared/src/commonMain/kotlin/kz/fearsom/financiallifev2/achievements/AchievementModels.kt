@@ -1,5 +1,6 @@
 package kz.fearsom.financiallifev2.achievements
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kz.fearsom.financiallifev2.model.GameState
 import kz.fearsom.financiallifev2.model.MessageSender
@@ -12,8 +13,10 @@ import kz.fearsom.financiallifev2.model.MessageSender
 //  scenario content. The server stores only per-user unlock state.
 // ════════════════════════════════════════════════════════════════════
 
+@Serializable
 enum class AchievementRarity { COMMON, RARE, LEGENDARY }
 
+@Serializable
 enum class AchievementKind {
     /** Gameplay milestone (emergency fund, debt-free, …). */
     GAME,
@@ -21,7 +24,28 @@ enum class AchievementKind {
     SCAM
 }
 
+/**
+ * Inline localized text for DB-authored achievements. Empty strings mean
+ * "no translation" — display code falls back ru → en → kk in that order
+ * (mirrors Strings.get() where ru is the source of truth).
+ */
+@Serializable
+data class LocalizedText(
+    val ru: String = "",
+    val en: String = "",
+    val kk: String = ""
+) {
+    fun resolve(locale: String): String = when (locale) {
+        "en" -> en.ifBlank { ru }
+        "kk" -> kk.ifBlank { ru }
+        else -> ru
+    }
+
+    val isBlank: Boolean get() = ru.isBlank() && en.isBlank() && kk.isBlank()
+}
+
 /** One entry on a scam dossier timeline (origin / variant / modern day). */
+@Serializable
 data class ScamTimelineEntry(
     val yearKey: String,
     val titleKey: String,
@@ -32,6 +56,7 @@ data class ScamTimelineEntry(
  * Historical dossier shown for an unlocked SCAM achievement:
  * origin → variants → modern form, plus red-flag recognition signs.
  */
+@Serializable
 data class ScamDossier(
     val ageKey: String,
     val origin: ScamTimelineEntry,
@@ -47,46 +72,76 @@ data class ScamDossier(
  * on purpose: achievement rules need cross-turn memory (ever had debt, stress
  * history through a crisis) that event conditions don't model.
  */
+@Serializable
 sealed class AchievementCondition {
 
     /** Unlocks when ANY of [flags] is present in PlayerState.flags. */
+    @Serializable
+    @SerialName("anyFlag")
     data class AnyFlag(val flags: Set<String>) : AchievementCondition()
 
     /** Unlocks after the first monthly report lands in the chat. */
+    @Serializable
+    @SerialName("firstMonthlyReport")
     data object FirstMonthlyReport : AchievementCondition()
 
     /** Unlocks when liquid capital covers [months] months of expenses. */
+    @Serializable
+    @SerialName("emergencyFund")
     data class EmergencyFund(val months: Int = 6) : AchievementCondition()
 
     /** Unlocks when debt hits zero after the player has carried debt. */
+    @Serializable
+    @SerialName("debtFree")
     data object DebtFree : AchievementCondition()
 
     /**
      * Unlocks when [months] months pass after a crisis event while stress
      * never reaches [stressBelow].
      */
+    @Serializable
+    @SerialName("calmThroughCrisis")
     data class CalmThroughCrisis(
         val months: Int = 12,
         val stressBelow: Int = 30
     ) : AchievementCondition()
 
     /** Unlocks when the character's story reaches any ending. */
+    @Serializable
+    @SerialName("storyCompleted")
     data object StoryCompleted : AchievementCondition()
 }
 
+/**
+ * A single achievement definition.
+ *
+ * Two content sources coexist:
+ * - Code-seeded entries (the original catalog) reference i18n keys
+ *   ([titleKey]/[descKey]/[hintKey]/[dossier] keys) resolved via Strings.
+ * - DB-authored entries (created in the admin panel) carry inline
+ *   [titleText]/[descText]/[hintText] — no compile-time keys exist for them.
+ *
+ * Resolution rule for display code: inline text wins when present and
+ * non-blank; otherwise fall back to the i18n key.
+ */
+@Serializable
 data class AchievementDefinition(
     val id: String,
     val kind: AchievementKind,
     val emoji: String,
     val rarity: AchievementRarity,
-    val titleKey: String,
+    val titleKey: String = "",
     /** GAME only — what to do. */
     val descKey: String? = null,
     /** GAME only — how to approach it. */
     val hintKey: String? = null,
     /** SCAM only — the unlockable dossier. */
     val dossier: ScamDossier? = null,
-    val condition: AchievementCondition
+    val condition: AchievementCondition,
+    /** Inline texts for DB-authored achievements (win over keys when set). */
+    val titleText: LocalizedText? = null,
+    val descText: LocalizedText? = null,
+    val hintText: LocalizedText? = null
 )
 
 // ════════════════════════════════════════════════════════════════════

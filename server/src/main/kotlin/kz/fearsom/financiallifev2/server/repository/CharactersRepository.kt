@@ -109,22 +109,28 @@ class CharactersRepository(private val db: Database) {
         }
     }
 
-    // ── Soft delete ───────────────────────────────────────────────────────────
+    // ── Active toggle / soft delete ───────────────────────────────────────────
+
+    /**
+     * Atomically sets the active flag. Single UPDATE — no read-modify-write
+     * race, and admin toggles never overwrite concurrent field edits.
+     * Returns false when the id does not exist.
+     */
+    suspend fun setActive(characterId: String, active: Boolean): Boolean {
+        val now = System.currentTimeMillis()
+        return newSuspendedTransaction(db = db) {
+            CharactersTable.update({ CharactersTable.id eq characterId }) {
+                it[isActive]  = active
+                it[updatedAt] = now
+            } > 0
+        }
+    }
 
     /**
      * Marks a character as inactive (soft-delete).
      * Statistics are preserved — use [deleteWithStatsCascade] to also wipe them.
      */
-    suspend fun softDelete(characterId: String): Boolean {
-        val now = System.currentTimeMillis()
-        return newSuspendedTransaction(db = db) {
-            val updated = CharactersTable.update({ CharactersTable.id eq characterId }) {
-                it[isActive]  = false
-                it[updatedAt] = now
-            }
-            updated > 0
-        }
-    }
+    suspend fun softDelete(characterId: String): Boolean = setActive(characterId, false)
 
     // ── Hard delete with cascade ──────────────────────────────────────────────
 

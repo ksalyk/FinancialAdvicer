@@ -11,14 +11,24 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.browser.window
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kz.fearsom.financiallifev2.achievements.AchievementUnlockDto
+import kz.fearsom.financiallifev2.admin.AchievementAdminRow
 import kz.fearsom.financiallifev2.admin.AdminUserDetailRow
 import kz.fearsom.financiallifev2.admin.AdminUserListResponse
 import kz.fearsom.financiallifev2.admin.CharacterRow
 import kz.fearsom.financiallifev2.admin.EraRow
 import kz.fearsom.financiallifev2.admin.ScenarioComboDto
 import kz.fearsom.financiallifev2.admin.ScenarioGraphDto
+import kz.fearsom.financiallifev2.admin.StoryDetail
+import kz.fearsom.financiallifev2.admin.StoryReviewRequest
+import kz.fearsom.financiallifev2.admin.StoryRow
+import kz.fearsom.financiallifev2.admin.StoryStatus
+import kz.fearsom.financiallifev2.admin.StoryValidationReport
+import kz.fearsom.financiallifev2.admin.UpsertAchievementRequest
 import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
+import kz.fearsom.financiallifev2.admin.UpsertStoryRequest
+import kz.fearsom.financiallifev2.admin.UserAchievementsAdminResponse
 
 // ── Request bodies ────────────────────────────────────────────────────────────
 
@@ -91,17 +101,18 @@ class AdminApiClient {
     suspend fun getUserDetail(id: String): AdminUserDetailRow =
         client.get("$baseUrl/admin/users/$id").body()
 
-    suspend fun resetPassword(id: String, newPassword: String): Boolean {
+    /** Throws with the server's error payload (e.g. "Password too short") on failure. */
+    suspend fun resetPassword(id: String, newPassword: String) {
         val res = client.post("$baseUrl/admin/users/$id/reset-password") {
             contentType(ContentType.Application.Json)
             setBody(ResetPasswordBody(newPassword))
         }
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    suspend fun deleteUser(id: String): Boolean {
+    suspend fun deleteUser(id: String) {
         val res = client.delete("$baseUrl/admin/users/$id")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
     // ── Characters ────────────────────────────────────────────────────────────
@@ -123,19 +134,19 @@ class AdminApiClient {
     }
 
     /** Hard-delete a character + cascade its stats across all users. */
-    suspend fun deleteCharacter(id: String): Boolean {
+    suspend fun deleteCharacter(id: String) {
         val res = client.delete("$baseUrl/admin/characters/$id")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    suspend fun activateCharacter(id: String): Boolean {
+    suspend fun activateCharacter(id: String) {
         val res = client.post("$baseUrl/admin/characters/$id/activate")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    suspend fun deactivateCharacter(id: String): Boolean {
+    suspend fun deactivateCharacter(id: String) {
         val res = client.post("$baseUrl/admin/characters/$id/deactivate")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
     // ── Eras ──────────────────────────────────────────────────────────────────
@@ -157,28 +168,139 @@ class AdminApiClient {
     }
 
     /** Hard-delete an era + cascade its stats across all users. */
-    suspend fun deleteEra(id: String): Boolean {
+    suspend fun deleteEra(id: String) {
         val res = client.delete("$baseUrl/admin/eras/$id")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    suspend fun activateEra(id: String): Boolean {
+    suspend fun activateEra(id: String) {
         val res = client.post("$baseUrl/admin/eras/$id/activate")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    suspend fun deactivateEra(id: String): Boolean {
+    suspend fun deactivateEra(id: String) {
         val res = client.post("$baseUrl/admin/eras/$id/deactivate")
-        return res.status.isSuccess()
+        if (!res.status.isSuccess()) res.failure()
     }
 
-    // ── Scenarios ─────────────────────────────────────────────────────────────
+    // ── Scenarios (built-in, read-only) ───────────────────────────────────────
 
     suspend fun listScenarioCombos(): List<ScenarioComboDto> =
         client.get("$baseUrl/admin/scenarios").body()
 
     suspend fun getScenarioGraph(characterId: String, eraId: String): ScenarioGraphDto =
         client.get("$baseUrl/admin/scenarios/$characterId/$eraId").body()
+
+    // ── Stories (DB-backed CRUD + moderation) ─────────────────────────────────
+
+    suspend fun listStories(status: StoryStatus? = null): List<StoryRow> =
+        client.get("$baseUrl/admin/stories") {
+            status?.let { parameter("status", it.name) }
+        }.body()
+
+    suspend fun getStory(id: String): StoryDetail =
+        client.get("$baseUrl/admin/stories/$id").body()
+
+    suspend fun createStory(req: UpsertStoryRequest): StoryDetail {
+        val res = client.post("$baseUrl/admin/stories") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    suspend fun updateStory(req: UpsertStoryRequest): StoryDetail {
+        val res = client.put("$baseUrl/admin/stories/${req.id}") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    suspend fun deleteStory(id: String) {
+        val res = client.delete("$baseUrl/admin/stories/$id")
+        if (!res.status.isSuccess()) res.failure()
+    }
+
+    suspend fun validateStory(id: String): StoryValidationReport {
+        val res = client.post("$baseUrl/admin/stories/$id/validate")
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    // NB: body must be a concrete type at the callsite — wasmJs serialization
+    // has no reflection, so a generic `Any` body would fail at runtime.
+    private suspend fun storyAction(id: String, action: String): StoryRow {
+        val res = client.post("$baseUrl/admin/stories/$id/$action")
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    suspend fun submitStory(id: String): StoryRow    = storyAction(id, "submit")
+    suspend fun approveStory(id: String): StoryRow   = storyAction(id, "approve")
+    suspend fun publishStory(id: String): StoryRow   = storyAction(id, "publish")
+    suspend fun unpublishStory(id: String): StoryRow = storyAction(id, "unpublish")
+
+    suspend fun rejectStory(id: String, note: String?): StoryRow {
+        val res = client.post("$baseUrl/admin/stories/$id/reject") {
+            contentType(ContentType.Application.Json)
+            setBody(StoryReviewRequest(note))
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    /** Snapshot a built-in code graph into an editable DRAFT story. */
+    suspend fun cloneBuiltIn(characterId: String, eraId: String): StoryDetail {
+        val res = client.post("$baseUrl/admin/stories/clone/$characterId/$eraId")
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    // ── Achievements ──────────────────────────────────────────────────────────
+
+    suspend fun listAchievements(): List<AchievementAdminRow> =
+        client.get("$baseUrl/admin/achievements").body()
+
+    suspend fun upsertAchievement(req: UpsertAchievementRequest): AchievementAdminRow {
+        val res = client.post("$baseUrl/admin/achievements") {
+            contentType(ContentType.Application.Json)
+            setBody(req)
+        }
+        if (!res.status.isSuccess()) res.failure()
+        return res.body()
+    }
+
+    suspend fun activateAchievement(id: String) {
+        val res = client.post("$baseUrl/admin/achievements/$id/activate")
+        if (!res.status.isSuccess()) res.failure()
+    }
+
+    suspend fun deactivateAchievement(id: String) {
+        val res = client.post("$baseUrl/admin/achievements/$id/deactivate")
+        if (!res.status.isSuccess()) res.failure()
+    }
+
+    suspend fun deleteAchievement(id: String) {
+        val res = client.delete("$baseUrl/admin/achievements/$id")
+        if (!res.status.isSuccess()) res.failure()
+    }
+
+    suspend fun listUserAchievements(userId: String): List<AchievementUnlockDto> =
+        client.get("$baseUrl/admin/users/$userId/achievements")
+            .body<UserAchievementsAdminResponse>().unlocks
+
+    suspend fun grantAchievement(userId: String, achievementId: String) {
+        val res = client.post("$baseUrl/admin/users/$userId/achievements/$achievementId")
+        if (!res.status.isSuccess()) res.failure()
+    }
+
+    suspend fun revokeAchievement(userId: String, achievementId: String) {
+        val res = client.delete("$baseUrl/admin/users/$userId/achievements/$achievementId")
+        if (!res.status.isSuccess()) res.failure()
+    }
 
     // ── Internals ───────────────────────────────────────────────────────────────
 

@@ -5,11 +5,16 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kz.fearsom.financiallifev2.admin.AchievementCatalogResponse
 import kz.fearsom.financiallifev2.admin.CharacterRow
 import kz.fearsom.financiallifev2.admin.EraRow
 import kz.fearsom.financiallifev2.admin.GameCatalogResponse
+import kz.fearsom.financiallifev2.admin.PublishedStoriesResponse
+import kz.fearsom.financiallifev2.admin.StoryStatus
+import kz.fearsom.financiallifev2.server.repository.AchievementCatalogRepository
 import kz.fearsom.financiallifev2.server.repository.CharactersRepository
 import kz.fearsom.financiallifev2.server.repository.ErasRepository
+import kz.fearsom.financiallifev2.server.repository.StoriesRepository
 
 /**
  * Public game catalog endpoint.
@@ -26,8 +31,31 @@ import kz.fearsom.financiallifev2.server.repository.ErasRepository
  */
 fun Route.catalogRoutes(
     charactersRepository: CharactersRepository,
-    erasRepository: ErasRepository
+    erasRepository: ErasRepository,
+    achievementCatalogRepository: AchievementCatalogRepository,
+    storiesRepository: StoriesRepository
 ) {
+    // ── Achievements: active definitions for game clients ────────────────────
+    get("/game/catalog/achievements") {
+        call.respond(AchievementCatalogResponse(achievementCatalogRepository.listActiveDefinitions()))
+    }
+
+    // ── Stories: published list + single graph for game clients / frontend ───
+    get("/game/catalog/stories") {
+        call.respond(PublishedStoriesResponse(storiesRepository.list(status = StoryStatus.PUBLISHED)))
+    }
+
+    get("/game/catalog/stories/{id}") {
+        val id = call.parameters["id"]
+            ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+        val detail = storiesRepository.findDetail(id)
+        if (detail == null || detail.row.status != StoryStatus.PUBLISHED) {
+            // Same response for missing and unpublished — no draft enumeration.
+            return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Story not found"))
+        }
+        call.respond(detail)
+    }
+
     get("/game/catalog") {
         val characters = charactersRepository.listAll(activeOnly = true)
         val eras       = erasRepository.listAll(activeOnly = true)

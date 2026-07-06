@@ -8,12 +8,12 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import kz.fearsom.financiallifev2.achievements.AchievementCatalog
 import kz.fearsom.financiallifev2.achievements.AchievementFeedbackRequest
 import kz.fearsom.financiallifev2.achievements.AchievementVote
 import kz.fearsom.financiallifev2.achievements.UnlockAchievementsRequest
 import kz.fearsom.financiallifev2.achievements.UnlockAchievementsResponse
 import kz.fearsom.financiallifev2.achievements.UserAchievementsResponse
+import kz.fearsom.financiallifev2.server.repository.AchievementCatalogRepository
 import kz.fearsom.financiallifev2.server.repository.AchievementsRepository
 import org.slf4j.LoggerFactory
 
@@ -28,7 +28,10 @@ data class AchievementFeedbackResponse(val feedback: Map<String, String>)
 // ── Routes ────────────────────────────────────────────────────────────────────
 // Mounted inside authenticate("auth-jwt") {} in Routing.kt.
 
-fun Route.achievementRoutes(achievementsRepository: AchievementsRepository) {
+fun Route.achievementRoutes(
+    achievementsRepository: AchievementsRepository,
+    catalogRepository: AchievementCatalogRepository
+) {
 
     route("/achievements") {
 
@@ -53,7 +56,9 @@ fun Route.achievementRoutes(achievementsRepository: AchievementsRepository) {
                 )
             }
 
-            val unknown = req.unlocks.map { it.achievementId }.filterNot(AchievementCatalog::isValidId)
+            // Validate against the DB catalog (seeded from code + admin-created ids).
+            val knownIds = catalogRepository.allIds()
+            val unknown = req.unlocks.map { it.achievementId }.filterNot { it in knownIds }
             if (unknown.isNotEmpty()) {
                 return@post call.respond(
                     HttpStatusCode.BadRequest,
@@ -85,7 +90,7 @@ fun Route.achievementRoutes(achievementsRepository: AchievementsRepository) {
             val achievementId = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing achievement id"))
 
-            if (!AchievementCatalog.isValidId(achievementId)) {
+            if (achievementId !in catalogRepository.allIds()) {
                 return@post call.respond(
                     HttpStatusCode.NotFound,
                     mapOf("error" to "Unknown achievement id '$achievementId'")

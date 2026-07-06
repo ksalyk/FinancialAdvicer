@@ -21,7 +21,8 @@ private data class ResetPasswordRequest(val password: String)
 private data class DeleteUserResponse(val deleted: Boolean, val userId: String)
 
 /**
- * Admin user management endpoints.  All are guarded by [isAdminAuthorized].
+ * Admin user management endpoints. Guarded at mount point by
+ * `authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH)` in Routing.kt.
  * passwordHash is NEVER included in any response.
  *
  *   GET    /admin/users?limit&offset&search  — paginated list
@@ -37,9 +38,6 @@ fun Route.adminUserRoutes(
 
         // ── GET /admin/users ──────────────────────────────────────────────────
         get {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@get
-            }
             val limit  = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 200) ?: 50
             val offset = call.request.queryParameters["offset"]?.toLongOrNull()?.coerceAtLeast(0L) ?: 0L
             val search = call.request.queryParameters["search"]?.takeIf { it.isNotBlank() }
@@ -51,9 +49,6 @@ fun Route.adminUserRoutes(
 
         // ── GET /admin/users/{id} ─────────────────────────────────────────────
         get("/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@get
-            }
             val id = call.parameters["id"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
@@ -76,9 +71,6 @@ fun Route.adminUserRoutes(
 
         // ── POST /admin/users/{id}/reset-password ─────────────────────────────
         post("/{id}/reset-password") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@post
-            }
             val id = call.parameters["id"]
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 
@@ -97,9 +89,6 @@ fun Route.adminUserRoutes(
 
         // ── DELETE /admin/users/{id} ──────────────────────────────────────────
         delete("/{id}") {
-            if (!call.isAdminAuthorized()) {
-                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized")); return@delete
-            }
             val id = call.parameters["id"]
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
 

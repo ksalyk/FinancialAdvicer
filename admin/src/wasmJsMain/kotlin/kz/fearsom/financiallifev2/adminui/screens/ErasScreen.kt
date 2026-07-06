@@ -49,13 +49,14 @@ fun ErasScreen(api: AdminApiClient, onMessage: (String) -> Unit) {
 
     fun toggle(era: EraRow, onRevert: () -> Unit) {
         scope.launch {
-            val ok = try {
+            try {
                 if (era.isActive) api.deactivateEra(era.id)
                 else              api.activateEra(era.id)
+                reload()
             } catch (e: Exception) {
-                onMessage("Toggle failed: ${e.message}"); false
+                onMessage("Toggle failed: ${e.message}")
+                onRevert()
             }
-            if (ok) reload() else onRevert()
         }
     }
 
@@ -79,12 +80,9 @@ fun ErasScreen(api: AdminApiClient, onMessage: (String) -> Unit) {
         scope.launch {
             busy = true
             try {
-                if (api.deleteEra(era.id)) {
-                    onMessage("Deleted era '${era.id}'")
-                    reload()
-                } else {
-                    onMessage("Delete failed for '${era.id}'")
-                }
+                api.deleteEra(era.id)
+                onMessage("Deleted era '${era.id}'")
+                reload()
             } catch (e: Exception) {
                 onMessage("Delete failed: ${e.message}")
             } finally {
