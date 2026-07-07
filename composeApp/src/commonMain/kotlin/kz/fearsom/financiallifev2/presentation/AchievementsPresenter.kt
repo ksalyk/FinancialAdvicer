@@ -8,26 +8,34 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kz.fearsom.financiallifev2.achievements.AchievementCatalog
+import kz.fearsom.financiallifev2.achievements.AchievementDefinition
+import kz.fearsom.financiallifev2.achievements.AchievementKind
 import kz.fearsom.financiallifev2.achievements.AchievementUnlockDto
 import kz.fearsom.financiallifev2.data.AchievementsRepository
 
 data class AchievementsUiState(
-    /** achievementId → unlock record (definitions come from [AchievementCatalog]). */
+    /** achievementId → unlock record. */
     val unlocks: Map<String, AchievementUnlockDto> = emptyMap(),
     /** achievementId → "up" | "down". */
     val votes: Map<String, String> = emptyMap(),
     /** Currently open detail sheet, null = grid only. */
-    val selectedId: String? = null
+    val selectedId: String? = null,
+    /** Active catalog: compile-time fallback, overlaid by the server (admin edits). */
+    val definitions: List<AchievementDefinition> = AchievementCatalog.all
 ) {
+    val byId: Map<String, AchievementDefinition> get() = definitions.associateBy { it.id }
+    val gameDefinitions: List<AchievementDefinition> get() =
+        definitions.filter { it.kind == AchievementKind.GAME }
+    val scamDefinitions: List<AchievementDefinition> get() =
+        definitions.filter { it.kind == AchievementKind.SCAM }
+
     val unlockedCount: Int get() = unlocks.size
-    val totalCount: Int get() = AchievementCatalog.all.size
+    val totalCount: Int get() = definitions.size
     val progressPct: Int get() =
         if (totalCount == 0) 0 else unlockedCount * 100 / totalCount
 
-    val gameUnlockedCount: Int get() =
-        AchievementCatalog.gameAchievements.count { it.id in unlocks }
-    val scamUnlockedCount: Int get() =
-        AchievementCatalog.scamAchievements.count { it.id in unlocks }
+    val gameUnlockedCount: Int get() = gameDefinitions.count { it.id in unlocks }
+    val scamUnlockedCount: Int get() = scamDefinitions.count { it.id in unlocks }
 }
 
 /**
@@ -43,17 +51,24 @@ class AchievementsPresenter(
 
     init {
         scope.launch {
-            combine(repository.unlocks, repository.votes) { unlocks, votes ->
-                unlocks to votes
-            }.collect { (unlocks, votes) ->
-                _uiState.update { it.copy(unlocks = unlocks, votes = votes) }
+            combine(
+                repository.unlocks,
+                repository.votes,
+                repository.catalogDefinitions
+            ) { unlocks, votes, definitions ->
+                Triple(unlocks, votes, definitions)
+            }.collect { (unlocks, votes, definitions) ->
+                _uiState.update { it.copy(unlocks = unlocks, votes = votes, definitions = definitions) }
             }
         }
+        // Pull the admin-curated catalog early so counts/grid reflect it.
+        scope.launch { repository.refreshCatalog() }
     }
 
     /** Pull/push server state; local data renders immediately either way. */
     fun refresh() {
         scope.launch { repository.sync() }
+        scope.launch { repository.refreshCatalog() }
     }
 
     fun select(achievementId: String) {

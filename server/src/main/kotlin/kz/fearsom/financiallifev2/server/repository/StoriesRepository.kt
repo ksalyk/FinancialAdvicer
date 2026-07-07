@@ -100,7 +100,7 @@ class StoriesRepository(private val db: Database) {
                 it[StoriesTable.characterId] = req.characterId
                 it[StoriesTable.eraId]       = req.eraId
                 it[status]      = StoryStatus.DRAFT.name
-                it[StoriesTable.source]      = source.name
+                it[StoriesTable.storySource] = source.name
                 it[StoriesTable.authorId]    = authorId
                 it[reviewNote]  = null
                 it[StoriesTable.graphJson]   = graphJson
@@ -160,7 +160,12 @@ class StoriesRepository(private val db: Database) {
             }
 
             val now = System.currentTimeMillis()
-            StoriesTable.update({ StoriesTable.id eq id }) {
+            // Optimistic concurrency: only move the row while it is STILL in [from].
+            // A concurrent transition that already changed the status matches 0 rows,
+            // so two approve/reject calls racing on the same old state can't both win.
+            val moved = StoriesTable.update({
+                (StoriesTable.id eq id) and (StoriesTable.status eq from.name)
+            }) {
                 it[status]    = to.name
                 it[updatedAt] = now
                 when (to) {
@@ -168,6 +173,16 @@ class StoriesRepository(private val db: Database) {
                     StoryStatus.REJECTED  -> it[StoriesTable.reviewNote] = reviewNote
                     else                  -> it[StoriesTable.reviewNote] = null
                 }
+            }
+
+            if (moved == 0) {
+                // Lost the race: someone transitioned it between our read and write.
+                // Report the current status as a conflicting (illegal) transition.
+                val current = StoriesTable.selectAll().where { StoriesTable.id eq id }.singleOrNull()
+                    ?: return@newSuspendedTransaction TransitionResult.NotFound
+                return@newSuspendedTransaction TransitionResult.Illegal(
+                    StoryStatus.valueOf(current[StoriesTable.status]), to
+                )
             }
 
             val fresh = StoriesTable.selectAll().where { StoriesTable.id eq id }.single().toRow()
@@ -188,7 +203,7 @@ class StoriesRepository(private val db: Database) {
         characterId = this[StoriesTable.characterId],
         eraId       = this[StoriesTable.eraId],
         status      = StoryStatus.valueOf(this[StoriesTable.status]),
-        source      = StorySource.valueOf(this[StoriesTable.source]),
+        source      = StorySource.valueOf(this[StoriesTable.storySource]),
         authorId    = this[StoriesTable.authorId],
         reviewNote  = this[StoriesTable.reviewNote],
         eventCount  = this[StoriesTable.eventCount],

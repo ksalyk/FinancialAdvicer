@@ -78,6 +78,36 @@ class AdminStoryRoutesTest {
         )
     )
 
+    /** INVALID for a DB story: a valid tree whose root is 'start', not 'intro'. */
+    private fun noIntroGraph() = validGraph().copy(
+        events = listOf(
+            GameEvent(
+                id      = "start",
+                message = "Start",
+                options = listOf(GameOption(id = "go", text = "Go", emoji = "🚀", next = "the_end"))
+            ),
+            GameEvent(
+                id = "the_end", message = "Done", options = emptyList(),
+                isEnding = true, endingType = EndingType.FINANCIAL_STABILITY
+            )
+        )
+    )
+
+    /** INVALID for a DB story: an option points at an event that doesn't exist. */
+    private fun danglingTargetGraph() = validGraph().copy(
+        events = listOf(
+            GameEvent(
+                id      = "intro",
+                message = "Start",
+                options = listOf(GameOption(id = "go", text = "Go", emoji = "🚀", next = "missing_event"))
+            ),
+            GameEvent(
+                id = "the_end", message = "Done", options = emptyList(),
+                isEnding = true, endingType = EndingType.FINANCIAL_STABILITY
+            )
+        )
+    )
+
     private fun upsertRequest(
         id: String = "test_story",
         graph: ScenarioGraphDto = validGraph()
@@ -228,6 +258,32 @@ class AdminStoryRoutesTest {
         val row = json.decodeFromString<StoryRow>(res.bodyAsText())
         assertEquals(StoryStatus.PUBLISHED, row.status)
         assertNotNull(row.publishedAt)
+    }
+
+    @Test
+    fun `POST publish - rejects graph without intro (422)`() = testApplication {
+        setupApp()
+        val client = testClient()
+        client.post("/api/v1/admin/stories") {
+            adminAuth(); jsonBody(upsertRequest(graph = noIntroGraph()))
+        }
+
+        val res = client.post("/api/v1/admin/stories/test_story/publish") { adminAuth() }
+
+        assertEquals(HttpStatusCode.UnprocessableEntity, res.status)
+    }
+
+    @Test
+    fun `POST publish - rejects unresolved option target (422)`() = testApplication {
+        setupApp()
+        val client = testClient()
+        client.post("/api/v1/admin/stories") {
+            adminAuth(); jsonBody(upsertRequest(graph = danglingTargetGraph()))
+        }
+
+        val res = client.post("/api/v1/admin/stories/test_story/publish") { adminAuth() }
+
+        assertEquals(HttpStatusCode.UnprocessableEntity, res.status)
     }
 
     @Test

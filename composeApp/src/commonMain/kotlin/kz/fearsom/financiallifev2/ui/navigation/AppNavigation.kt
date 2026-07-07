@@ -30,6 +30,7 @@ import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
+import kz.fearsom.financiallifev2.data.PublishedStoriesRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.presentation.AchievementsPresenter
@@ -102,6 +103,7 @@ fun AppNavigation() {
     val localeRepo: LocaleRepository = koinInject()
     val featureFlags: FeatureFlagRepository = koinInject()
     val achievementsRepo: AchievementsRepository = koinInject()
+    val publishedStoriesRepo: PublishedStoriesRepository = koinInject()
 
     val scope = rememberCoroutineScope()
 
@@ -144,6 +146,9 @@ fun AppNavigation() {
 
     // ── Cold start ────────────────────────────────────────────────────────────
     LaunchedEffect(Unit) { authPresenter.restoreSession() }
+    // Warm the published-story cache so admin-published stories overlay gameplay
+    // (the GameEngine resolver reads it synchronously at startGame).
+    LaunchedEffect(Unit) { publishedStoriesRepo.refresh() }
 
     // ── Splash exit — fires once session restore completes ────────────────────
     LaunchedEffect(authUiState.isRestoringSession) {

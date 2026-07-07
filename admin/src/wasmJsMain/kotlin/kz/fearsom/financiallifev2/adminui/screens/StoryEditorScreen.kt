@@ -251,7 +251,7 @@ fun StoryEditorScreen(
                 .map { PoolEntry(it.eventId.trim(), it.weight.intOr0().takeIf { w -> w > 0 } ?: 10) }
         )
     }
-    val analysis = remember(builtGraph) { analyzeScenario(builtGraph) }
+    val analysis = remember(builtGraph) { analyzeScenario(builtGraph, selfContained = true) }
     val errorCount = analysis.warnings.count { it.severity == GraphWarning.Severity.ERROR }
 
     val allEventIds = remember(events) { events.map { it.id.trim() }.filter { it.isNotBlank() } }

@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.core.Table
  * as an editable draft via the admin panel.
  *
  * [status]  — StoryStatus name: DRAFT / PENDING_REVIEW / PUBLISHED / REJECTED / ARCHIVED
- * [source]  — StorySource name: BUILT_IN (clone) / ADMIN / USER
+ * [storySource] — StorySource name: BUILT_IN (clone) / ADMIN / USER (DB column "source")
  * [authorId] — users.id for USER-submitted stories; no FK on purpose so
  *              deleting a user never destroys published content.
  * [reviewNote] — moderator feedback shown to the author on rejection.
@@ -24,7 +24,8 @@ object StoriesTable : Table("stories") {
     val characterId = varchar("character_id", 50)
     val eraId       = varchar("era_id", 50)
     val status      = varchar("status", 20)
-    val source      = varchar("source", 20)
+    // Named storySource (not source) — Exposed's Table/FieldSet already declares `source`.
+    val storySource = varchar("source", 20)
     val authorId    = varchar("author_id", 36).nullable()
     val reviewNote  = text("review_note").nullable()
     val graphJson   = text("graph_json")

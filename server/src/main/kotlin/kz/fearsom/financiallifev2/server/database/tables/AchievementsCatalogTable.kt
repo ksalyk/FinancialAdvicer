@@ -11,15 +11,16 @@ import org.jetbrains.exposed.v1.core.Table
  * texts) is stored as JSON in [definitionJson]; frequently-filtered fields are
  * denormalized into columns.
  *
- * [source] — "SEEDED" (from code catalog; delete-protected, deactivate instead)
- *            or "CUSTOM" (created in the admin panel).
+ * [catalogSource] — "SEEDED" (from code catalog; delete-protected, deactivate instead)
+ *            or "CUSTOM" (created in the admin panel). DB column "source".
  */
 object AchievementsCatalogTable : Table("achievements_catalog") {
     val id             = varchar("id", 64)
     val kind           = varchar("kind", 10)
     val isActive       = bool("is_active")
     val sortOrder      = integer("sort_order")
-    val source         = varchar("source", 10)
+    // Named catalogSource (not source) — Exposed's Table/FieldSet already declares `source`.
+    val catalogSource  = varchar("source", 10)
     val definitionJson = text("definition_json")
     val createdAt      = long("created_at")
     val updatedAt      = long("updated_at")

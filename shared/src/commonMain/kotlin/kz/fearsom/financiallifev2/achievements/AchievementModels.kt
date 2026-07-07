@@ -198,15 +198,21 @@ data class AchievementSessionFacts(
 object AchievementEvaluator {
 
     /**
-     * Returns ids from [AchievementCatalog] whose conditions hold for
-     * ([state], [facts]) and are not already in [alreadyUnlocked].
+     * Returns ids from [catalog] whose conditions hold for ([state], [facts]) and
+     * are not already in [alreadyUnlocked].
+     *
+     * [catalog] defaults to the compile-time [AchievementCatalog]; the client passes
+     * the server's active catalog (admin edits + custom entries, minus deactivated
+     * ones) so admin changes have real effect. Param is last + defaulted to keep
+     * existing 3-arg callers (tests) source-compatible.
      */
     fun newlyUnlocked(
         state: GameState,
         facts: AchievementSessionFacts,
-        alreadyUnlocked: Set<String>
+        alreadyUnlocked: Set<String>,
+        catalog: List<AchievementDefinition> = AchievementCatalog.all
     ): Set<String> =
-        AchievementCatalog.all
+        catalog
             .asSequence()
             .filter { it.id !in alreadyUnlocked }
             .filter { isSatisfied(it.condition, state, facts) }

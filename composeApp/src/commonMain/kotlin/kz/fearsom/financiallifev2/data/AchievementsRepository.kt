@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
-import kz.fearsom.financiallifev2.achievements.AchievementCatalog
+import kz.fearsom.financiallifev2.achievements.AchievementDefinition
 import kz.fearsom.financiallifev2.achievements.AchievementEvaluator
 import kz.fearsom.financiallifev2.achievements.AchievementSessionFacts
 import kz.fearsom.financiallifev2.achievements.AchievementUnlockDto
@@ -37,7 +37,8 @@ private const val KEY_VOTES        = "achievements_votes"
  */
 class AchievementsRepository(
     private val secureStorage: SecureStorage? = null,
-    private val api: AchievementApiService? = null
+    private val api: AchievementApiService? = null,
+    private val catalogStore: AchievementCatalogStore = AchievementCatalogStore()
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -98,7 +99,8 @@ class AchievementsRepository(
         val newlyUnlocked = AchievementEvaluator.newlyUnlocked(
             state           = state,
             facts           = facts,
-            alreadyUnlocked = _unlocks.value.keys
+            alreadyUnlocked = _unlocks.value.keys,
+            catalog         = catalogStore.current   // active (admin-curated) catalog
         )
         if (newlyUnlocked.isEmpty()) return emptySet()
 
@@ -172,7 +174,15 @@ class AchievementsRepository(
     // ── Counters (main-menu subtitle) ─────────────────────────────────────────
 
     val unlockedCount: Int get() = _unlocks.value.size
-    val totalCount: Int get() = AchievementCatalog.all.size
+    val totalCount: Int get() = catalogStore.current.size
+
+    // ── Active catalog (admin-curated) ─────────────────────────────────────────
+
+    /** Active definitions (compile-time fallback → server overlay). */
+    val catalogDefinitions: StateFlow<List<AchievementDefinition>> get() = catalogStore.definitions
+
+    /** Pull the server's active catalog. Safe no-op offline / without api. */
+    suspend fun refreshCatalog() = catalogStore.refresh()
 
     // ── Persistence ───────────────────────────────────────────────────────────
 
@@ -181,7 +191,7 @@ class AchievementsRepository(
         runCatching {
             storage.get(KEY_UNLOCKS)?.takeIf { it.isNotBlank() }?.let {
                 val restored = json.decodeFromString<List<AchievementUnlockDto>>(it)
-                    .filter { dto -> AchievementCatalog.isValidId(dto.achievementId) }
+                    .filter { dto -> catalogStore.isValidId(dto.achievementId) }
                 _unlocks.value = restored.associateBy { dto -> dto.achievementId }
             }
         }

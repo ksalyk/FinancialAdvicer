@@ -92,7 +92,16 @@ fun ScenarioAnalysis.toValidationReport(): StoryValidationReport {
 
 private const val SECONDARY_GRID_COLUMNS = 4
 
-fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
+/**
+ * @param selfContained when true, the graph must run entirely on its own events:
+ *   a missing `intro` root and any option/pool target that resolves to no known
+ *   event are ERRORS (not warnings). DB-backed stories are self-contained — the
+ *   engine hard-fails without `intro` and stalls on an unresolved `next` — so the
+ *   admin editor and the server publish gate pass `true`. The read-only built-in
+ *   scenario viewer passes `false`: code graphs may reference shared scam/era
+ *   library events that live outside the per-character graph.
+ */
+fun analyzeScenario(dto: ScenarioGraphDto, selfContained: Boolean = false): ScenarioAnalysis {
     val events = dto.events
     val byId = events.associateBy { it.id }
 
@@ -207,6 +216,20 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
     val warnings = ArrayList<GraphWarning>()
     val knownIds = byId.keys + dto.conditionalEvents.map { it.id }.toSet()
 
+    // Self-contained (DB) stories: unresolved targets stall the engine → ERROR.
+    // Built-in graphs may reference shared library events → WARN.
+    val unresolvedSeverity =
+        if (selfContained) GraphWarning.Severity.ERROR else GraphWarning.Severity.WARN
+
+    // GameEngine starts every story at the "intro" event; without it the story
+    // can never begin, so a self-contained graph missing "intro" is unpublishable.
+    if (selfContained && "intro" !in byId) {
+        warnings += GraphWarning(
+            GraphWarning.Severity.ERROR, rootId,
+            "no 'intro' event — the engine starts every story at 'intro'"
+        )
+    }
+
     // Duplicate ids across events + conditionalEvents (authoring error a form editor can produce)
     val duplicateIds = (events.map { it.id } + dto.conditionalEvents.map { it.id })
         .groupingBy { it }.eachCount().filterValues { it > 1 }.keys
@@ -218,13 +241,15 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
     }
 
     for (e in events) {
-        // Unresolved option targets (could be a shared scam/era-library event — WARN not ERROR)
+        // Unresolved option targets: ERROR for self-contained stories (engine stalls),
+        // WARN for built-in graphs (may be a shared scam/era-library event).
         for (o in e.options) {
             if (o.next != MONTHLY_TICK && o.next !in knownIds) {
                 warnings += GraphWarning(
-                    GraphWarning.Severity.WARN, e.id,
-                    "option '${o.id}' → '${o.next}' not found in this graph " +
-                        "(ok if it is a shared scam/era-library event)"
+                    unresolvedSeverity, e.id,
+                    "option '${o.id}' → '${o.next}' not found in this graph" +
+                        if (selfContained) " — the engine has nowhere to go and stalls"
+                        else " (ok if it is a shared scam/era-library event)"
                 )
             }
         }
@@ -261,7 +286,7 @@ fun analyzeScenario(dto: ScenarioGraphDto): ScenarioAnalysis {
     for (p in dto.eventPool) {
         if (p.eventId !in knownIds) {
             warnings += GraphWarning(
-                GraphWarning.Severity.WARN, p.eventId,
+                unresolvedSeverity, p.eventId,
                 "pool entry → '${p.eventId}' not found in events/conditional events"
             )
         }

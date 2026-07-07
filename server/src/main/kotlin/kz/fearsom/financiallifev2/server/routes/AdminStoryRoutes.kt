@@ -117,7 +117,7 @@ fun Route.adminStoryRoutes(storiesRepository: StoriesRepository) {
 
             // Editing a live story must never break it: gate on validation.
             if (existing.status == StoryStatus.PUBLISHED) {
-                val report = analyzeScenario(req.graph).toValidationReport()
+                val report = analyzeScenario(req.graph, selfContained = true).toValidationReport()
                 if (!report.publishable) {
                     return@put call.respond(
                         HttpStatusCode.UnprocessableEntity,
@@ -152,7 +152,7 @@ fun Route.adminStoryRoutes(storiesRepository: StoriesRepository) {
                 ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
             val detail = storiesRepository.findDetail(id)
                 ?: return@post call.respond(HttpStatusCode.NotFound, mapOf("error" to "Story '$id' not found"))
-            call.respond(analyzeScenario(detail.graph).toValidationReport())
+            call.respond(analyzeScenario(detail.graph, selfContained = true).toValidationReport())
         }
 
         // ── Status transitions ────────────────────────────────────────────────
@@ -258,7 +258,7 @@ private suspend fun ApplicationCall.publishStory(repo: StoriesRepository) {
     val detail = repo.findDetail(id)
         ?: return respond(HttpStatusCode.NotFound, mapOf("error" to "Story '$id' not found"))
 
-    val report = analyzeScenario(detail.graph).toValidationReport()
+    val report = analyzeScenario(detail.graph, selfContained = true).toValidationReport()
     if (!report.publishable) {
         return respond(
             HttpStatusCode.UnprocessableEntity,

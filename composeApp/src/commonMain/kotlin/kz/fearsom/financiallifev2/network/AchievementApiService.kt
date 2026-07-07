@@ -8,11 +8,13 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kz.fearsom.financiallifev2.achievements.AchievementDefinition
 import kz.fearsom.financiallifev2.achievements.AchievementFeedbackRequest
 import kz.fearsom.financiallifev2.achievements.AchievementUnlockDto
 import kz.fearsom.financiallifev2.achievements.UnlockAchievementsRequest
 import kz.fearsom.financiallifev2.achievements.UnlockAchievementsResponse
 import kz.fearsom.financiallifev2.achievements.UserAchievementsResponse
+import kz.fearsom.financiallifev2.admin.AchievementCatalogResponse
 
 private const val TAG = "AchievementApiService"
 
@@ -30,6 +32,18 @@ class AchievementApiService(
 ) {
 
     private fun hasToken() = tokenStorage?.isAccessTokenPresent() == true
+
+    /**
+     * Public active-catalog fetch (no auth) — overlays admin catalog edits onto
+     * the compile-time catalog. Served from /game/catalog/achievements.
+     */
+    suspend fun getCatalog(): Result<List<AchievementDefinition>> =
+        runCatching {
+            httpClient.get("$baseUrl/game/catalog/achievements")
+                .body<AchievementCatalogResponse>().definitions
+        }.onFailure { e ->
+            Napier.w("Failed to fetch achievement catalog: ${e.message}", tag = TAG)
+        }
 
     /** Fetches the authoritative unlock list for the current user. */
     suspend fun getUnlocks(): Result<List<AchievementUnlockDto>> =

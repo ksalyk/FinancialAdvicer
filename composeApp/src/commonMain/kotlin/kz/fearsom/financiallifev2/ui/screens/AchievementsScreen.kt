@@ -35,7 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kz.fearsom.financiallifev2.achievements.AchievementCatalog
 import kz.fearsom.financiallifev2.achievements.AchievementDefinition
 import kz.fearsom.financiallifev2.achievements.AchievementKind
 import kz.fearsom.financiallifev2.achievements.AchievementRarity
@@ -104,17 +103,17 @@ fun AchievementsScreen(
 
                 SectionHeader(
                     label = Strings.uiAchSectionGame,
-                    count = "${uiState.gameUnlockedCount} / ${AchievementCatalog.gameAchievements.size}"
+                    count = "${uiState.gameUnlockedCount} / ${uiState.gameDefinitions.size}"
                 )
                 BadgeGrid(
-                    definitions = AchievementCatalog.gameAchievements,
+                    definitions = uiState.gameDefinitions,
                     uiState = uiState,
                     onSelect = onSelect
                 )
 
                 SectionHeader(
                     label = Strings.uiAchSectionScams,
-                    count = "${uiState.scamUnlockedCount} / ${AchievementCatalog.scamAchievements.size}"
+                    count = "${uiState.scamUnlockedCount} / ${uiState.scamDefinitions.size}"
                 )
                 Text(
                     text = Strings.uiAchScamHint,
@@ -123,7 +122,7 @@ fun AchievementsScreen(
                     modifier = Modifier.padding(start = 2.dp, end = 2.dp, bottom = 12.dp)
                 )
                 BadgeGrid(
-                    definitions = AchievementCatalog.scamAchievements,
+                    definitions = uiState.scamDefinitions,
                     uiState = uiState,
                     onSelect = onSelect
                 )
@@ -133,7 +132,7 @@ fun AchievementsScreen(
         }
 
         // ── Detail bottom sheet ────────────────────────────────────────────────
-        val selected = uiState.selectedId?.let { AchievementCatalog.byId[it] }
+        val selected = uiState.selectedId?.let { uiState.byId[it] }
         if (selected != null) {
             ModalBottomSheet(
                 onDismissRequest = onCloseDetail,
@@ -317,7 +316,7 @@ private fun AchievementBadge(
             }
         }
         Text(
-            text = Strings[definition.titleKey],
+            text = definition.displayTitle(),
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
@@ -372,7 +371,7 @@ private fun AchievementDetail(
 
         Spacer(Modifier.height(14.dp))
         Text(
-            text = Strings[definition.titleKey],
+            text = definition.displayTitle(),
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
             color = colors.textPrimary,
@@ -459,26 +458,42 @@ private fun GameAchievementBody(definition: AchievementDefinition) {
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        definition.descKey?.let { key ->
+        definition.displayDesc()?.let { descText ->
             InfoCard(
                 label = Strings.uiAchTaskLabel,
                 labelColor = colors.textSecondary,
-                text = Strings[key],
+                text = descText,
                 background = colors.backgroundSubCard,
                 borderColor = colors.border
             )
         }
-        definition.hintKey?.let { key ->
+        definition.displayHint()?.let { hintText ->
             InfoCard(
                 label = Strings.uiAchHintLabel,
                 labelColor = IndigoPrimary,
-                text = Strings[key],
+                text = hintText,
                 background = IndigoPrimary.copy(alpha = 0.06f),
                 borderColor = IndigoPrimary.copy(alpha = 0.25f)
             )
         }
     }
 }
+
+// ── Inline text resolution ──────────────────────────────────────────────────────
+// DB-authored achievements carry inline LocalizedText; code-seeded ones reference
+// i18n keys. Inline text wins when present (per AchievementDefinition doc), else the
+// key resolves through Strings for the active locale.
+
+private fun AchievementDefinition.displayTitle(): String =
+    titleText?.resolve(Strings.currentLocale)?.takeIf { it.isNotBlank() } ?: Strings[titleKey]
+
+private fun AchievementDefinition.displayDesc(): String? =
+    descText?.resolve(Strings.currentLocale)?.takeIf { it.isNotBlank() }
+        ?: descKey?.let { Strings[it] }
+
+private fun AchievementDefinition.displayHint(): String? =
+    hintText?.resolve(Strings.currentLocale)?.takeIf { it.isNotBlank() }
+        ?: hintKey?.let { Strings[it] }
 
 @Composable
 private fun InfoCard(

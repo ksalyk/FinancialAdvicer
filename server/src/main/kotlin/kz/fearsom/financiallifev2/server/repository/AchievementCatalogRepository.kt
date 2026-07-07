@@ -127,7 +127,7 @@ class AchievementCatalogRepository(private val db: Database) {
                     it[kind]           = req.definition.kind.name
                     it[isActive]       = req.isActive
                     it[sortOrder]      = req.sortOrder
-                    it[source]         = AchievementSource.CUSTOM
+                    it[catalogSource]  = AchievementSource.CUSTOM
                     it[definitionJson] = defJson
                     it[createdAt]      = now
                     it[updatedAt]      = now
@@ -161,7 +161,7 @@ class AchievementCatalogRepository(private val db: Database) {
                 .singleOrNull()
                 ?: return@newSuspendedTransaction DeleteOutcome.NotFound
 
-            if (row[AchievementsCatalogTable.source] == AchievementSource.SEEDED) {
+            if (row[AchievementsCatalogTable.catalogSource] == AchievementSource.SEEDED) {
                 return@newSuspendedTransaction DeleteOutcome.SeededProtected
             }
 
@@ -190,7 +190,7 @@ class AchievementCatalogRepository(private val db: Database) {
                     it[kind]           = def.kind.name
                     it[isActive]       = true
                     it[sortOrder]      = index
-                    it[source]         = AchievementSource.SEEDED
+                    it[catalogSource]  = AchievementSource.SEEDED
                     it[definitionJson] = json.encodeToString(def)
                     it[createdAt]      = now
                     it[updatedAt]      = now
@@ -209,7 +209,7 @@ class AchievementCatalogRepository(private val db: Database) {
             definition  = decodeDefinition(),
             isActive    = this[AchievementsCatalogTable.isActive],
             sortOrder   = this[AchievementsCatalogTable.sortOrder],
-            source      = this[AchievementsCatalogTable.source],
+            source      = this[AchievementsCatalogTable.catalogSource],
             unlockCount = unlockCount,
             upVotes     = upVotes,
             downVotes   = downVotes,

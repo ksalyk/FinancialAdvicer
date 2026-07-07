@@ -50,7 +50,15 @@ class GameEngine(
     // GameEngine on every /game/choose request and immediately loadState()s over it).
     private var graph: ScenarioGraph = ScenarioGraphFactory.forCharacter("asan", "kz_2024"),
     private var eraDefinition: EraDefinition? = null,
-    private val random: Random = Random.Default
+    private val random: Random = Random.Default,
+    /**
+     * Resolves the graph for a (characterId, eraId) at startGame/loadState time.
+     * Default = built-in code graphs. The client overrides this to overlay
+     * published DB stories, so publishing a story affects gameplay; the server
+     * keeps the default (code graphs only), so its behaviour is unchanged.
+     */
+    private val resolveGraph: (characterId: String, eraId: String) -> ScenarioGraph =
+        { characterId, eraId -> ScenarioGraphFactory.forCharacter(characterId, eraId) }
 ) {
 
     private val _state = MutableStateFlow<GameState?>(null)
@@ -72,7 +80,7 @@ class GameEngine(
     ): GameState {
         currentCharacterName = characterName
         if (initialState != null) {
-            graph         = ScenarioGraphFactory.forCharacter(initialState.characterId, initialState.eraId)
+            graph         = resolveGraph(initialState.characterId, initialState.eraId)
             eraDefinition = EraRegistry.findById(initialState.eraId)
         }
         val ps    = initialState ?: graph.initialPlayerState
@@ -211,7 +219,7 @@ class GameEngine(
     fun loadState(state: GameState, characterName: String = "") {
         val resolvedCharacterName = characterName.ifEmpty { state.characterName }
         if (resolvedCharacterName.isNotEmpty()) currentCharacterName = resolvedCharacterName
-        graph         = ScenarioGraphFactory.forCharacter(state.playerState.characterId, state.playerState.eraId)
+        graph         = resolveGraph(state.playerState.characterId, state.playerState.eraId)
         eraDefinition = EraRegistry.findById(state.playerState.eraId)
         val localizedState = if (currentCharacterName.isNotEmpty()) {
             state.copy(

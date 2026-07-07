@@ -1,20 +1,24 @@
 package kz.fearsom.financiallifev2.di
 
 import kz.fearsom.financiallifev2.auth.AuthRepository
+import kz.fearsom.financiallifev2.data.AchievementCatalogStore
 import kz.fearsom.financiallifev2.data.AchievementsRepository
 import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
+import kz.fearsom.financiallifev2.data.PublishedStoriesRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.i18n.initDeviceLocaleCache
 import kz.fearsom.financiallifev2.network.AchievementApiService
 import kz.fearsom.financiallifev2.network.GameApiService
 import kz.fearsom.financiallifev2.network.NetworkConfig
+import kz.fearsom.financiallifev2.network.StoriesApiService
 import kz.fearsom.financiallifev2.network.TokenStorage
 import kz.fearsom.financiallifev2.network.buildHttpClient
+import kz.fearsom.financiallifev2.scenarios.ScenarioGraphFactory
 import org.koin.dsl.module
 
 /**
@@ -78,8 +82,20 @@ val commonModule = module {
         )
     }
 
+    // ── Published stories (admin/community DB stories overlaid onto gameplay) ──
+    single { StoriesApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl) }
+    single { PublishedStoriesRepository(secureStorage = get<SecureStorage>(), api = get()) }
+
     // ── Game engine ───────────────────────────────────────────────────────────
-    single { GameEngine() }
+    // The resolver overlays a published DB story onto its (characterId, eraId) when
+    // one exists (so publishing a story affects gameplay), else falls back to the
+    // built-in code graph.
+    single {
+        val stories = get<PublishedStoriesRepository>()
+        GameEngine(resolveGraph = { characterId, eraId ->
+            stories.graphFor(characterId, eraId) ?: ScenarioGraphFactory.forCharacter(characterId, eraId)
+        })
+    }
 
     // ── Session repository — persisted to SecureStorage for offline resilience ──
     single { GameSessionRepository(secureStorage = get<SecureStorage>()) }
@@ -96,5 +112,12 @@ val commonModule = module {
 
     // ── Achievements (offline-first unlock store + server sync) ────────────────
     single { AchievementApiService(httpClient = get(), baseUrl = NetworkConfig.baseUrl, tokenStorage = get()) }
-    single { AchievementsRepository(secureStorage = get<SecureStorage>(), api = get()) }
+    single { AchievementCatalogStore(secureStorage = get<SecureStorage>(), api = get()) }
+    single {
+        AchievementsRepository(
+            secureStorage = get<SecureStorage>(),
+            api           = get(),
+            catalogStore  = get()
+        )
+    }
 }
