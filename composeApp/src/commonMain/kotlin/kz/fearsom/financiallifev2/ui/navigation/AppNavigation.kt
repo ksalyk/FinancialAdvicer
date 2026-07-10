@@ -30,6 +30,7 @@ import kz.fearsom.financiallifev2.data.CatalogRepository
 import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
+import kz.fearsom.financiallifev2.data.OnboardingRepository
 import kz.fearsom.financiallifev2.data.PublishedStoriesRepository
 import kz.fearsom.financiallifev2.engine.GameEngine
 import kz.fearsom.financiallifev2.network.GameApiService
@@ -48,6 +49,7 @@ import kz.fearsom.financiallifev2.ui.screens.ChatScreen
 import kz.fearsom.financiallifev2.ui.screens.EraSelectionScreen
 import kz.fearsom.financiallifev2.ui.screens.LoginScreen
 import kz.fearsom.financiallifev2.ui.screens.MainMenuScreen
+import kz.fearsom.financiallifev2.ui.screens.OnboardingScreen
 import kz.fearsom.financiallifev2.ui.screens.SettingsScreen
 import kz.fearsom.financiallifev2.ui.screens.SplashScreen
 import kz.fearsom.financiallifev2.ui.screens.StatisticsScreen
@@ -61,6 +63,7 @@ import org.koin.compose.koinInject
 
 sealed interface AppScreen {
     object Splash : AppScreen
+    object Onboarding : AppScreen
     object Login : AppScreen
     object MainMenu : AppScreen
     object EraSelection : AppScreen
@@ -77,6 +80,7 @@ sealed interface AppScreen {
 // Navigation depth — drives slide direction.
 private fun AppScreen.depth(): Int = when (this) {
     AppScreen.Splash -> -1
+    AppScreen.Onboarding -> 0
     AppScreen.MainMenu -> 1
     AppScreen.Login -> 2
     AppScreen.EraSelection -> 2
@@ -104,6 +108,7 @@ fun AppNavigation() {
     val featureFlags: FeatureFlagRepository = koinInject()
     val achievementsRepo: AchievementsRepository = koinInject()
     val publishedStoriesRepo: PublishedStoriesRepository = koinInject()
+    val onboardingRepo: OnboardingRepository = koinInject()
 
     val scope = rememberCoroutineScope()
 
@@ -154,7 +159,11 @@ fun AppNavigation() {
     LaunchedEffect(authUiState.isRestoringSession) {
         if (!authUiState.isRestoringSession && backStack.lastOrNull() == AppScreen.Splash) {
             navForward = true
-            backStack = listOf(AppScreen.MainMenu)
+            backStack = if (onboardingRepo.isCompleted()) {
+                listOf(AppScreen.MainMenu)
+            } else {
+                listOf(AppScreen.Onboarding)
+            }
         }
     }
 
@@ -226,6 +235,20 @@ fun AppNavigation() {
 
                     // ── Splash ────────────────────────────────────────────────────
                     AppScreen.Splash -> SplashScreen()
+
+                    // ── Onboarding (first launch) ─────────────────────────────────
+                    AppScreen.Onboarding -> OnboardingScreen(
+                        onFinish = {
+                            onboardingRepo.markCompleted()
+                            navForward = true
+                            backStack = listOf(AppScreen.MainMenu)
+                        },
+                        onLoginClick = {
+                            onboardingRepo.markCompleted()
+                            navForward = true
+                            backStack = listOf(AppScreen.MainMenu, AppScreen.Login)
+                        }
+                    )
 
                     // ── Login ─────────────────────────────────────────────────────
                     AppScreen.Login -> LoginScreen(

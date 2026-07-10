@@ -34,7 +34,9 @@ data class GraphNode(
     val column: Int,
     val band: Band,
     val isRoot: Boolean,
-    val reachable: Boolean
+    val reachable: Boolean,
+    /** true → lives in dto.conditionalEvents (state-triggered after a tick, not via `next`). */
+    val isConditional: Boolean = false
 )
 
 /** A directed edge between two story events (target resolved within `events`). */
@@ -116,10 +118,15 @@ fun analyzeScenario(dto: ScenarioGraphDto, selfContained: Boolean = false): Scen
         )
     }
 
-    // ── Direct edges (only when the target is a story event) ──────────────────
-    val edges = events.flatMap { e ->
+    // ── Direct edges (target must resolve to a laid-out node: story OR conditional).
+    // Conditional events are laid out too (own band below the pool grid) so the
+    // graph view shows how they weave into the narrative; edges FROM conditional
+    // events are included so their continuations are visible.
+    val condById = dto.conditionalEvents.associateBy { it.id }
+    val laidOutIds = byId.keys + condById.keys
+    val edges = (events + dto.conditionalEvents).flatMap { e ->
         e.options.mapNotNull { o ->
-            if (o.next in byId) GraphEdge(e.id, o.next, o.id) else null
+            if (o.next in laidOutIds) GraphEdge(e.id, o.next, o.id) else null
         }
     }
     val adjacency: Map<String, List<String>> =
@@ -161,12 +168,15 @@ fun analyzeScenario(dto: ScenarioGraphDto, selfContained: Boolean = false): Scen
 
     // ── Full reachability: BFS from root AND every legitimate non-direct entry,
     // over direct edges. An event reached only via a pool entry (after a tick) is
-    // therefore NOT mis-flagged as an orphan. (Validated against a synthetic graph.)
+    // therefore NOT mis-flagged as an orphan. Conditional events are seeds too —
+    // the engine enters them whenever their state conditions hold — so an event
+    // reachable only through a conditional event's option is not an orphan either.
+    // (This only relaxes warnings; it can never introduce new ERRORs.)
     val fullReachable: Set<String> = run {
         val seen = HashSet<String>()
         val queue = ArrayDeque<String>()
-        for (r in (setOf(rootId) + poolIds + scheduledIds)) {
-            if (r in byId && seen.add(r)) queue.add(r)
+        for (r in (setOf(rootId) + poolIds + scheduledIds + condById.keys)) {
+            if (r in laidOutIds && seen.add(r)) queue.add(r)
         }
         while (queue.isNotEmpty()) {
             val cur = queue.removeFirst()
@@ -208,7 +218,25 @@ fun analyzeScenario(dto: ScenarioGraphDto, selfContained: Boolean = false): Scen
         )
     }
 
-    val nodes = mainNodes + secondaryNodes
+    // ── Conditional band: grid below the secondary band ───────────────────────
+    val secondaryRows =
+        if (secondaryEvents.isEmpty()) 0
+        else (secondaryEvents.size - 1) / SECONDARY_GRID_COLUMNS + 1
+    val condStartRank = secondaryStartRank + secondaryRows +
+        if (dto.conditionalEvents.isEmpty()) 0 else 1
+    val conditionalNodes = dto.conditionalEvents.mapIndexed { idx, e ->
+        GraphNode(
+            event = e,
+            rank = condStartRank + idx / SECONDARY_GRID_COLUMNS,
+            column = idx % SECONDARY_GRID_COLUMNS,
+            band = Band.SECONDARY,
+            isRoot = false,
+            reachable = true, // entered by the engine whenever its conditions hold
+            isConditional = true
+        )
+    }
+
+    val nodes = mainNodes + secondaryNodes + conditionalNodes
     val columnCount = (nodes.maxOfOrNull { it.column } ?: 0) + 1
     val rankCount = (nodes.maxOfOrNull { it.rank } ?: 0) + 1
 

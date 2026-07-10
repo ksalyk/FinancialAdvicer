@@ -8,6 +8,7 @@ import kz.fearsom.financiallifev2.data.FeatureFlagRepository
 import kz.fearsom.financiallifev2.data.GameSessionRepository
 import kz.fearsom.financiallifev2.data.LocalFeatureFlagRepository
 import kz.fearsom.financiallifev2.data.LocaleRepository
+import kz.fearsom.financiallifev2.data.OnboardingRepository
 import kz.fearsom.financiallifev2.data.PublishedStoriesRepository
 import kz.fearsom.financiallifev2.data.SecureStorage
 import kz.fearsom.financiallifev2.engine.GameEngine
@@ -99,6 +100,9 @@ val commonModule = module {
 
     // ── Session repository — persisted to SecureStorage for offline resilience ──
     single { GameSessionRepository(secureStorage = get<SecureStorage>()) }
+
+    // ── Onboarding (one-shot intro flow flag) ─────────────────────────────────
+    single { OnboardingRepository(secureStorage = get<SecureStorage>()) }
 
     // ── Feature flags (local; swap impl here when remote config is added) ────
     // Bound as the interface so all callers are agnostic of the storage backend.

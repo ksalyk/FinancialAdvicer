@@ -151,6 +151,17 @@ object LineIcons {
         }
     }
 
+    /** Check mark — onboarding CTA badge. */
+    val Check: ImageVector by lazy {
+        lineIcon("LineIcons.Check") {
+            strokePath(strokeWidth = 2.6f) {
+                moveTo(20f, 6f)
+                lineTo(9f, 17f)
+                lineToRelative(-5f, -5f)
+            }
+        }
+    }
+
     /** Paper-plane send. */
     val Send: ImageVector by lazy {
         lineIcon("LineIcons.Send") {

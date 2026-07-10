@@ -219,6 +219,7 @@ private fun GraphSummary(
     Text("Legend", style = MaterialTheme.typography.titleSmall)
     Text(
         "• Entry = highlighted  • 🏁 = ending (colored by type)  • dashed red = unreachable\n" +
+            "• ◈ dashed = conditional (state-triggered)  • ⟳ = leads into monthly tick\n" +
             "Pinch / scroll to zoom, drag to pan, tap a node to inspect.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant

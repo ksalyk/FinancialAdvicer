@@ -18,6 +18,7 @@ import kz.fearsom.financiallifev2.admin.StoryDetail
 import kz.fearsom.financiallifev2.admin.UpsertStoryRequest
 import kz.fearsom.financiallifev2.adminui.components.FormField
 import kz.fearsom.financiallifev2.adminui.components.ScenarioCanvas
+import kz.fearsom.financiallifev2.adminui.components.rememberScenarioCanvasState
 import kz.fearsom.financiallifev2.adminui.net.AdminApiClient
 import kz.fearsom.financiallifev2.model.Condition
 import kz.fearsom.financiallifev2.model.CurrencyCode
@@ -207,7 +208,8 @@ private fun InitialStateDraft.toPlayerState() = PlayerState(
 
 private val prettyJson = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
-private enum class SidePanel { VALIDATION, PREVIEW }
+/** What the center pane shows: the selected event's form, or the full-size graph. */
+private enum class CenterMode { FORM, GRAPH }
 
 @Composable
 fun StoryEditorScreen(
@@ -237,9 +239,11 @@ fun StoryEditorScreen(
     }
 
     var selectedIndex by remember { mutableStateOf(if (events.isEmpty()) null else 0) }
-    var sidePanel     by remember { mutableStateOf(SidePanel.VALIDATION) }
+    var centerMode    by remember { mutableStateOf(CenterMode.FORM) }
     var jsonOpen      by remember { mutableStateOf(false) }
     var busy          by remember { mutableStateOf(false) }
+    // Hoisted so pan/zoom survives Form ⇄ Graph toggles.
+    val canvasState   = rememberScenarioCanvasState()
 
     // ── Live graph + validation ───────────────────────────────────────────────
     val builtGraph: ScenarioGraphDto = remember(events, pool, initialState) {
@@ -259,6 +263,27 @@ fun StoryEditorScreen(
     fun updateSelected(transform: (EventDraft) -> EventDraft) {
         val idx = selectedIndex ?: return
         events = events.mapIndexed { i, e -> if (i == idx) transform(e) else e }
+    }
+
+    /** Canvas selection: unknown id or empty-space tap (null) clears the selection. */
+    fun selectById(id: String?) {
+        selectedIndex = id?.let { events.indexOfFirst { e -> e.id == it }.takeIf { i -> i >= 0 } }
+    }
+
+    /** Validation jump: no-op when the id isn't a real event (e.g. "-" for graph-level errors). */
+    fun jumpToEvent(id: String) {
+        events.indexOfFirst { it.id == id }.takeIf { it >= 0 }?.let { selectedIndex = it }
+    }
+
+    /**
+     * Creates a new (non-ending) event with a unique id derived from [base] and a
+     * default "Continue → tick" option, WITHOUT stealing the current selection.
+     * Returns the actual id so callers can link to it (option.next, schedules).
+     */
+    fun createLinkedEvent(base: String): String {
+        val id = uniqueEventId(base, events.map { it.id.trim() })
+        events = events + emptyEventDraft(id, isEnding = false, options = listOf(defaultOption(1)))
+        return id
     }
 
     fun save() {
@@ -296,6 +321,18 @@ fun StoryEditorScreen(
             Text("Editing: ${initial.row.id}", style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.width(12.dp))
             StatusBadge(initial.row.status)
+            Spacer(Modifier.width(16.dp))
+            FilterChip(
+                selected = centerMode == CenterMode.FORM,
+                onClick  = { centerMode = CenterMode.FORM },
+                label    = { Text("📝 Form") }
+            )
+            Spacer(Modifier.width(6.dp))
+            FilterChip(
+                selected = centerMode == CenterMode.GRAPH,
+                onClick  = { centerMode = CenterMode.GRAPH },
+                label    = { Text("🕸 Graph") }
+            )
             Spacer(Modifier.weight(1f))
             if (errorCount > 0) {
                 Text(
@@ -330,19 +367,39 @@ fun StoryEditorScreen(
                 InitialStateForm(initialState) { initialState = it }
 
                 HorizontalDivider()
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Events (${events.size})", style = MaterialTheme.typography.titleSmall)
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = {
-                        val newId = uniqueEventId("event", allEventIds)
-                        events = events + emptyEventDraft(newId, isEnding = false)
-                        selectedIndex = events.size - 1
-                    }) { Text("+ Event") }
-                    TextButton(onClick = {
-                        val newId = uniqueEventId("ending", allEventIds)
-                        events = events + emptyEventDraft(newId, isEnding = true)
-                        selectedIndex = events.size - 1
-                    }) { Text("+ Ending") }
+                Text("Events (${events.size})", style = MaterialTheme.typography.titleSmall)
+                Row {
+                    // Templates: every new event is immediately playable (no dead-end errors).
+                    TextButton(
+                        contentPadding = PaddingValues(horizontal = 6.dp),
+                        onClick = {
+                            val newId = uniqueEventId("event", allEventIds)
+                            events = events + emptyEventDraft(newId, isEnding = false, options = listOf(defaultOption(1)))
+                            selectedIndex = events.size - 1
+                        }
+                    ) { Text("+ Event") }
+                    TextButton(
+                        contentPadding = PaddingValues(horizontal = 6.dp),
+                        onClick = {
+                            val newId = uniqueEventId("choice", allEventIds)
+                            events = events + emptyEventDraft(
+                                newId, isEnding = false,
+                                options = listOf(
+                                    defaultOption(1).copy(text = "Choice A", emoji = "✅"),
+                                    defaultOption(2).copy(text = "Choice B", emoji = "❌")
+                                )
+                            )
+                            selectedIndex = events.size - 1
+                        }
+                    ) { Text("+ Choice") }
+                    TextButton(
+                        contentPadding = PaddingValues(horizontal = 6.dp),
+                        onClick = {
+                            val newId = uniqueEventId("ending", allEventIds)
+                            events = events + emptyEventDraft(newId, isEnding = true)
+                            selectedIndex = events.size - 1
+                        }
+                    ) { Text("+ Ending") }
                 }
 
                 events.forEachIndexed { idx, e ->
@@ -405,19 +462,64 @@ fun StoryEditorScreen(
 
             VerticalDivider()
 
-            // ── Center: selected event form ────────────────────────────────────
+            // ── Center: selected event form ⇄ full-size graph ──────────────────
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 val idx = selectedIndex
-                if (idx == null || idx !in events.indices) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Select an event on the left.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                when {
+                    centerMode == CenterMode.GRAPH -> {
+                        ScenarioCanvas(
+                            analysis        = analysis,
+                            selectedEventId = idx?.let { events.getOrNull(it)?.id },
+                            onSelect        = { id -> selectById(id) },
+                            state           = canvasState
+                        )
+                        // Floating summary of the selected node with a jump-to-form action.
+                        val sel = idx?.let { events.getOrNull(it) }
+                        if (sel != null) {
+                            Card(
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp),
+                                elevation = CardDefaults.elevatedCardElevation()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                        .widthIn(max = 520.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(Modifier.weight(1f, fill = false)) {
+                                        Text("${sel.flavor} ${sel.id}",
+                                            style = MaterialTheme.typography.titleSmall)
+                                        Text(
+                                            "${sel.options.size} option(s) · " +
+                                                sel.message.replace('\n', ' ').take(60)
+                                                    .ifBlank { "(no message)" },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1
+                                        )
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Button(onClick = { centerMode = CenterMode.FORM }) { Text("Edit") }
+                                }
+                            }
+                        } else {
+                            Text(
+                                "Click a node to select · wheel to zoom · drag to pan",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp)
+                            )
+                        }
                     }
-                } else {
-                    EventForm(
-                        draft       = events[idx],
-                        allEventIds = allEventIds,
-                        onChange    = { updateSelected { _ -> it } },
+                    idx == null || idx !in events.indices ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Select an event on the left (or switch to 🕸 Graph).",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    else -> EventForm(
+                        draft         = events[idx],
+                        allEventIds   = allEventIds,
+                        onChange      = { updateSelected { _ -> it } },
+                        onCreateEvent = ::createLinkedEvent,
                         onDuplicate = {
                             val copy = events[idx].copy(id = uniqueEventId(events[idx].id, allEventIds))
                             events = events + copy
@@ -433,69 +535,49 @@ fun StoryEditorScreen(
 
             VerticalDivider()
 
-            // ── Right: validation / preview ────────────────────────────────────
-            Column(Modifier.width(380.dp).fillMaxHeight()) {
-                Row(Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilterChip(
-                        selected = sidePanel == SidePanel.VALIDATION,
-                        onClick  = { sidePanel = SidePanel.VALIDATION },
-                        label    = { Text("Validation (${analysis.warnings.size})") }
-                    )
-                    FilterChip(
-                        selected = sidePanel == SidePanel.PREVIEW,
-                        onClick  = { sidePanel = SidePanel.PREVIEW },
-                        label    = { Text("Preview") }
-                    )
-                }
+            // ── Right: validation ──────────────────────────────────────────────
+            Column(Modifier.width(340.dp).fillMaxHeight()) {
+                Text(
+                    "Validation (${analysis.warnings.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(12.dp)
+                )
                 HorizontalDivider()
-                when (sidePanel) {
-                    SidePanel.VALIDATION -> LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        if (analysis.warnings.isEmpty()) {
-                            item {
-                                Text("No issues found — publishable.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (analysis.warnings.isEmpty()) {
+                        item {
+                            Text("No issues found — publishable.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        items(analysis.warnings) { w ->
-                            Card(Modifier.fillMaxWidth().clickable {
-                                val target = events.indexOfFirst { it.id == w.eventId }
-                                if (target >= 0) selectedIndex = target
-                            }) {
-                                Row(Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {
-                                    Text(
-                                        when (w.severity) {
-                                            GraphWarning.Severity.ERROR -> "ERR"
-                                            GraphWarning.Severity.WARN  -> "WARN"
-                                            GraphWarning.Severity.INFO  -> "INFO"
-                                        },
-                                        color = when (w.severity) {
-                                            GraphWarning.Severity.ERROR -> MaterialTheme.colorScheme.error
-                                            GraphWarning.Severity.WARN  -> MaterialTheme.colorScheme.tertiary
-                                            GraphWarning.Severity.INFO  -> MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Column {
-                                        Text(w.eventId, style = MaterialTheme.typography.labelMedium)
-                                        Text(w.message, style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
+                    }
+                    items(analysis.warnings) { w ->
+                        Card(Modifier.fillMaxWidth().clickable { jumpToEvent(w.eventId) }) {
+                            Row(Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {
+                                Text(
+                                    when (w.severity) {
+                                        GraphWarning.Severity.ERROR -> "ERR"
+                                        GraphWarning.Severity.WARN  -> "WARN"
+                                        GraphWarning.Severity.INFO  -> "INFO"
+                                    },
+                                    color = when (w.severity) {
+                                        GraphWarning.Severity.ERROR -> MaterialTheme.colorScheme.error
+                                        GraphWarning.Severity.WARN  -> MaterialTheme.colorScheme.tertiary
+                                        GraphWarning.Severity.INFO  -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text(w.eventId, style = MaterialTheme.typography.labelMedium)
+                                    Text(w.message, style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
                     }
-                    SidePanel.PREVIEW -> ScenarioCanvas(
-                        analysis        = analysis,
-                        selectedEventId = selectedIndex?.let { events.getOrNull(it)?.id },
-                        onSelect        = { id ->
-                            val target = events.indexOfFirst { it.id == id }
-                            if (target >= 0) selectedIndex = target
-                        }
-                    )
                 }
             }
         }
@@ -521,7 +603,15 @@ fun StoryEditorScreen(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-private fun emptyEventDraft(id: String, isEnding: Boolean) = EventDraft(
+/** Default "keep playing" option — a new event is never an instant dead-end error. */
+private fun defaultOption(n: Int) =
+    OptionDraft(id = "opt_$n", text = "Continue", emoji = "👉", next = MONTHLY_TICK)
+
+private fun emptyEventDraft(
+    id: String,
+    isEnding: Boolean,
+    options: List<OptionDraft> = emptyList()
+) = EventDraft(
     id = id, message = "", flavor = if (isEnding) "🏁" else "💬",
     isEnding = isEnding,
     endingType = if (isEnding) EndingType.FINANCIAL_STABILITY else null,
@@ -529,7 +619,7 @@ private fun emptyEventDraft(id: String, isEnding: Boolean) = EventDraft(
     unique = false, cooldownMonths = "0", maxOccurrences = "0",
     schemeExplanation = "",
     conditions = emptyList(),
-    options = emptyList(),
+    options = if (isEnding) emptyList() else options,
     isConditional = false
 )
 
@@ -590,9 +680,13 @@ private fun EventIdSelector(
     label: String,
     options: List<String>,
     allowTick: Boolean,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
+    /** When set, an unknown typed id offers "➕ create event" — [onCreate] must create it and link. */
+    onCreate: ((String) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val typed = value.trim()
+    val isUnknown = typed.isNotEmpty() && typed != MONTHLY_TICK && typed !in options
 
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
@@ -604,6 +698,12 @@ private fun EventIdSelector(
             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable).fillMaxWidth()
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (onCreate != null && isUnknown) {
+                DropdownMenuItem(
+                    text = { Text("➕ Create event '$typed'") },
+                    onClick = { onCreate(typed); expanded = false }
+                )
+            }
             if (allowTick) {
                 DropdownMenuItem(
                     text = { Text("MONTHLY_TICK (monthly sim)") },
@@ -622,6 +722,8 @@ private fun EventForm(
     draft: EventDraft,
     allEventIds: List<String>,
     onChange: (EventDraft) -> Unit,
+    /** Creates a new event with a unique id derived from the base; returns the actual id. */
+    onCreateEvent: (String) -> String,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -735,8 +837,10 @@ private fun EventForm(
             Text("Options (${draft.options.size})", style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.weight(1f))
             TextButton(onClick = {
-                val optId = "opt_${draft.options.size + 1}"
-                onChange(draft.copy(options = draft.options + OptionDraft(id = optId)))
+                val existing = draft.options.map { it.id }
+                var n = draft.options.size + 1
+                while ("opt_$n" in existing) n++
+                onChange(draft.copy(options = draft.options + OptionDraft(id = "opt_$n")))
             }) { Text("+ Option") }
         }
         if (draft.isEnding && draft.options.isNotEmpty()) {
@@ -746,9 +850,12 @@ private fun EventForm(
         }
         draft.options.forEachIndexed { oi, opt ->
             OptionEditor(
-                opt         = opt,
-                allEventIds = allEventIds,
-                onChange    = { new ->
+                opt           = opt,
+                allEventIds   = allEventIds,
+                newIdBase     = listOf(draft.id.trim(), opt.id.trim())
+                    .filter { it.isNotBlank() }.joinToString("_").ifBlank { "event" },
+                onCreateEvent = onCreateEvent,
+                onChange      = { new ->
                     onChange(draft.copy(options = draft.options.mapIndexed { i, o ->
                         if (i == oi) new else o
                     }))
@@ -839,6 +946,10 @@ private fun opSymbol(op: Condition.Stat.Op): String = when (op) {
 private fun OptionEditor(
     opt: OptionDraft,
     allEventIds: List<String>,
+    /** Base for auto-generated ids of "create & link" events, e.g. "intro_opt_1". */
+    newIdBase: String,
+    /** Creates a new event with a unique id derived from the base; returns the actual id. */
+    onCreateEvent: (String) -> String,
     onChange: (OptionDraft) -> Unit,
     onRemove: () -> Unit
 ) {
@@ -857,13 +968,23 @@ private fun OptionEditor(
             OutlinedTextField(opt.text, { onChange(opt.copy(text = it)) },
                 label = { Text("Button text") }, singleLine = true, modifier = Modifier.fillMaxWidth())
 
-            EventIdSelector(
-                value     = opt.next,
-                label     = "next →",
-                options   = allEventIds,
-                allowTick = true,
-                onSelect  = { onChange(opt.copy(next = it)) }
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) {
+                    EventIdSelector(
+                        value     = opt.next,
+                        label     = "next →",
+                        options   = allEventIds,
+                        allowTick = true,
+                        onSelect  = { onChange(opt.copy(next = it)) },
+                        onCreate  = { typed -> onChange(opt.copy(next = onCreateEvent(typed))) }
+                    )
+                }
+                // One click: create "<eventId>_<optId>" and point this option at it.
+                TextButton(onClick = { onChange(opt.copy(next = onCreateEvent(newIdBase))) }) {
+                    Text("＋→ new")
+                }
+            }
 
             TextButton(onClick = { effectsOpen = !effectsOpen }) {
                 Text(if (effectsOpen) "▾ Effects" else "▸ Effects (${effectSummary(opt)})")
@@ -917,7 +1038,10 @@ private fun OptionEditor(
                                     label     = "scheduled event",
                                     options   = allEventIds,
                                     allowTick = false,
-                                    onSelect  = { onChange(opt.copy(schedule = sched.copy(eventId = it))) }
+                                    onSelect  = { onChange(opt.copy(schedule = sched.copy(eventId = it))) },
+                                    onCreate  = { typed ->
+                                        onChange(opt.copy(schedule = sched.copy(eventId = onCreateEvent(typed))))
+                                    }
                                 )
                             }
                             OutlinedTextField(
