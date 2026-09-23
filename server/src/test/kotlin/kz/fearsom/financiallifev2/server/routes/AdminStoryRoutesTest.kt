@@ -144,7 +144,7 @@ class AdminStoryRoutesTest {
     }
 
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     private fun HttpRequestBuilder.jsonBody(body: Any) {
         contentType(ContentType.Application.Json)

@@ -76,7 +76,7 @@ class AdminAchievementRoutesTest {
     }
 
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     private fun customDefinition(id: String = "game.custom_test") = AchievementDefinition(
         id        = id,

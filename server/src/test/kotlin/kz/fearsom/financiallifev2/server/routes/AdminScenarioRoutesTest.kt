@@ -98,7 +98,7 @@ class AdminScenarioRoutesTest {
     }
 
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     // ── GET /admin/scenarios ──────────────────────────────────────────────────
 

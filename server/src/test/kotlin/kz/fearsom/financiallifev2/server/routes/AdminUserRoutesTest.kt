@@ -66,7 +66,7 @@ class AdminUserRoutesTest {
 
     /** Sets the ADMIN_KEY Bearer token for every request. */
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     // ── GET /admin/users ──────────────────────────────────────────────────────
 
