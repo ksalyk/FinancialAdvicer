@@ -111,6 +111,12 @@ fun Route.achievementRoutes(
     }
 }
 
-/** Same JWT extraction as GameRoutes — valid only inside authenticate("auth-jwt"). */
+/**
+ * Same JWT extraction as GameRoutes — valid only inside authenticate("auth-jwt").
+ * Returns null if the principal is missing (misconfigured route or malformed token).
+ */
+private fun ApplicationCall.jwtUserIdOrNull(): String? =
+    principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString()?.takeIf { it.isNotBlank() }
+
 private fun ApplicationCall.jwtUserId(): String =
-    principal<JWTPrincipal>()!!.payload.getClaim("userId").asString()
+    jwtUserIdOrNull() ?: error("JWT principal missing — route must be inside authenticate(\"auth-jwt\")")
