@@ -77,7 +77,7 @@ fun Application.configureRouting(
             // Admin API — one guard for everything: session cookie (SPA) OR
             // ADMIN_KEY Bearer (programmatic). Adding a new admin route inside
             // this block is automatically protected.
-            authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+            authenticate(ADMIN_COMBINED_AUTH) {
                 adminRoutes(charactersRepository, erasRepository)
                 adminUserRoutes(userRepository, statisticsRepository)
                 adminScenarioRoutes(charactersRepository, erasRepository)

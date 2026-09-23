@@ -4,6 +4,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.achievements.AchievementDefinition
 import kz.fearsom.financiallifev2.achievements.AchievementEvaluator
@@ -51,7 +52,7 @@ class AchievementsRepository(
     val votes: StateFlow<Map<String, String>> = _votes.asStateFlow()
 
     /** Ids unlocked locally but not yet confirmed by the server. */
-    private var pendingSync = mutableSetOf<String>()
+    private val _pendingSync = MutableStateFlow<Set<String>>(emptySet())
 
     // ── Per-session unlock tracking ───────────────────────────────────────────
     private var facts = AchievementSessionFacts()
@@ -114,8 +115,8 @@ class AchievementsRepository(
             )
         }
 
-        _unlocks.value = _unlocks.value + added
-        pendingSync += newlyUnlocked
+        _unlocks.update { it + added }
+        _pendingSync.update { it + newlyUnlocked }
         persist()
 
         Napier.i("Achievements unlocked locally: $newlyUnlocked", tag = TAG)
@@ -132,7 +133,8 @@ class AchievementsRepository(
     suspend fun sync() {
         val service = api ?: return
 
-        val pending = pendingSync.mapNotNull { _unlocks.value[it] }
+        val snapshot = _pendingSync.value
+        val pending = snapshot.mapNotNull { _unlocks.value[it] }
         val result = if (pending.isNotEmpty()) {
             service.pushUnlocks(pending)
         } else {
@@ -141,12 +143,15 @@ class AchievementsRepository(
 
         result.onSuccess { serverUnlocks ->
             // Union merge: server response already contains everything we pushed.
-            val merged = _unlocks.value.toMutableMap()
-            serverUnlocks.forEach { dto -> merged[dto.achievementId] = dto }
-            _unlocks.value = merged
-            pendingSync.removeAll(serverUnlocks.map { it.achievementId }.toSet())
+            _unlocks.update { current ->
+                val merged = current.toMutableMap()
+                serverUnlocks.forEach { dto -> merged[dto.achievementId] = dto }
+                merged
+            }
+            val confirmedIds = serverUnlocks.map { it.achievementId }.toSet()
+            _pendingSync.update { it - confirmedIds }
             persist()
-            Napier.d("Achievements synced: ${merged.size} total, ${pendingSync.size} pending", tag = TAG)
+            Napier.d("Achievements synced: ${_unlocks.value.size} total, ${_pendingSync.value.size} pending", tag = TAG)
         }
     }
 
@@ -197,7 +202,7 @@ class AchievementsRepository(
         }
         runCatching {
             storage.get(KEY_PENDING_SYNC)?.takeIf { it.isNotBlank() }?.let {
-                pendingSync = json.decodeFromString<Set<String>>(it).toMutableSet()
+                _pendingSync.value = json.decodeFromString<Set<String>>(it)
             }
         }
         runCatching {
@@ -210,7 +215,7 @@ class AchievementsRepository(
     private fun persist() {
         val storage = secureStorage ?: return
         runCatching { storage.save(KEY_UNLOCKS, json.encodeToString(_unlocks.value.values.toList())) }
-        runCatching { storage.save(KEY_PENDING_SYNC, json.encodeToString(pendingSync.toSet())) }
+        runCatching { storage.save(KEY_PENDING_SYNC, json.encodeToString(_pendingSync.value)) }
         runCatching { storage.save(KEY_VOTES, json.encodeToString(_votes.value)) }
     }
 }

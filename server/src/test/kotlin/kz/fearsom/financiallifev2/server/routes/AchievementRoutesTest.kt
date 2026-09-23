@@ -24,6 +24,7 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -209,7 +210,7 @@ class AchievementRoutesTest {
             setBody("""{"vote":null}""")
         }
         assertEquals(HttpStatusCode.OK, clear.status)
-        assertTrue((TEST_USER_ID to AchievementCatalog.SCAM_PONZI) !in repo.feedback)
+        assertFalse(repo.feedback.containsKey(TEST_USER_ID to AchievementCatalog.SCAM_PONZI))
     }
 
     @Test
@@ -257,7 +258,8 @@ class AchievementRoutesTest {
         val response = client.get("/api/v1/achievements/feedback") { authHeader() }
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("\"${AchievementCatalog.SCAM_PONZI}\":\"down\""))
+        val body = json.decodeFromString<AchievementFeedbackResponse>(response.bodyAsText())
+        assertEquals("down", body.feedback[AchievementCatalog.SCAM_PONZI])
     }
 
     companion object {

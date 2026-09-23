@@ -35,16 +35,26 @@ fun Route.achievementRoutes(
 
     route("/achievements") {
 
+        // ── GET /achievements/feedback ────────────────────────────────────────
+        // Use an explicit sub-route so Ktor 3.x creates a dedicated path node
+        // in the routing tree. A bare get("/feedback") can still lose to get { }
+        // in Ktor 3.x because method selectors can match before path selectors
+        // consume remaining segments. An explicit route("/feedback") guarantees
+        // the path node is evaluated first by the quality-based routing engine.
+        route("/feedback") {
+            get {
+                val userId = call.jwtUserId()
+                call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
+            }
+        }
+
         // ── GET /achievements ─────────────────────────────────────────────────
-        // Full unlock state for the authenticated user.
         get {
             val userId = call.jwtUserId()
             call.respond(UserAchievementsResponse(achievementsRepository.listUnlocks(userId)))
         }
 
         // ── POST /achievements/unlock ─────────────────────────────────────────
-        // Idempotent batch sync from the client. Unknown ids are rejected as a
-        // whole batch (a client that sends them is out of date or tampering).
         post("/unlock") {
             val userId = call.jwtUserId()
             val req    = call.receive<UnlockAchievementsRequest>()
@@ -77,12 +87,6 @@ fun Route.achievementRoutes(
             ))
         }
 
-        // ── GET /achievements/feedback ────────────────────────────────────────
-        get("/feedback") {
-            val userId = call.jwtUserId()
-            call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
-        }
-
         // ── POST /achievements/{id}/feedback ──────────────────────────────────
         // Body: {"vote": "up" | "down" | null} — null clears the vote.
         post("/{id}/feedback") {
@@ -111,6 +115,12 @@ fun Route.achievementRoutes(
     }
 }
 
-/** Same JWT extraction as GameRoutes — valid only inside authenticate("auth-jwt"). */
+/**
+ * Same JWT extraction as GameRoutes — valid only inside authenticate("auth-jwt").
+ * Returns null if the principal is missing (misconfigured route or malformed token).
+ */
+private fun ApplicationCall.jwtUserIdOrNull(): String? =
+    principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asString()?.takeIf { it.isNotBlank() }
+
 private fun ApplicationCall.jwtUserId(): String =
-    principal<JWTPrincipal>()!!.payload.getClaim("userId").asString()
+    jwtUserIdOrNull() ?: error("JWT principal missing — route must be inside authenticate(\"auth-jwt\")")

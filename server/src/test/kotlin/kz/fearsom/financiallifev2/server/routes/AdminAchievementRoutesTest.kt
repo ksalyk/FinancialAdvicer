@@ -20,8 +20,7 @@ import kz.fearsom.financiallifev2.admin.AchievementAdminRow
 import kz.fearsom.financiallifev2.admin.UpsertAchievementRequest
 import kz.fearsom.financiallifev2.admin.UserAchievementsAdminResponse
 import kz.fearsom.financiallifev2.server.database.DatabaseTestFixture
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_KEY_AUTH
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_SESSION_AUTH
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_COMBINED_AUTH
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
@@ -62,7 +61,7 @@ class AdminAchievementRoutesTest {
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+                    authenticate(ADMIN_COMBINED_AUTH) {
                         adminAchievementRoutes(catalogRepo, unlockRepo, userRepo)
                     }
                 }
@@ -77,7 +76,7 @@ class AdminAchievementRoutesTest {
     }
 
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     private fun customDefinition(id: String = "game.custom_test") = AchievementDefinition(
         id        = id,

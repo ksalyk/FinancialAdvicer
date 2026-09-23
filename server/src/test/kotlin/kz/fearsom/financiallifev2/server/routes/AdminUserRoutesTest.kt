@@ -11,8 +11,7 @@ import kotlinx.serialization.json.Json
 import kz.fearsom.financiallifev2.admin.AdminUserDetailRow
 import kz.fearsom.financiallifev2.admin.AdminUserListResponse
 import io.ktor.server.auth.*
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_KEY_AUTH
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_SESSION_AUTH
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_COMBINED_AUTH
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
@@ -51,7 +50,7 @@ class AdminUserRoutesTest {
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+                    authenticate(ADMIN_COMBINED_AUTH) {
                         adminUserRoutes(userRepo, statsRepo)
                     }
                 }
@@ -67,7 +66,7 @@ class AdminUserRoutesTest {
 
     /** Sets the ADMIN_KEY Bearer token for every request. */
     private fun HttpRequestBuilder.adminAuth() =
-        header(HttpHeaders.Authorization, "Bearer dev-admin-key")
+        header(HttpHeaders.Authorization, "Bearer ${System.getenv("ADMIN_KEY") ?: "dev-admin-key"}")
 
     // ── GET /admin/users ──────────────────────────────────────────────────────
 
