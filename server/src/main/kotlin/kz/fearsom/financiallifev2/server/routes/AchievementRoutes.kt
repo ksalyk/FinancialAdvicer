@@ -36,12 +36,16 @@ fun Route.achievementRoutes(
     route("/achievements") {
 
         // ── GET /achievements/feedback ────────────────────────────────────────
-        // Declared before the bare `get { }` so Ktor route evaluation finds the
-        // more-specific path first (Ktor 3.x evaluates children in definition
-        // order when multiple selectors could match).
-        get("/feedback") {
-            val userId = call.jwtUserId()
-            call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
+        // Use an explicit sub-route so Ktor 3.x creates a dedicated path node
+        // in the routing tree. A bare get("/feedback") can still lose to get { }
+        // in Ktor 3.x because method selectors can match before path selectors
+        // consume remaining segments. An explicit route("/feedback") guarantees
+        // the path node is evaluated first by the quality-based routing engine.
+        route("/feedback") {
+            get {
+                val userId = call.jwtUserId()
+                call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
+            }
         }
 
         // ── GET /achievements ─────────────────────────────────────────────────
