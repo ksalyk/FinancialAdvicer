@@ -35,16 +35,22 @@ fun Route.achievementRoutes(
 
     route("/achievements") {
 
+        // ── GET /achievements/feedback ────────────────────────────────────────
+        // Declared before the bare `get { }` so Ktor route evaluation finds the
+        // more-specific path first (Ktor 3.x evaluates children in definition
+        // order when multiple selectors could match).
+        get("/feedback") {
+            val userId = call.jwtUserId()
+            call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
+        }
+
         // ── GET /achievements ─────────────────────────────────────────────────
-        // Full unlock state for the authenticated user.
         get {
             val userId = call.jwtUserId()
             call.respond(UserAchievementsResponse(achievementsRepository.listUnlocks(userId)))
         }
 
         // ── POST /achievements/unlock ─────────────────────────────────────────
-        // Idempotent batch sync from the client. Unknown ids are rejected as a
-        // whole batch (a client that sends them is out of date or tampering).
         post("/unlock") {
             val userId = call.jwtUserId()
             val req    = call.receive<UnlockAchievementsRequest>()
@@ -75,12 +81,6 @@ fun Route.achievementRoutes(
                 inserted = inserted,
                 unlocks  = achievementsRepository.listUnlocks(userId)
             ))
-        }
-
-        // ── GET /achievements/feedback ────────────────────────────────────────
-        get("/feedback") {
-            val userId = call.jwtUserId()
-            call.respond(AchievementFeedbackResponse(achievementsRepository.listFeedback(userId)))
         }
 
         // ── POST /achievements/{id}/feedback ──────────────────────────────────

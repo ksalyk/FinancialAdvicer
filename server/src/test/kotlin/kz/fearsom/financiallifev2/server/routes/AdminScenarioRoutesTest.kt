@@ -17,8 +17,7 @@ import kz.fearsom.financiallifev2.admin.UpsertCharacterRequest
 import kz.fearsom.financiallifev2.admin.UpsertEraRequest
 import io.ktor.server.auth.*
 import kz.fearsom.financiallifev2.server.database.DatabaseTestFixture
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_KEY_AUTH
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_SESSION_AUTH
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_COMBINED_AUTH
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
@@ -84,7 +83,7 @@ class AdminScenarioRoutesTest {
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+                    authenticate(ADMIN_COMBINED_AUTH) {
                         adminScenarioRoutes(characterRepo, eraRepo)
                     }
                 }

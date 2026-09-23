@@ -20,8 +20,7 @@ import kz.fearsom.financiallifev2.model.GameEvent
 import kz.fearsom.financiallifev2.model.GameOption
 import kz.fearsom.financiallifev2.model.PlayerState
 import kz.fearsom.financiallifev2.server.database.DatabaseTestFixture
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_KEY_AUTH
-import kz.fearsom.financiallifev2.server.plugins.ADMIN_SESSION_AUTH
+import kz.fearsom.financiallifev2.server.plugins.ADMIN_COMBINED_AUTH
 import kz.fearsom.financiallifev2.server.plugins.configureAdminSession
 import kz.fearsom.financiallifev2.server.plugins.configureSecurity
 import kz.fearsom.financiallifev2.server.plugins.configureSerialization
@@ -130,7 +129,7 @@ class AdminStoryRoutesTest {
             configureStatusPages()
             routing {
                 route("/api/v1") {
-                    authenticate(ADMIN_SESSION_AUTH, ADMIN_KEY_AUTH) {
+                    authenticate(ADMIN_COMBINED_AUTH) {
                         adminStoryRoutes(repo)
                     }
                 }
