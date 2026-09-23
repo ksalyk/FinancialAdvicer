@@ -37,13 +37,16 @@ class AdminCombinedAuthProvider(config: Config) : AuthenticationProvider(config)
 
     class Config(name: String?) : AuthenticationProvider.Config(name)
 
+    // Capture name during construction — constructor params are not in scope inside methods.
+    private val providerName: String? = config.name
+
     override suspend fun onAuthenticate(context: AuthenticationContext) {
         val call = context.call
 
         // 1. Try session cookie (browser SPA).
         val session = runCatching { call.sessions.get<AdminSession>() }.getOrNull()
         if (session != null && !session.isExpired()) {
-            context.principal(config.name, session)
+            context.principal(providerName, session)
             return
         }
 
@@ -58,7 +61,7 @@ class AdminCombinedAuthProvider(config: Config) : AuthenticationProvider(config)
                         adminKey.toByteArray(Charsets.UTF_8)
                     )
                 ) {
-                    context.principal(config.name, AdminKeyPrincipal)
+                    context.principal(providerName, AdminKeyPrincipal)
                     return
                 }
             }
