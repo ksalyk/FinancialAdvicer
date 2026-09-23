@@ -258,7 +258,8 @@ class AchievementRoutesTest {
         val response = client.get("/api/v1/achievements/feedback") { authHeader() }
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("\"${AchievementCatalog.SCAM_PONZI}\":\"down\""))
+        val body = json.decodeFromString<AchievementFeedbackResponse>(response.bodyAsText())
+        assertEquals("down", body.feedback[AchievementCatalog.SCAM_PONZI])
     }
 
     companion object {
